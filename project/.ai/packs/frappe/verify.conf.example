@@ -1,0 +1,10 @@
+# Frappe pack: copy the lines you need into .ai/verify.conf during onboarding, then fix the TODOs.
+FAST=(
+  "bash .ai/check_antipatterns.sh"
+  "if command -v pre-commit >/dev/null; then [ -z \"\$CHANGED\" ] || printf '%s\n' \"\$CHANGED\" | xargs pre-commit run --files; else echo 'SKIPPED: pre-commit not installed'; exit 1; fi"
+)
+FULL=(
+  # Docker bench:  "docker compose -f <compose file> exec <service> bench --site <test-site> run-tests --app <app>"
+  # Native bench:  "cd <bench dir> && bench --site <test-site> run-tests --app <app>"
+  # SPA build:     "cd frontend && yarn build"
+)

@@ -1,0 +1,59 @@
+#!/usr/bin/env bash
+# Read-only check of this machine against MANIFEST.md. Changes nothing.
+#   bash bin/doctor               tools, plugins, skills, sandbox, git identity
+#   bash bin/doctor --leak-check  scan this repo for company/client words before a commit
+# Leak words live OUTSIDE the repo (they are company names themselves): ~/.config/ai-kit/leak-words, one ERE per line.
+set -uo pipefail
+cd "$(dirname "$(readlink -f "$0")")/.."
+
+if [ "${1:-}" = "--leak-check" ]; then
+  words="$HOME/.config/ai-kit/leak-words"
+  [ -f "$words" ] || { echo "LEAK-CHECK: no $words. Create it (one company/client word or email per line)."; exit 1; }
+  pats="$(grep -vE '^[[:space:]]*(#|$)' "$words")"
+  hits="$(git grep -n -i -E -e "$(printf '%s' "$pats" | paste -sd'|')" -- . ':!.git' 2>/dev/null; \
+          git ls-files --others --exclude-standard | xargs -r grep -n -i -E -e "$(printf '%s' "$pats" | paste -sd'|')" 2>/dev/null)"
+  if [ -n "$hits" ]; then echo "LEAK-CHECK: FAIL"; echo "$hits" | sort -u; exit 1; fi
+  echo "LEAK-CHECK: PASS"; exit 0
+fi
+
+ok=0; miss=0
+row() { printf '%-26s %-8s %s\n' "$1" "$2" "$3"; if [ "$2" = OK ]; then ok=$((ok+1)); else miss=$((miss+1)); fi; }
+ver() { "$@" 2>/dev/null | head -1; }
+
+echo "== system"
+for p in git curl bubblewrap socat pipx zenity gh; do
+  if dpkg -s "$p" >/dev/null 2>&1; then row "$p" OK "$(dpkg-query -W -f='${Version}' "$p")"; else row "$p" MISSING "apt"; fi
+done
+if command -v bwrap >/dev/null; then row "sandbox (bwrap)" OK ""; else row "sandbox (bwrap)" MISSING "install bubblewrap"; fi
+if [ -n "${DISPLAY:-}${WAYLAND_DISPLAY:-}" ]; then row "desktop for askpass" OK "${DISPLAY:-}${WAYLAND_DISPLAY:-}"; else row "desktop for askpass" NONE "sudo goes to the user's terminal"; fi
+
+echo "== user tools"
+if [ -s "$HOME/.nvm/nvm.sh" ]; then row nvm OK ""; else row nvm MISSING ""; fi
+for c in node npm uv claude codex pre-commit lazygit pyright typescript-language-server graphify; do
+  if command -v "$c" >/dev/null; then row "$c" OK "$(ver "$c" --version)"; else row "$c" MISSING ""; fi
+done
+
+echo "== claude plugins"
+f="$HOME/.claude/plugins/installed_plugins.json"
+for p in mattpocock-skills@claude-plugins-official context7@claude-plugins-official pyright-lsp@claude-plugins-official \
+         typescript-lsp@claude-plugins-official chrome-devtools-mcp@claude-plugins-official codex@openai-codex claude-hud@claude-hud; do
+  s="$(python3 -c 'import json,sys
+try: d=json.load(open(sys.argv[1])).get("plugins",{})
+except Exception: d={}
+e=d.get(sys.argv[2],[])
+print("user" if any(x.get("scope")=="user" for x in e) else (e[0].get("scope") if e else ""))' "$f" "$p")"
+  case "$s" in user) row "${p%@*}" OK "user scope" ;; "") row "${p%@*}" MISSING "" ;; *) row "${p%@*}" PARTIAL "$s scope only" ;; esac
+done
+if [ -d "$HOME/.claude/skills/find-skills" ]; then row "find-skills (unwanted)" PRESENT "remove it"; fi
+
+echo "== skills"
+for s in frappe-app-dev frappe-code-review code-style graphify; do
+  if [ -f "$HOME/.claude/skills/$s/SKILL.md" ]; then row "$s" OK ""; else row "$s" MISSING ""; fi
+done
+
+echo "== git identity"
+e="$(git config --global user.email)"
+if [ -n "$e" ]; then row "global user.email" OK "$e"; else row "global user.email" MISSING ""; fi
+git config --global --get-regexp '^includeif\.' | while read -r k v; do printf '%-26s %-8s %s\n' "includeIf" INFO "$k -> $v"; done
+
+echo; echo "OK: $ok  not OK: $miss"

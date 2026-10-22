@@ -1,0 +1,10 @@
+
+# Private AI kit (never committed)
+/AGENTS.md
+/CLAUDE.local.md
+/.ai
+/.worktrees
+/.claude/settings.local.json
+/graphify-out
+/.graphifyrc
+/.graphifyignore

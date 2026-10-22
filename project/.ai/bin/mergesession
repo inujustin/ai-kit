@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+# Squash an ai/* branch into the branch checked out in the main repo folder: ONE clean commit on your branch.
+# The ai/* branch is kept, so its detailed commits stay traceable (the commit body names it).
+# Usage: bash .ai/bin/mergesession <ai-branch> "<commit message>" [--cleanup]   (--cleanup removes its worktree)
+# Undo (before pushing): git reset --soft HEAD~1 && git restore --staged .   (your branch only)
+set -euo pipefail
+branch="${1:?usage: mergesession <ai-branch> \"<message>\" [--cleanup]}"
+msg="${2:?commit message required}"
+root="$(dirname "$(git rev-parse --path-format=absolute --git-common-dir)")"
+target="$(git -C "$root" branch --show-current)"
+case "$branch" in ai/*) ;; *) echo "Only ai/* branches can be merged with this." >&2; exit 1 ;; esac
+case "$target" in ai/*|"") echo "Main folder is on '$target'. Check out your working branch first." >&2; exit 1 ;; esac
+[ -z "$(git -C "$root" status --porcelain --untracked-files=no)" ] || { echo "Your branch has uncommitted changes. Commit or stash them first." >&2; exit 1; }
+
+commits="$(git -C "$root" log --reverse --format='- %h %s' "$target..$branch")"
+[ -n "$commits" ] || { echo "Nothing to merge: $branch has no commits that $target lacks." >&2; exit 1; }
+echo "Squashing into $target:"; echo "$commits"; git -C "$root" diff --stat "$target...$branch"
+
+if ! git -C "$root" merge --squash -q "$branch"; then
+  echo "Conflict. Fix the files and commit, or cancel with: git -C \"$root\" reset --merge" >&2; exit 1
+fi
+git -C "$root" commit -q -m "$msg" -m "Squashed from $branch:
+$commits
+
+Co-Authored-By: Claude <noreply@anthropic.com>"
+echo "Merged: $(git -C "$root" log -1 --format='%h %s')"
+
+if [ "${3:-}" = "--cleanup" ]; then
+  wt="$(git -C "$root" worktree list --porcelain | awk -v b="refs/heads/$branch" '/^worktree /{p=$2} $0=="branch "b{print p}')"
+  [ -n "$wt" ] && git -C "$root" worktree remove --force "$wt" && echo "Removed worktree $wt (branch $branch kept)"
+fi

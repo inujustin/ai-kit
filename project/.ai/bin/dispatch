@@ -1,0 +1,62 @@
+#!/usr/bin/env bash
+# Run one ticket with Codex in a fresh context and its own worktree, check it, then commit on its ai/codex/* branch.
+# Codex edits files and runs tests but cannot commit (its sandbox cannot write the main .git); this script commits.
+# Usage: bash .ai/bin/dispatch .ai/tickets/T012-foo.md [coder|tester] [base-branch]
+#   tester: writes failing tests only, from the ticket (branch ai/codex/<date>-<id>-tests).
+#   coder:  writes the code (default). If a tests branch for this ticket exists, it starts from it and may not touch tests.
+# Risky logic: run tester first, review the tests with the user, then coder. Claude runs both as background commands.
+# Model: AI_CODEX_MODEL (default gpt-6.1-sol), effort: AI_CODEX_EFFORT (default medium; high for tricky tickets).
+set -euo pipefail
+ticket="$(readlink -f "${1:?usage: dispatch <ticket.md> [coder|tester] [base]}")"
+role="${2:-coder}"
+case "$role" in coder|tester) ;; *) echo "role must be coder or tester" >&2; exit 1 ;; esac
+root="$(dirname "$(git rev-parse --path-format=absolute --git-common-dir)")"
+id="$(basename "$ticket" .md)"
+model="${AI_CODEX_MODEL:-gpt-6.1-sol}"
+effort="${AI_CODEX_EFFORT:-medium}"
+log="$root/.ai/logs"
+mkdir -p "$log"
+TEST_FILES_ERE='(^|/)tests?/'
+# shellcheck source=/dev/null
+. "$root/.ai/packs.conf"
+
+base="${3:-}"
+name="$id"
+if [ "$role" = tester ]; then
+  name="$id-tests"
+elif [ -z "$base" ]; then
+  base="$(git -C "$root" for-each-ref --sort=-committerdate --format='%(refname:short)' "refs/heads/ai/codex/*-$id-tests" | head -1)"
+fi
+tests_base="$base"
+wt="$(bash "$root/.ai/bin/newsession" codex "$name" ${base:+"$base"} | tail -1)"
+branch="$(git -C "$wt" branch --show-current)"
+start="$(git -C "$wt" rev-parse HEAD)"
+
+prompt="$(cat "$root/.ai/roles/$role.md")
+
+Ticket $id:
+$(cat "$ticket")"
+
+codex exec --sandbox workspace-write -m "$model" -c model_reasoning_effort="$effort" \
+  -C "$wt" -o "$log/$name.md" "$prompt" >"$log/$name.log" 2>&1 || true
+
+if (cd "$wt" && bash .ai/verify.sh --fast >"$log/$name.verify.log" 2>&1); then status=PASS; else status=FAIL; fi
+
+git -C "$wt" add -A
+if git -C "$wt" diff --cached --quiet; then
+  echo "FAIL $id ($role) branch=$branch: Codex changed nothing. See $log/$name.md"; exit 1
+fi
+changed="$(git -C "$wt" diff --cached --name-only "$start")"
+if [ "$role" = tester ]; then
+  bad="$(printf '%s\n' "$changed" | grep -vE "$TEST_FILES_ERE" || true)"
+  [ -n "$bad" ] && { status=FAIL; echo "tester changed non-test files:"; echo "$bad"; } >>"$log/$name.verify.log"
+elif [ -n "$tests_base" ]; then
+  bad="$(printf '%s\n' "$changed" | grep -E "$TEST_FILES_ERE" || true)"
+  [ -n "$bad" ] && { status=FAIL; echo "coder changed test files written by the tester:"; echo "$bad"; } >>"$log/$name.verify.log"
+fi
+
+title="$(sed -n '1s/^#* *//p' "$ticket")"
+git -C "$wt" commit -q -m "${title:-$id}${role:+ ($role)}" -m "Ticket: .ai/tickets/$id.md
+Role: $role. Executor: Codex $model ($effort). Checks: $status${tests_base:+. Tests from: $tests_base}"
+echo "$status $id ($role) branch=$branch sha=$(git -C "$wt" rev-parse --short HEAD) worktree=$wt summary=$log/$name.md checks=$log/$name.verify.log"
+[ "$status" = PASS ]

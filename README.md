@@ -1,0 +1,31 @@
+# ai-kit (cá nhân, private)
+
+Bộ setup AI mang đi mọi máy: Claude = não chính, Codex = thợ code + người review. Không chứa dữ liệu công ty/khách.
+
+## Dùng trên máy mới (WSL, VM, máy công ty…)
+1. `gh auth login` (tài khoản cá nhân) → `gh repo clone inujustin/ai-kit ~/ai-kit`
+2. `cd ~/ai-kit && claude`
+3. Nói: **"setup everything"**. AI làm theo `SETUP.md`: kiểm máy (`bin/doctor`) → hỏi bạn → cài từng thứ trong `MANIFEST.md`
+   (mỗi lệnh có popup giải thích tiếng Việt; lệnh sudo hiện cửa sổ nhập mật khẩu hoặc đưa bạn tự gõ) → cài kit vào project bạn chọn.
+
+```
+ai-kit/
+├── CLAUDE.md        AI đọc khi mở claude ở đây: "setup everything" làm gì
+├── SETUP.md         các bước cài (cho AI)
+├── MANIFEST.md      mọi tool/plugin/skill + nguồn + phiên bản đã pin
+├── bin/doctor       kiểm máy (chỉ đọc); --leak-check: quét từ khoá công ty trước khi commit
+├── bin/askpass      cửa sổ nhập mật khẩu sudo
+├── machine/         mẫu git identity theo thư mục, hướng dẫn VM
+├── project/         kit chép vào từng project (AGENTS.md, CLAUDE.local.md, .ai/, .claude/)
+└── project-exclude.txt   dòng thêm vào .git/info/exclude của project
+```
+
+## Luật an toàn
+- Repo này **private**. Không bao giờ chứa tên, email, code, tài liệu của công ty/khách.
+- Từ khoá công ty để chặn lộ nằm **ngoài** repo: `~/.config/ai-kit/leak-words`. AI chạy `bin/doctor --leak-check` trước mỗi commit.
+- Phần riêng của từng công ty (luật design system, VM guide có tên dự án…) để trong máy/VM của công ty đó, không đưa vào đây.
+- Thêm tool mới: nói "add <tên> to the kit"; AI kiểm nguồn chính chủ, hỏi bạn, rồi ghi vào MANIFEST.md.
+
+## Gỡ
+Trong project: xoá `AGENTS.md`, `CLAUDE.local.md`, `.ai/`, `.worktrees/`, `.claude/settings.local.json`, `.git/hooks/pre-push`, các dòng trong `.git/info/exclude`.
+Trên máy: `claude plugin uninstall <tên>`, `uv tool uninstall <tên>`, `npm uninstall -g <tên>`, `graphify uninstall`.

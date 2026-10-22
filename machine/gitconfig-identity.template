@@ -1,0 +1,4 @@
+# Identity for one folder of repos. Copy to ~/.gitconfig-<name> and fill in.
+[user]
+	name = <NAME>
+	email = <EMAIL>

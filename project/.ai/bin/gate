@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+# Before merging into your branch or opening a PR: full verify, then a Codex adversarial review of the branch.
+# Usage (inside the branch or worktree to check): bash .ai/bin/gate [base-branch] [effort]
+# Exit 0 only when verify.sh passes AND the review ends with "VERDICT: PASS".
+set -euo pipefail
+cd "$(git rev-parse --show-toplevel)"
+branch="$(git branch --show-current)"
+base="${1:-$(git config "branch.$branch.aibase" || echo main)}"
+effort="${2:-high}"            # xhigh for release candidates or security-sensitive diffs
+model="${AI_CODEX_REVIEW_MODEL:-gpt-6-astra}"
+
+bash .ai/verify.sh || { echo "verify.sh failed: fix it before spending review tokens"; exit 1; }
+
+mkdir -p .ai/logs
+out=".ai/logs/review-$(echo "$branch" | tr '/' '-')-$(git rev-parse --short HEAD).md"
+
+codex review --base "$base" -c model="$model" -c model_reasoning_effort="$effort" - <<'PROMPT' | tee "$out"
+Adversarial pre-merge review. Read CLAUDE.md (team rules), AGENTS.md and .ai/docs/ (spec, ADRs, GLOSSARY.md) first.
+Look for: behaviour that differs from the ticket or spec, permission and security holes, data loss,
+race conditions, missing tests for risky logic, violations of CLAUDE.md or AGENTS.md rules.
+Skip style issues that linters already enforce.
+For each finding give file:line, severity (BLOCKER / MAJOR / MINOR), why it is wrong, and a concrete fix.
+End with exactly one line, either:
+VERDICT: PASS
+VERDICT: BLOCK
+PROMPT
+
+grep -q '^VERDICT: PASS' "$out" && echo "PASS  report: $out" || { echo "BLOCK report: $out"; exit 1; }

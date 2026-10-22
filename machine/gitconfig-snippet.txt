@@ -1,0 +1,4 @@
+# Append to the END of ~/.gitconfig (show the user the diff first). Undo: delete these lines.
+# Repos under <FOLDER> use the identity in ~/.gitconfig-<name>; everything else keeps the global one.
+[includeIf "gitdir:~/<FOLDER>/"]
+	path = ~/.gitconfig-<name>

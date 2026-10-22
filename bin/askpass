@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+# SUDO_ASKPASS helper: shows a password window (WSLg or desktop). Usage: SUDO_ASKPASS=~/ai-kit/bin/askpass sudo -A <cmd>
+# The password goes from the window straight to sudo; it is never printed or stored.
+exec zenity --password --title="sudo for ai-kit setup"
