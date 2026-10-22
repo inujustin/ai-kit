@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Rule-coded grep checks on the files in $CHANGED (set by verify.sh), so old code does not block new work.
 # `bash .ai/check_antipatterns.sh --all` checks the whole repo instead (for a one-time audit).
-# A line that contains "<CODE>:" (e.g. "# R-A1: batch job, one commit per 100 rows") is an accepted exception.
+# A line that contains "<CODE>:" (e.g. "# FR-1: flush before enqueue") is an accepted exception.
 set -uo pipefail
 cd "$(git rev-parse --show-toplevel)"
 if [ "${1:-}" = "--all" ]; then
