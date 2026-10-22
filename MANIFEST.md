@@ -11,6 +11,8 @@ Scope: user = only this Linux user. sudo = system package (see SETUP.md "sudo").
 | pipx | isolated Python CLIs |
 | zenity | password popup for `sudo -A` (only on machines with a desktop/WSLg) |
 | gh (from GitHub's official apt repo, cli.github.com) | GitHub CLI, PRs, multiple accounts |
+| Docker Engine + compose plugin (Docker's official apt repo, docs.docker.com/engine/install/ubuntu — never the snap) | run app stacks (e.g. Frappe, DB, Redis). Then `sudo usermod -aG docker $USER` and log in again |
+| openssh-server (VMs only) | VS Code Remote-SSH into the VM; key auth only, see machine/VM.md |
 
 ## 2. User tools
 | Tool | Pin | Source | Install |
