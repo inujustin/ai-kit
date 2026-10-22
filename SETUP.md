@@ -17,19 +17,19 @@ Talk to the user in their language. Ask with AskUserQuestion at each decision. O
    gets the project kit? Anything they do NOT want installed here?
 3. Company or client machine: confirm with the user that the company allows Claude and Codex (and which accounts).
 
-## Phase 1: system packages (sudo) — MANIFEST §1
+## Phase 1: system packages (sudo) — MANIFEST C1
 Install only what doctor reports missing. Afterwards `sudo apt-mark manual bubblewrap socat` so autoremove never drops the sandbox.
 
-## Phase 2: user tools — MANIFEST §2
+## Phase 2: user tools — MANIFEST C2
 In table order (Node before npm tools, pipx before uv). Resolve pins, write them back to MANIFEST.md.
 Logins are the user's: `claude` (first run), `codex login`, `gh auth login`. Tell the user when each is needed.
 
-## Phase 3: plugins and skills — MANIFEST §3, §4
-`claude plugin marketplace add …` / `claude plugin install …@… ` one by one. Frappe skills: clone to `$TMPDIR`, checkout
-the pinned commit, copy the three folders into `~/.claude/skills/` (ask before overwriting an existing folder).
+## Phase 3: core plugins — MANIFEST C3
+`claude plugin marketplace add …` / `claude plugin install …@… ` one by one.
 Remind the user to run `/codex:setup` and `/claude-hud:setup` in a new Claude session.
+Nothing stack-specific here: language servers, framework skills and packs are installed in Phase 5, per project.
 
-## Phase 4: git identity and settings — MANIFEST §5
+## Phase 4: git identity and settings — MANIFEST C4
 - Identity per folder: copy `machine/gitconfig-identity.template` to `~/.gitconfig-<name>` with the values the user gives,
   and add the `includeIf` block from `machine/gitconfig-snippet.txt` to `~/.gitconfig` (show the diff first).
 - Merge (never overwrite) the settings listed in MANIFEST §5 into `~/.claude/settings.json`; show the diff, ask.
@@ -40,7 +40,9 @@ For the folder the user names (must be a git repo):
 2. Append `~/ai-kit/project-exclude.txt` to `<dir>/.git/info/exclude`.
 3. `cp ~/ai-kit/project/.ai/git-hooks/pre-push <dir>/.git/hooks/pre-push` if none exists; otherwise show both and ask.
 4. In `<dir>`: `git status` must show none of the kit files.
-5. Tell the user to open `claude` in `<dir>`; the onboarding in `.ai/KIT.md` starts there.
+5. Detect the project's stack (manifests, lock files, framework files). Install only its rows from MANIFEST "Per stack"
+   (LSP plugin + server, official framework skills). No matching row: follow "Other" and `project/.ai/packs/README.md`.
+6. Tell the user to open `claude` in `<dir>`; the onboarding in `.ai/KIT.md` starts there (packs, verify, team rules).
 
 ## Phase 6: done
 `bash bin/doctor` again. Report in a short table: installed (with versions), skipped (why), what the user still has to do

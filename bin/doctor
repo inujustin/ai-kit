@@ -29,26 +29,38 @@ if [ -n "${DISPLAY:-}${WAYLAND_DISPLAY:-}" ]; then row "desktop for askpass" OK 
 
 echo "== user tools"
 if [ -s "$HOME/.nvm/nvm.sh" ]; then row nvm OK ""; else row nvm MISSING ""; fi
-for c in node npm uv claude codex pre-commit lazygit pyright typescript-language-server graphify; do
+for c in node npm uv claude codex pre-commit lazygit graphify docker; do
   if command -v "$c" >/dev/null; then row "$c" OK "$(ver "$c" --version)"; else row "$c" MISSING ""; fi
 done
 
-echo "== claude plugins"
 f="$HOME/.claude/plugins/installed_plugins.json"
-for p in mattpocock-skills@claude-plugins-official context7@claude-plugins-official pyright-lsp@claude-plugins-official \
-         typescript-lsp@claude-plugins-official chrome-devtools-mcp@claude-plugins-official codex@openai-codex claude-hud@claude-hud; do
-  s="$(python3 -c 'import json,sys
+plugin_scope() {
+  python3 -c 'import json,sys
 try: d=json.load(open(sys.argv[1])).get("plugins",{})
 except Exception: d={}
 e=d.get(sys.argv[2],[])
-print("user" if any(x.get("scope")=="user" for x in e) else (e[0].get("scope") if e else ""))' "$f" "$p")"
+print("user" if any(x.get("scope")=="user" for x in e) else (e[0].get("scope") if e else ""))' "$f" "$1"
+}
+
+echo "== claude plugins (core)"
+for p in mattpocock-skills@claude-plugins-official context7@claude-plugins-official \
+         chrome-devtools-mcp@claude-plugins-official codex@openai-codex claude-hud@claude-hud; do
+  s="$(plugin_scope "$p")"
   case "$s" in user) row "${p%@*}" OK "user scope" ;; "") row "${p%@*}" MISSING "" ;; *) row "${p%@*}" PARTIAL "$s scope only" ;; esac
 done
 if [ -d "$HOME/.claude/skills/find-skills" ]; then row "find-skills (unwanted)" PRESENT "remove it"; fi
+if [ -f "$HOME/.claude/skills/graphify/SKILL.md" ]; then row "graphify skill" OK ""; else row "graphify skill" MISSING ""; fi
 
-echo "== skills"
-for s in frappe-app-dev frappe-code-review code-style graphify; do
-  if [ -f "$HOME/.claude/skills/$s/SKILL.md" ]; then row "$s" OK ""; else row "$s" MISSING ""; fi
+# Per-stack items are informational: only needed when a project on this machine uses that stack.
+echo "== per stack (install only if a project needs it)"
+for p in $(python3 -c 'import json,sys
+try: d=json.load(open(sys.argv[1])).get("plugins",{})
+except Exception: d={}
+print(" ".join(k for k in d if k.split("@")[0].endswith("-lsp")))' "$f"); do
+  printf '%-26s %-8s %s\n' "${p%@*}" INFO "installed ($(plugin_scope "$p") scope)"
+done
+for s in frappe-app-dev frappe-code-review code-style; do
+  if [ -f "$HOME/.claude/skills/$s/SKILL.md" ]; then printf '%-26s %-8s %s\n' "$s" INFO "installed (frappe stack)"; fi
 done
 
 echo "== git identity"

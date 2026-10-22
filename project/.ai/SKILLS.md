@@ -11,9 +11,9 @@ Before relying on an entry, check it is really installed (`/skills`, `/plugin`);
 | Bug, error, "it does not work" | `diagnosing-bugs` | mattpocock-skills |
 | Write tests first for risky logic | `tdd` | mattpocock-skills |
 | End of a week or after a repeated mistake | `retro`, then propose a line for AGENTS.md or a CI rule | mattpocock-skills |
-| Writing or editing any code | `code-style` | user skill (~/.claude/skills) |
-| Frappe: DocType, controller, hook, whitelisted API, bench, permissions, Frappe test | `frappe-app-dev` | user skill (Frappe official) |
-| Reviewing Frappe code | `frappe-code-review` | user skill (Frappe official) |
+| Writing or editing any code | `code-style` if installed, plus the active packs' RULES.md | user skill (frappe/skills) |
+| Frappe projects only: DocType, controller, hook, whitelisted API, bench, permissions, Frappe test | `frappe-app-dev` | user skill (Frappe official) |
+| Frappe projects only: reviewing Frappe code | `frappe-code-review` | user skill (Frappe official) |
 | Reviewing any diff before merge or PR | `/code-review`; risky diff: `bash .ai/bin/gate` too | built-in / Codex |
 | Auth, permissions, uploads, raw input, secrets | `/security-review` | built-in |
 | Cleanup after a feature works | `/simplify` | built-in |

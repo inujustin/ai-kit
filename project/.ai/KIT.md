@@ -28,7 +28,7 @@ CLAUDE.local.md               Claude-only: how to talk, grill, git flow, onboard
 Do this with the user, asking with AskUserQuestion at each decision. Change nothing in tracked team files.
 1. Read the project: README, CLAUDE.md / AGENTS.md of the team, docs/, manifests (pyproject, package.json),
    lint config (.pre-commit-config.yaml, eslint, ruff), CI files, test layout, how it runs (docker, bench, npm).
-2. Detect the stack and propose packs for `.ai/packs.conf`. No pack fits? Propose a new pack folder
+2. Detect the stack and propose packs for `.ai/packs.conf` (any stack works; see `.ai/packs/README.md`). No pack fits? Propose a new pack folder
    (RULES.md + antipatterns.rules.sh + verify.conf.example) built from the project's real conventions.
 3. Compare kit rules with the team's rules and real code. List conflicts and rules that do not match; ask which to keep.
    The team's rules always win. Fill the "Project" section and TODOs in AGENTS.md.
