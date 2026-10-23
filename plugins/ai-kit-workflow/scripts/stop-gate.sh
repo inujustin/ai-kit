@@ -5,9 +5,12 @@ input=$(cat)
 active=$(printf '%s' "$input" | python3 -c 'import json,sys; print(json.load(sys.stdin).get("stop_hook_active", False))' 2>/dev/null)
 [ "$active" = "True" ] && exit 0
 kit="$(bash "$(dirname "$0")/kit-resolve.sh" "${CLAUDE_PROJECT_DIR:-$PWD}")" || exit 0
-[ -d "$kit/worktrees" ] || exit 0
+AI_MODE=worktree; [ -f "$kit/.ai/mode.conf" ] && . "$kit/.ai/mode.conf"
+root="$(dirname "$(git -C "${CLAUDE_PROJECT_DIR:-$PWD}" rev-parse --path-format=absolute --git-common-dir 2>/dev/null)")"
 fail=""
-for wt in "$kit"/worktrees/*/; do
+places=("$kit"/worktrees/*/); [ "$AI_MODE" = direct ] && places+=("$root/")
+for wt in "${places[@]}"; do
+  [ -d "$wt" ] || continue
   [ -e "$wt/.git" ] || continue
   [ -n "$(git -C "$wt" status --porcelain)" ] || continue
   out=$(cd "$wt" && bash "$kit/.ai/verify.sh" --fast 2>&1) || fail="$fail

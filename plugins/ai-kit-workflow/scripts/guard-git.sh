@@ -31,6 +31,19 @@ if printf '%s' "$cmd" | grep -qE 'git([[:space:]]+-C[[:space:]]+[^[:space:]]+)?[
   [ -z "$dir" ] && dir="$cwd"
   case "$dir" in /*) ;; *) dir="$cwd/$dir" ;; esac
   branch=$(git -C "$dir" branch --show-current 2>/dev/null)
-  case "$branch" in ai/*) ;; *) block "commit only on ai/* branches (this is '$branch'). Use \$KIT/.ai/bin/newsession, then \$KIT/.ai/bin/story when the user asks." ;; esac
+  kit=$(bash "$(dirname "$0")/kit-resolve.sh" "$dir")
+  AI_MODE=worktree; PROTECTED_BRANCHES='^(main|master|develop|dev|release.*|production|staging)$'
+  [ -f "$kit/.ai/mode.conf" ] && . "$kit/.ai/mode.conf"
+  printf '%s' "$branch" | grep -qE "$PROTECTED_BRANCHES" && block "never commit on '$branch'."
+  if [ "$AI_MODE" = direct ]; then
+    subj=$(printf '%s' "$cmd" | sed -nE 's/.*-m[[:space:]]+"([^"]*)".*/\1/p; t; s/.*-m[[:space:]]+\x27([^\x27]*)\x27.*/\1/p' | head -1)
+    if [ -n "$subj" ] && [ -f "$kit/.ai/commit-style.conf" ]; then
+      . "$kit/.ai/commit-style.conf"
+      printf '%s' "$subj" | grep -qE "$SUBJECT_ERE" || block "commit subject '$subj' does not match \$KIT/.ai/commit-style.conf ($COMMIT_STYLE_SOURCE). Say the behaviour a teammate can observe, e.g. 'feat(scope): ...'."
+      printf '%s' "$subj" | grep -qiE "$BAD_SUBJECT_ERE" && block "commit subject '$subj' looks like wip/fixup/typo; describe the step."
+    fi
+  else
+    case "$branch" in ai/*) ;; *) block "worktree mode: commit only on ai/* branches (this is '$branch'). Use \$KIT/.ai/bin/newsession, then \$KIT/.ai/bin/story when the user asks." ;; esac
+  fi
 fi
 exit 0

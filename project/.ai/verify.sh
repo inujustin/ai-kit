@@ -9,7 +9,9 @@ set -uo pipefail
 # Never changes the team's checkout: run from the repo's main folder, it re-runs itself in a throw-away worktree of HEAD
 # inside the kit, so fixers inside the checks (pre-commit hooks, formatters) can only touch that copy.
 top="$(git rev-parse --show-toplevel)"
-if [ "$top" = "$ROOT" ] && [ -z "${AI_VERIFY_NESTED:-}" ]; then
+AI_MODE=worktree; [ -f "$KIT/.ai/mode.conf" ] && . "$KIT/.ai/mode.conf"
+all=no; for arg in "$@"; do [ "$arg" = "--all" ] && all=yes; done
+if [ "$top" = "$ROOT" ] && [ -z "${AI_VERIFY_NESTED:-}" ] && { [ "$AI_MODE" != direct ] || [ "$all" = yes ]; }; then
   tmp="$WT_DIR/.verify-$$"; mkdir -p "$WT_DIR"
   git -C "$ROOT" worktree add -q --detach "$tmp" HEAD
   echo "(verify runs on a throw-away copy of HEAD in $tmp; your checkout is never modified; uncommitted changes are not included)"

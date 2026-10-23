@@ -9,6 +9,8 @@ tool=$(read_json 'd.get("tool_name","")')
 cwd=$(read_json 'd.get("cwd","")'); cwd="${cwd:-$PWD}"
 kit="$(bash "$(dirname "$0")/kit-resolve.sh" "$cwd")" || exit 0
 allow_root=no; [ -e "$kit/.ai/allow-root-edits" ] && allow_root=yes
+AI_MODE=worktree; [ -f "$kit/.ai/mode.conf" ] && . "$kit/.ai/mode.conf"
+edits_ok=$allow_root; [ "$AI_MODE" = direct ] && edits_ok=yes
 root="$(dirname "$(git -C "$cwd" rev-parse --path-format=absolute --git-common-dir)")"
 block() { echo "Blocked by ai-kit guard-repo: $1 Work in an ai/* worktree (bash $kit/.ai/bin/newsession claude <name>), or ask the user to allow edits by creating $kit/.ai/allow-root-edits." >&2; exit 2; }
 in_root() { case "$(realpath -m "$1")/" in "$root"/*) return 0 ;; *) return 1 ;; esac; }
@@ -22,7 +24,7 @@ case "$tool" in
     src="$(cat "${XDG_CONFIG_HOME:-$HOME/.config}/ai-kit/source" 2>/dev/null)"
     if [ -n "$src" ]; then case "$(realpath -m "$f")/" in "$src"/*)
       echo "Blocked by ai-kit guard-repo: $f is in the shared ai-kit source ($src). A project's changes stay in its own kit ($kit): project hooks go in $kit/.ai/hooks/<Event>/. To change the kit for every project, the user opens claude inside $src and asks there." >&2; exit 2 ;; esac; fi
-    [ "$allow_root" = no ] && in_root "$f" && block "$f is in the team's checkout ($root)."
+    [ "$edits_ok" = no ] && in_root "$f" && block "$f is in the team's checkout ($root)."
     ;;
   Bash)
     cmd=$(read_json 'd.get("tool_input",{}).get("command","")')
