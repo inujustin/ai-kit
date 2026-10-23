@@ -10,6 +10,16 @@
             "timeout": 15
           }
         ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/scripts/project-hooks.sh\" SessionStart",
+            "timeout": 60
+          }
+        ],
+        "matcher": "startup|resume|clear|compact"
       }
     ],
     "UserPromptSubmit": [
@@ -19,6 +29,15 @@
             "type": "command",
             "command": "bash \"${CLAUDE_PLUGIN_ROOT}/scripts/prompt-skills.sh\"",
             "timeout": 10
+          }
+        ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/scripts/project-hooks.sh\" UserPromptSubmit",
+            "timeout": 60
           }
         ]
       }
@@ -43,6 +62,16 @@
             "timeout": 10
           }
         ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/scripts/project-hooks.sh\" PreToolUse",
+            "timeout": 60
+          }
+        ],
+        "matcher": "*"
       }
     ],
     "PostToolUse": [
@@ -55,6 +84,16 @@
             "timeout": 120
           }
         ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/scripts/project-hooks.sh\" PostToolUse",
+            "timeout": 60
+          }
+        ],
+        "matcher": "*"
       }
     ],
     "Stop": [
@@ -64,6 +103,15 @@
             "type": "command",
             "command": "bash \"${CLAUDE_PLUGIN_ROOT}/scripts/stop-gate.sh\"",
             "timeout": 300
+          }
+        ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/scripts/project-hooks.sh\" Stop",
+            "timeout": 60
           }
         ]
       }
