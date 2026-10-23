@@ -6,7 +6,7 @@ Bộ setup AI mang đi mọi máy: Claude = não chính, Codex = thợ code + ng
 1. `git clone https://github.com/inujustin/ai-kit.git ~/ai-kit` (repo public, không cần đăng nhập; máy công ty không đăng nhập tài khoản cá nhân)
 2. `cd ~/ai-kit && claude`
 3. Nói: **"setup everything"**. AI làm theo `SETUP.md`: kiểm máy (`bin/doctor`) → hỏi bạn → cài từng thứ trong `MANIFEST.md`
-   (mỗi lệnh có popup giải thích tiếng Việt; lệnh sudo hiện cửa sổ nhập mật khẩu hoặc đưa bạn tự gõ) → cài kit vào project bạn chọn.
+   (mỗi lệnh có popup giải thích tiếng Việt; lệnh sudo thì AI đưa lệnh, bạn tự gõ trong terminal) → cài kit vào project bạn chọn.
 4. Trong mỗi repo dự án: mở `claude` ở đó và nói **"setup the kit for this project"**. AI hỏi bạn để kit ở đâu (**ngoài** repo),
    tạo kit + đăng ký. Từ đó chỉ cần gõ `claude` trong repo: plugin `ai-kit-workflow` tự nạp kit, hook gợi ý skill, chặn git…
    Repo công ty không bao giờ có file nào của kit.
@@ -18,7 +18,6 @@ ai-kit/
 ├── SETUP.md         các bước cài (cho AI)
 ├── MANIFEST.md      mọi tool/plugin/skill + nguồn + phiên bản đã pin
 ├── bin/doctor       kiểm máy (chỉ đọc); --leak-check: quét từ khoá công ty trước khi commit
-├── bin/askpass      cửa sổ nhập mật khẩu sudo
 ├── machine/         mẫu git identity theo thư mục, hướng dẫn VM
 ├── project/         kit chép vào từng project (AGENTS.md, CLAUDE.local.md, .ai/, .claude/)
 ├── plugins/ai-kit-workflow  hook của kit (cài 1 lần mỗi máy, dùng cho mọi project)

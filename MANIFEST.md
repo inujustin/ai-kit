@@ -12,7 +12,6 @@ Scope: user = only this Linux user. sudo = system package (see SETUP.md "sudo").
 | git curl ca-certificates build-essential unzip | basics |
 | bubblewrap socat | Claude Code sandbox on Linux (never remove; mark manual: `apt-mark manual bubblewrap socat`) |
 | pipx | isolated Python CLIs |
-| zenity | password popup for `sudo -A` (only on machines with a desktop/WSLg) |
 | gh (Ubuntu repo, or GitHub's official apt repo cli.github.com) | GitHub CLI, PRs, multiple accounts |
 | Docker Engine + compose plugin (Docker's official apt repo, docs.docker.com/engine/install/ubuntu — never the snap) | run app stacks, databases, caches. Then `sudo usermod -aG docker $USER` and log in again |
 | openssh-server (VMs only) | VS Code Remote-SSH into the VM; key auth only, see machine/VM.md |

@@ -4,12 +4,8 @@ Talk to the user in their language. Ask with AskUserQuestion at each decision. O
 
 ## sudo
 - Never ask the user to type a password into chat, never store it, never pass it on a command line.
-- Sandboxed commands cannot use sudo. Run each sudo command as its own tool call outside the sandbox, after
-  saying in one line what it changes; the permission popup is the user's approval.
-- Desktop or WSLg available (`$DISPLAY` or `$WAYLAND_DISPLAY` set) and zenity installed:
-  `SUDO_ASKPASS="$HOME/ai-kit/bin/askpass" sudo -A <command>` → a password window pops up for the user.
-- No desktop (SSH, server VM) or no zenity yet: give the user the exact command to run in their own terminal
-  (or `! <command>` in the Claude prompt), wait, then run `bash bin/doctor` to confirm.
+- The AI never runs sudo. Give the user the exact command, one per step, with one plain line on what it changes and
+  how to undo it; the user runs it in their own terminal. Wait, then run `bash bin/doctor` to confirm.
 
 ## Phase 0: look before touching
 1. `bash bin/doctor` → show the user a short table: OK / missing / wrong version.

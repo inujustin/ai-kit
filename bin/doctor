@@ -21,11 +21,10 @@ row() { printf '%-26s %-8s %s\n' "$1" "$2" "$3"; if [ "$2" = OK ]; then ok=$((ok
 ver() { "$@" 2>/dev/null | head -1; }
 
 echo "== system"
-for p in git curl bubblewrap socat pipx zenity gh; do
+for p in git curl bubblewrap socat pipx gh; do
   if dpkg -s "$p" >/dev/null 2>&1; then row "$p" OK "$(dpkg-query -W -f='${Version}' "$p")"; else row "$p" MISSING "apt"; fi
 done
 if command -v bwrap >/dev/null; then row "sandbox (bwrap)" OK ""; else row "sandbox (bwrap)" MISSING "install bubblewrap"; fi
-if [ -n "${DISPLAY:-}${WAYLAND_DISPLAY:-}" ]; then row "desktop for askpass" OK "${DISPLAY:-}${WAYLAND_DISPLAY:-}"; else row "desktop for askpass" NONE "sudo goes to the user's terminal"; fi
 
 echo "== user tools"
 if [ -s "$HOME/.nvm/nvm.sh" ]; then row nvm OK ""; else row nvm MISSING ""; fi
