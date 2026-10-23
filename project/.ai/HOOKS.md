@@ -36,6 +36,7 @@ The SessionStart hook of the ai-kit-workflow plugin reminds you of candidates st
 | Hook | Event | Enforces |
 |---|---|---|
 | plugin guard-git.sh | PreToolUse(Bash) | commit only on ai/*, no push of ai/*, no force-push, no push to main/master/develop |
+| plugin guard-repo.sh | PreToolUse(Edit/Write/Bash) | no edits in the team's checkout (only ai/* worktrees), no whole-repo fixers there |
 | plugin after-edit.sh | PostToolUse(Edit/Write) | the team's pre-commit hooks on the edited file |
 | plugin stop-gate.sh | Stop | `verify.sh --fast` in the kit's worktrees with uncommitted changes |
 | git pre-push | git | ai/* branches never leave the machine (also for the user) |

@@ -32,7 +32,8 @@ worktrees/                    AI worktrees (inside the kit, never in the repo)
 ```
 
 ## Onboarding: first session in a new project (and again whenever the user says "review the kit")
-Do this with the user, asking with AskUserQuestion at each decision. Change nothing in tracked team files.
+Do this with the user, asking with AskUserQuestion at each decision. READ ONLY on the repo: change nothing in it, run no
+formatters or fixers on it (the guard-repo hook blocks this); everything you write goes into the kit.
 1. Read the project: README, CLAUDE.md / AGENTS.md of the team, docs/, manifests (pyproject, package.json),
    lint config (.pre-commit-config.yaml, eslint, ruff), CI files, test layout, how it runs (docker, bench, npm).
 2. Detect the stack and propose packs for `.ai/packs.conf` (any stack works; see `.ai/packs/README.md`). No pack fits? Propose a new pack folder
@@ -40,7 +41,8 @@ Do this with the user, asking with AskUserQuestion at each decision. Change noth
 3. Compare kit rules with the team's rules and real code. List conflicts and rules that do not match; ask which to keep.
    The team's rules always win. Fill the "Project" section and TODOs in AGENTS.md.
 4. Fill `.ai/verify.conf` with commands that really exist here. Ask how to run tests (docker or native, site name).
-   Run `bash $KIT/.ai/verify.sh` until green on the current code, or tell the user exactly which part cannot run and why.
+   Run `bash $KIT/.ai/verify.sh --all` (it runs on a throw-away copy of HEAD, never on the user's checkout). Red on the
+   current code is the team's state, not yours to fix: report it and ask; adjust only the kit's verify.conf.
 5. Check `.ai/SKILLS.md` against what is installed and what this stack needs. Propose missing ones (official only).
 6. Check the safety basics: private files excluded (`git status` shows none of them), pre-push hook in place,
    remote branch names, the user's default base branch. Ask for anything unclear.

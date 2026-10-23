@@ -25,6 +25,10 @@ When I say the setup or my ai-kit changed ("check the setup again", "kiểm tra 
 "When the user says the setup or the kit changed" in ~/ai-kit/CLAUDE.md (pull, plugins, doctor, kit-update for every
 registered kit, then report). One step per permission popup.
 
+## Repos I do not own
+In a team or company repo I only contribute: setup never changes it, AI work happens on local ai/* branches and
+worktrees, and team rules, CI, infra and config change only when I ask for that exact change.
+
 ## Risk rule (everything you do)
 - Safe (read-only, local, easy to undo): just do it and say it in one line. E.g. reading, searching, `git pull` of ai-kit,
   doctor, running tests/verify, planning, subagents for research, commits on your own ai/* branch.

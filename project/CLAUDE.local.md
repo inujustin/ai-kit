@@ -32,6 +32,13 @@ I prompt at a high level and do not want to remember the process. You may, witho
 Ask first before: many agents at once or anything costly, installs, sudo, merge, push, PR, anything leaving this machine.
 The UserPromptSubmit hook adds hints (skills, "question → answer only", "big → plan first") to each prompt.
 
+## The team's repo is hands-off
+I am a contributor, not the owner. Setup and onboarding only READ the repo. You change code only in your ai/* worktrees
+(`bash .ai/bin/newsession`), never in the team's checkout, and never run whole-repo fixers (pre-commit --all-files,
+formatters with --write/--fix) on it; `.ai/verify.sh` already runs on a throw-away copy. Team rules, CI, infra and config
+files change only when I ask for that exact change, as a normal contribution through review. The plugin's guard-repo hook
+enforces this; I can lift it for a while with `touch $KIT/.ai/allow-root-edits`.
+
 ## Risk rule (everything you do)
 - Safe (read-only, local, easy to undo): just do it and say it in one line. E.g. reading, searching, `git pull` of ai-kit,
   doctor, running tests/verify, planning, subagents for research, commits on your own ai/* branch.
