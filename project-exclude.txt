@@ -1,10 +1,5 @@
 
-# Private AI kit (never committed)
-/AGENTS.md
-/CLAUDE.local.md
-/.ai
-/.worktrees
-/.claude/settings.local.json
+# ai-kit: tool output that may appear in a project repo (the kit itself lives outside the repo)
 /graphify-out
 /.graphifyrc
 /.graphifyignore

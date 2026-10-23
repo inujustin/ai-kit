@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+# Bring a project's kit up to date with this ai-kit source (git pull here first). Never overwrites your edits.
+# Usage: bash ~/ai-kit/bin/kit-update <kit-folder>
+# For every file of project/:  new upstream -> copied in;  untouched by you -> replaced by the new version;
+#   edited by you AND changed upstream -> left alone and listed (Claude shows the diff and asks you);
+#   removed upstream -> listed (ask before deleting). The baseline is refreshed for the files it replaced.
+set -euo pipefail
+SRC="$(cd "$(dirname "$0")/.." && pwd)"
+kit="$(cd "${1:?usage: kit-update <kit-folder>}" && pwd)"
+base="$kit/.ai/.kit-baseline"
+[ -f "$base" ] || { echo "No $base: this kit was not made by kit-new. Compare by hand." >&2; exit 1; }
+declare -A was
+while read -r h f; do was["$f"]="$h"; done < "$base"
+added=(); replaced=(); review=(); same=0
+while IFS= read -r -d '' f; do
+  new="$(sha256sum "$SRC/project/$f" | cut -d' ' -f1)"
+  if [ ! -e "$kit/$f" ]; then mkdir -p "$(dirname "$kit/$f")"; cp -p "$SRC/project/$f" "$kit/$f"; added+=("$f"); was["$f"]="$new"; continue; fi
+  cur="$(sha256sum "$kit/$f" | cut -d' ' -f1)"
+  [ "$cur" = "$new" ] && { same=$((same+1)); was["$f"]="$new"; continue; }
+  if [ "$cur" = "${was[$f]:-}" ]; then cp -p "$SRC/project/$f" "$kit/$f"; replaced+=("$f"); was["$f"]="$new"
+  else review+=("$f"); fi
+done < <(cd "$SRC/project" && find . -type f -print0)
+gone=()
+for f in "${!was[@]}"; do [ -e "$SRC/project/$f" ] || gone+=("$f"); done
+{ for f in "${!was[@]}"; do [ -e "$SRC/project/$f" ] && echo "${was[$f]}  $f"; done; } | sort -k2 > "$base"
+git -C "$SRC" rev-parse --short HEAD > "$kit/.ai/.kit-source" 2>/dev/null || true
+echo "kit: $kit   source: $(cat "$kit/.ai/.kit-source")   unchanged: $same"
+printf 'added:    %s\n' "${added[@]:-(none)}"
+printf 'replaced: %s\n' "${replaced[@]:-(none)}"
+printf 'REVIEW (you edited it and upstream changed it; ask the user): %s\n' "${review[@]:-(none)}"
+printf 'removed upstream (ask before deleting): %s\n' "${gone[@]:-(none)}"
+[ ${#review[@]} -eq 0 ] || { echo "diff one with: diff -u \"$kit/<file>\" \"$SRC/project/<file>\""; exit 2; }

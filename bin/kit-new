@@ -1,0 +1,48 @@
+#!/usr/bin/env bash
+# Create a project's kit OUTSIDE its repo and register it, so plain `claude` in the repo loads it (plugin ai-kit-workflow).
+# Usage: bash ~/ai-kit/bin/kit-new <repo-folder> <kit-folder>      (the user picks <kit-folder>; it must not exist yet)
+# Changes: creates <kit-folder> (no .git), adds one line to ~/.config/ai-kit/projects.tsv, adds <kit-folder> to
+#   permissions.additionalDirectories in ~/.claude/settings.json (backup kept), installs .git/hooks/pre-push if none,
+#   adds graphify output names to .git/info/exclude. Nothing is written into the repo's tracked files.
+# Undo: delete <kit-folder>, its line in projects.tsv and in settings.json, and .git/hooks/pre-push if it was added.
+set -euo pipefail
+SRC="$(cd "$(dirname "$0")/.." && pwd)"
+repo="$(cd "${1:?usage: kit-new <repo-folder> <kit-folder>}" && pwd)"
+kit="${2:?usage: kit-new <repo-folder> <kit-folder>}"
+root="$(dirname "$(git -C "$repo" rev-parse --path-format=absolute --git-common-dir)")"
+[ -e "$kit" ] && { echo "$kit already exists. Pick a new folder, or use kit-update for an existing kit." >&2; exit 1; }
+case "$(realpath -m "$kit")/" in "$root"/*) echo "The kit must live outside the repo." >&2; exit 1 ;; esac
+
+mkdir -p "$kit"; kit="$(cd "$kit" && pwd)"
+cp -r "$SRC/project/." "$kit/"
+mkdir -p "$kit/worktrees" "$kit/.ai/logs" "$kit/.ai/tickets" "$kit/.ai/docs"
+(cd "$SRC/project" && find . -type f -print0 | sort -z | xargs -0 sha256sum) > "$kit/.ai/.kit-baseline"
+git -C "$SRC" rev-parse --short HEAD > "$kit/.ai/.kit-source" 2>/dev/null || echo unknown > "$kit/.ai/.kit-source"
+
+reg="${XDG_CONFIG_HOME:-$HOME/.config}/ai-kit/projects.tsv"
+mkdir -p "$(dirname "$reg")"; touch "$reg"
+awk -F'\t' -v r="$root" '$1!=r' "$reg" > "$reg.tmp" && mv "$reg.tmp" "$reg"
+printf '%s\t%s\n' "$root" "$kit" >> "$reg"
+
+settings="$HOME/.claude/settings.json"
+[ -f "$settings" ] && cp "$settings" "$settings.bak-ai-kit"
+python3 - "$settings" "$kit" <<'PY'
+import json, os, sys
+p, kit = sys.argv[1], sys.argv[2]
+d = json.load(open(p)) if os.path.exists(p) else {}
+dirs = d.setdefault("permissions", {}).setdefault("additionalDirectories", [])
+if kit not in dirs: dirs.append(kit)
+json.dump(d, open(p, "w"), indent=2); open(p, "a").write("\n")
+PY
+
+hooks="$(git -C "$root" rev-parse --path-format=absolute --git-path hooks)"
+if [ -e "$hooks/pre-push" ]; then echo "NOTE: $hooks/pre-push already exists; merge $kit/.ai/git-hooks/pre-push into it by hand (ask the user)."
+else mkdir -p "$hooks"; cp "$kit/.ai/git-hooks/pre-push" "$hooks/pre-push"; chmod +x "$hooks/pre-push"; fi
+excl="$(git -C "$root" rev-parse --path-format=absolute --git-path info/exclude)"
+mkdir -p "$(dirname "$excl")"; touch "$excl"
+while read -r line; do [ -z "$line" ] || grep -qxF -- "$line" "$excl" || echo "$line" >> "$excl"; done < "$SRC/project-exclude.txt"
+
+echo "kit created: $kit"
+echo "registered:  $root -> $kit   ($reg)"
+echo "Claude may use the kit folder (additionalDirectories in $settings; backup: $settings.bak-ai-kit)"
+echo "Next: open claude in $root (new session) and run the onboarding in $kit/.ai/KIT.md."

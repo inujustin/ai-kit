@@ -44,7 +44,7 @@ print("user" if any(x.get("scope")=="user" for x in e) else (e[0].get("scope") i
 
 echo "== claude plugins (core)"
 for p in mattpocock-skills@claude-plugins-official context7@claude-plugins-official \
-         chrome-devtools-mcp@claude-plugins-official codex@openai-codex claude-hud@claude-hud ponytail@ai-kit; do
+         chrome-devtools-mcp@claude-plugins-official codex@openai-codex claude-hud@claude-hud ponytail@ai-kit ai-kit-workflow@ai-kit; do
   s="$(plugin_scope "$p")"
   case "$s" in user) row "${p%@*}" OK "user scope" ;; "") row "${p%@*}" MISSING "" ;; *) row "${p%@*}" PARTIAL "$s scope only" ;; esac
 done
@@ -66,6 +66,10 @@ done
 echo "== global rules"
 if grep -q 'ai-kit global rules' "$HOME/.claude/CLAUDE.md" 2>/dev/null; then row "~/.claude/CLAUDE.md" OK "ai-kit rules merged"; else row "~/.claude/CLAUDE.md" MISSING "merge machine/CLAUDE.global.md"; fi
 if [ -d "$HOME/shots" ]; then row "~/shots (screenshots)" OK ""; else row "~/shots (screenshots)" MISSING "mkdir ~/shots"; fi
+
+echo "== project kits (~/.config/ai-kit/projects.tsv)"
+reg="${XDG_CONFIG_HOME:-$HOME/.config}/ai-kit/projects.tsv"
+if [ -s "$reg" ]; then while IFS=$'\t' read -r r k; do if [ -f "$k/.ai/lib.sh" ]; then printf '%-26s %-8s %s\n' "$(basename "$r")" INFO "kit $k (source $(cat "$k/.ai/.kit-source" 2>/dev/null))"; else printf '%-26s %-8s %s\n' "$(basename "$r")" BROKEN "kit folder missing: $k"; fi; done < "$reg"; else echo "  (none yet: say 'setup the kit for this project' inside a repo)"; fi
 
 echo "== git identity"
 e="$(git config --global user.email)"
