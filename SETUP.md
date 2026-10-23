@@ -25,14 +25,15 @@ In table order (Node before npm tools, pipx before uv). Resolve pins, write them
 Logins are the user's: `claude` (first run), `codex login`, `gh auth login`. Tell the user when each is needed.
 
 ## Phase 3: core plugins — MANIFEST C3
-`claude plugin marketplace add …` / `claude plugin install …@… ` one by one.
+`claude plugin marketplace add …` / `claude plugin install …@… ` one by one, including this repo's own marketplace
+(`claude plugin marketplace add inujustin/ai-kit`, then `claude plugin install ponytail@ai-kit`).
 Remind the user to run `/codex:setup` and `/claude-hud:setup` in a new Claude session.
 Nothing stack-specific here: language servers, framework skills and packs are installed in Phase 5, per project.
 
 ## Phase 4: git identity and settings — MANIFEST C4
 - Identity per folder: copy `machine/gitconfig-identity.template` to `~/.gitconfig-<name>` with the values the user gives,
   and add the `includeIf` block from `machine/gitconfig-snippet.txt` to `~/.gitconfig` (show the diff first).
-- Merge (never overwrite) the settings listed in MANIFEST §5 into `~/.claude/settings.json`; show the diff, ask.
+- Merge (never overwrite) the settings listed in MANIFEST C4 into `~/.claude/settings.json`; show the diff, ask.
 
 ## Phase 5: project kit
 For the folder the user names (must be a git repo):

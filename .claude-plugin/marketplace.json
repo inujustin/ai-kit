@@ -1,0 +1,20 @@
+{
+  "name": "ai-kit",
+  "description": "Third-party Claude Code plugins reviewed and pinned to an exact commit for this personal kit",
+  "owner": {
+    "name": "inujustin",
+    "url": "https://github.com/inujustin"
+  },
+  "plugins": [
+    {
+      "name": "ponytail",
+      "description": "Write the least code that works (YAGNI, stdlib first). Reviewed 2026-10-23: hooks local only, no network. Pinned v5.1.0.",
+      "source": {
+        "source": "github",
+        "repo": "DietrichGebert/ponytail",
+        "ref": "main",
+        "sha": "9cc65d03aa2da1db7121b912d03596409ee340b8"
+      }
+    }
+  ]
+}

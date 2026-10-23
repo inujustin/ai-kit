@@ -44,7 +44,7 @@ print("user" if any(x.get("scope")=="user" for x in e) else (e[0].get("scope") i
 
 echo "== claude plugins (core)"
 for p in mattpocock-skills@claude-plugins-official context7@claude-plugins-official \
-         chrome-devtools-mcp@claude-plugins-official codex@openai-codex claude-hud@claude-hud; do
+         chrome-devtools-mcp@claude-plugins-official codex@openai-codex claude-hud@claude-hud ponytail@ai-kit; do
   s="$(plugin_scope "$p")"
   case "$s" in user) row "${p%@*}" OK "user scope" ;; "") row "${p%@*}" MISSING "" ;; *) row "${p%@*}" PARTIAL "$s scope only" ;; esac
 done

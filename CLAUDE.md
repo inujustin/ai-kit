@@ -1,7 +1,10 @@
-# ai-kit (personal, private)
+# ai-kit (personal, public repo github.com/inujustin/ai-kit)
 
 This folder is the user's portable AI setup. It contains no client or company data and must never receive any.
 Reply in the user's language (Vietnamese by default), short and plain. Grill with AskUserQuestion at each real decision.
+Every permission popup and every question carries its own brief explanation in the user's language (what, what it
+changes, why, remote or not, undo, which option); the user reads the popup, not the chat. One step per permission.
+Only Claude (plus Codex) models: never install free model routers or switchers (omniroute, claude-code-router, cc-switch).
 
 ## When the user says "setup everything" / "cài hết" / "setup this machine"
 Follow `SETUP.md` from the top. It installs the tools, plugins and skills in `MANIFEST.md`, sets the git identity,
@@ -18,7 +21,19 @@ then installs the project kit (`project/`) into the folder the user names and st
 Check it like `project/.ai/SKILLS.md` "Missing" says (official source, stars, license, last release, what it sends out),
 ask the user, then add a row to MANIFEST.md and, if the AI should use it, to `project/.ai/SKILLS.md`.
 
+## Third-party plugins (the ai-kit marketplace)
+Reviewed third-party plugins are listed in `.claude-plugin/marketplace.json`, each pinned to a full commit `sha`, so every
+machine installs exactly the reviewed code: `claude plugin marketplace add inujustin/ai-kit` then `claude plugin install <name>@ai-kit`.
+To add or update one: read its hooks/scripts for network calls and commands, pick a commit at least 14 days old,
+set `sha`, run `claude plugin validate .`, ask the user, then note it in MANIFEST.md and `project/.ai/SKILLS.md`.
+
+## Rule conflicts and rule → hook
+Same as in the project kit: on conflicting rules stop and ask (both rules side by side, sources, recommendation);
+when a rule is mechanical, repeated or forgotten, ask whether to make it a hook, again each time, unless the user said
+"no for this whole session". See `project/CLAUDE.local.md` and `project/.ai/HOOKS.md`.
+
 ## Git for this repo
 - Work on `ai/claude/<date>-<name>` branches; ask the user whether to merge into main when a piece is done.
-- Push only to the user's private repo `inujustin/ai-kit`, step by step, with the user's OK each time.
-- Before every commit: `bash bin/doctor --leak-check` must pass (no company names, emails, client code or data).
+- The repo is public. Before every commit: `bash bin/doctor --leak-check` must pass (no company names, emails,
+  client code or data; leak words live outside the repo in ~/.config/ai-kit/leak-words).
+- The user pushes (`git push` is blocked for the AI); tell them when main is ready.

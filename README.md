@@ -1,9 +1,9 @@
-# ai-kit (cá nhân, private)
+# ai-kit (cá nhân, public)
 
 Bộ setup AI mang đi mọi máy: Claude = não chính, Codex = thợ code + người review. Không chứa dữ liệu công ty/khách.
 
 ## Dùng trên máy mới (WSL, VM, máy công ty…)
-1. `gh auth login` (tài khoản cá nhân) → `gh repo clone inujustin/ai-kit ~/ai-kit`
+1. `git clone https://github.com/inujustin/ai-kit.git ~/ai-kit` (repo public, không cần đăng nhập; máy công ty không đăng nhập tài khoản cá nhân)
 2. `cd ~/ai-kit && claude`
 3. Nói: **"setup everything"**. AI làm theo `SETUP.md`: kiểm máy (`bin/doctor`) → hỏi bạn → cài từng thứ trong `MANIFEST.md`
    (mỗi lệnh có popup giải thích tiếng Việt; lệnh sudo hiện cửa sổ nhập mật khẩu hoặc đưa bạn tự gõ) → cài kit vào project bạn chọn.
@@ -21,7 +21,9 @@ ai-kit/
 ```
 
 ## Luật an toàn
-- Repo này **private**. Không bao giờ chứa tên, email, code, tài liệu của công ty/khách.
+- Repo này **public**. Không bao giờ chứa tên, email, code, tài liệu của công ty/khách.
+- Plugin bên thứ ba đã kiểm tra nằm trong `.claude-plugin/marketplace.json`, khoá theo commit: `claude plugin marketplace add inujustin/ai-kit`.
+- AI luôn: giải thích ngắn trong mọi câu hỏi / popup xin quyền; dừng lại hỏi khi luật xung đột; chủ động hỏi luật nào nên thành hook; tự chọn skill và hỏi khi không chắc.
 - Từ khoá công ty để chặn lộ nằm **ngoài** repo: `~/.config/ai-kit/leak-words`. AI chạy `bin/doctor --leak-check` trước mỗi commit.
 - Phần riêng của từng công ty (luật design system, VM guide có tên dự án…) để trong máy/VM của công ty đó, không đưa vào đây.
 - Thêm tool mới: nói "add <tên> to the kit"; AI kiểm nguồn chính chủ, hỏi bạn, rồi ghi vào MANIFEST.md.

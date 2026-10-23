@@ -30,7 +30,7 @@ Rule: **the client's code, data and accounts live only in the VM.** The host is 
 4. Host `~/.ssh/config`: `Host <client>` with HostName, User, IdentityFile. VS Code › Remote-SSH › connect.
 
 ## 3. Inside the VM
-`gh auth login` (personal, only to clone ai-kit) → `gh repo clone inujustin/ai-kit ~/ai-kit` → `cd ~/ai-kit && claude` → "setup everything".
+`git clone https://github.com/inujustin/ai-kit.git ~/ai-kit` (public, no personal login on a company VM) → `cd ~/ai-kit && claude` → "setup everything".
 Then: `git config --global user.name/user.email` = the company identity; `gh auth login` with the company account; `gh auth switch` to make it active.
 
 ## 4. Habits

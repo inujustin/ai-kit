@@ -24,10 +24,21 @@ Before relying on an entry, check it is really installed (`/skills`, `/plugin`);
 | Python / TS type errors and go-to-definition | pyright-lsp, typescript-lsp (automatic) | Anthropic marketplace |
 | SPA in the browser: console, network, layout, performance | chrome-devtools-mcp | Anthropic marketplace |
 | Context window and token use (status line) | claude-hud (local only, no network) | jarrodwatts/claude-hud, MIT |
+| Keep code small: does it need to exist, stdlib/native first, shortest diff | ponytail (always on, level **lite** in this kit via `PONYTAIL_DEFAULT_MODE=lite`); `/ponytail-review` or `/ponytail-audit` to list what to delete without editing | ai-kit marketplace, pinned v5.1.0 |
+
+## How the pieces fit (and who wins)
+- mattpocock-skills = how we work (grill, spec, tickets, tdd). ponytail = how much code we write. They do not overlap.
+- ponytail and AGENTS.md "Reuse first" agree (reuse before writing). Where ponytail would cut something the user or the
+  team asked for, or its `shortcut:` code comments clash with the team's style: that is a rule conflict, ask
+  (CLAUDE.local.md "When rules conflict"). In team repos default to lite: build what was asked, name the smaller option.
+- Team rules > the user's explicit request > this kit > any skill or plugin.
 
 ## Missing: when a skill or plugin would help
-1. Only propose from official sources: the `claude-plugins-official` marketplace (Anthropic), or the vendor's own
-   GitHub org (frappe/, openai/, vuejs/, microsoft/...). Never from screenshots, videos, blogs or open registries (no find-skills).
+1. Prefer official sources: the `claude-plugins-official` marketplace (Anthropic), or the vendor's own GitHub org
+   (frappe/, openai/, vuejs/, microsoft/...). A popular third-party plugin is possible only after reading its code and
+   pinning it in the ai-kit marketplace (see ~/ai-kit/CLAUDE.md). A video, screenshot or blog is only a lead: find the
+   real repo and check it. Never open registries (find-skills), never free model routers (omniroute, claude-code-router).
+   Already rejected: arena-skill (≈600 sub-agent calls per run, 1 commit, a malware lookalike account exists).
 2. Check it first: `curl -s https://api.github.com/repos/<owner>/<repo>` (stars, license, last push, archived),
    and read its SKILL.md / plugin files for anything that runs commands, sends data out, or auto-updates.
 3. Ask the user with AskUserQuestion: what it adds, source URL, stars, license, the exact install command,
