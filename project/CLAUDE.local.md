@@ -33,8 +33,9 @@ Ask first before: many agents at once or anything costly, installs, sudo, merge,
 The UserPromptSubmit hook adds hints (skills, "question → answer only", "big → plan first") to each prompt.
 
 ## The team's repo is hands-off
-I am a contributor, not the owner. Setup and onboarding only READ the repo. You change code only in your ai/* worktrees
-(`bash .ai/bin/newsession`), never in the team's checkout, and never run whole-repo fixers (pre-commit --all-files,
+I am a contributor, not the owner. Setup and onboarding only READ the repo. Code changes follow `.ai/mode.conf`: direct =
+on my current feature branch, one local commit per finished step (never on protected branches); worktree = only in your
+ai/* worktrees. In every mode: never run whole-repo fixers (pre-commit --all-files,
 formatters with --write/--fix) on it; `.ai/verify.sh` already runs on a throw-away copy. Team rules, CI, infra and config
 files change only when I ask for that exact change, as a normal contribution through review. The plugin's guard-repo hook
 enforces this; I can lift it for a while with `touch $KIT/.ai/allow-root-edits`.

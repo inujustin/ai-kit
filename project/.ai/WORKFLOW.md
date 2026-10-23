@@ -21,7 +21,15 @@ Read this when you dispatch work, review, commit, merge, push or open a PR. Hard
 - Small work (UI text, layout, rename, config): one context is fine. Unsure whether it is risky? Ask.
 - Your own code is reviewed by `/codex:review` or `gate`, never only by you. Wide searches: an Explore subagent.
 
-## Git (local AI branches, clean history)
+## Mode: direct or worktree (`.ai/mode.conf`)
+- direct (default): work on the user's current feature branch in the team checkout. Each finished ticket = one local
+  commit right away, subject in the project's commit style (guard-git checks it), body = why; give the SHA. Never commit
+  on protected branches (mode.conf). Small, ordered steps make the branch read as a story already; no worktree, no
+  story step. Codex: reviews (`/codex:review`, `gate`) or runs a ticket in a worktree only when tickets run in parallel.
+- worktree: everything below (ai/* branches, story). Use it for parallel Codex tickets or work you want fully separated.
+Push and PR are the same in both modes: ask first, step by step.
+
+## Git (worktree mode: local AI branches, clean history)
 - Your work: `bash $KIT/.ai/bin/newsession claude <short-name>` → branch `ai/claude/<date>-<name>` in `$KIT/worktrees/`.
   1 request = 1 commit there; give the SHA. Commit messages end with `Co-Authored-By: Claude <noreply@anthropic.com>`.
 - Commits only on ai/* branches (hook). ai/* branches never reach the remote (pre-push hook).

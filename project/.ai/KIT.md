@@ -25,7 +25,8 @@ worktrees/                    AI worktrees (inside the kit, never in the repo)
 .ai/roles/                    prompts for the tester and coder roles (fresh contexts)
 .ai/bin/story                 default merge: rebuild ai/* work as a clean story of commits; check (identical result,
                               verify per commit, commit style) then fast-forward the user's branch
-.ai/commit-style.conf         commit subject rules for story check, set from the team's convention at onboarding
+.ai/commit-style.conf         commit subject rules (story check, and guard-git in direct mode), set at onboarding
+.ai/mode.conf                 direct (commit steps on the feature branch) or worktree (ai/* branches + story)
 .ai/bin/mergesession          squash merge, only for one small change
 .ai/bin/gate                  full verify + Codex adversarial review -> VERDICT PASS/BLOCK
 .ai/tickets/, .ai/docs/       tickets, spec, glossary, ADRs (private, not the team's docs/)
@@ -47,6 +48,8 @@ formatters or fixers on it (the guard-repo hook blocks this); everything you wri
 5. Check `.ai/SKILLS.md` against what is installed and what this stack needs. Propose missing ones (official only).
 6. Check the safety basics: private files excluded (`git status` shows none of them), pre-push hook in place,
    remote branch names, the user's default base branch. Ask for anything unclear.
+6b. Mode: ask direct (default, simplest to follow) or worktree (parallel Codex tickets, full separation); write mode.conf
+   and the protected branches of this repo.
 7. Commit style: read the team's last ~50 commit subjects by other people (`git log --format=%s --author=...`), commitlint,
    .gitmessage, CONTRIBUTING, and the commit rules of installed skills. Propose `.ai/commit-style.conf` from what the team
    really does; if sources disagree with each other or with the kit default, ask which wins (show examples of each).
