@@ -5,7 +5,18 @@
 set -uo pipefail
 # shellcheck source=/dev/null
 . "$(dirname "$0")/lib.sh"
-cd "$(git rev-parse --show-toplevel)"
+#   bash $KIT/.ai/verify.sh --all    check every tracked file, not only the changed ones (onboarding audit)
+# Never changes the team's checkout: run from the repo's main folder, it re-runs itself in a throw-away worktree of HEAD
+# inside the kit, so fixers inside the checks (pre-commit hooks, formatters) can only touch that copy.
+top="$(git rev-parse --show-toplevel)"
+if [ "$top" = "$ROOT" ] && [ -z "${AI_VERIFY_NESTED:-}" ]; then
+  tmp="$WT_DIR/.verify-$$"; mkdir -p "$WT_DIR"
+  git -C "$ROOT" worktree add -q --detach "$tmp" HEAD
+  echo "(verify runs on a throw-away copy of HEAD in $tmp; your checkout is never modified; uncommitted changes are not included)"
+  (cd "$tmp" && AI_VERIFY_NESTED=1 bash "$KIT/.ai/verify.sh" "$@"); rc=$?
+  git -C "$ROOT" worktree remove --force "$tmp"; exit $rc
+fi
+cd "$top"
 
 # Files changed on this branch since its base (set by newsession), plus uncommitted and untracked ones.
 branch="$(git branch --show-current)"
@@ -13,6 +24,7 @@ base="$(git config "branch.$branch.aibase" || true)"
 from="HEAD"
 [ -n "$base" ] && from="$(git merge-base HEAD "$base")"
 CHANGED="$( { git diff --name-only --diff-filter=ACMR "$from"; git ls-files --others --exclude-standard; } | sort -u)"
+[ "${1:-}" = "--all" ] || [ "${2:-}" = "--all" ] && CHANGED="$(git ls-files)"
 export CHANGED
 
 FAST=()
@@ -21,7 +33,7 @@ FULL=()
 . "$KIT/.ai/verify.conf"
 
 mode=full
-[ "${1:-}" = "--fast" ] && mode=fast
+for arg in "$@"; do [ "$arg" = "--fast" ] && mode=fast; done
 fail=0
 run() { printf '\n> %s\n' "$1"; bash -c "$1" || { printf 'FAILED: %s\n' "$1"; fail=1; }; }
 
