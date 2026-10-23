@@ -4,6 +4,7 @@
 file=$(python3 -c 'import json,sys; print(json.load(sys.stdin).get("tool_input",{}).get("file_path",""))' 2>/dev/null)
 [ -f "$file" ] || exit 0
 command -v pre-commit >/dev/null || exit 0
+bash "$(dirname "$0")/kit-resolve.sh" "$(dirname "$file")" >/dev/null || exit 0
 dir="$(cd "$(dirname "$file")" && git rev-parse --show-toplevel 2>/dev/null)" || exit 0
 [ -f "$dir/.pre-commit-config.yaml" ] || exit 0
 cd "$dir" || exit 0

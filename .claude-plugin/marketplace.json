@@ -7,6 +7,11 @@
   },
   "plugins": [
     {
+      "name": "ai-kit-workflow",
+      "description": "This kit's own hooks: load the project's kit (outside the repo) at session start, skill hints per prompt, git guard, lint after edit, fast gate before stop.",
+      "source": "./plugins/ai-kit-workflow"
+    },
+    {
       "name": "ponytail",
       "description": "Write the least code that works (YAGNI, stdlib first). Reviewed 2026-10-23: hooks local only, no network. Pinned v5.1.0.",
       "source": {

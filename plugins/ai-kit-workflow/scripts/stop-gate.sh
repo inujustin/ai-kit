@@ -4,13 +4,13 @@
 input=$(cat)
 active=$(printf '%s' "$input" | python3 -c 'import json,sys; print(json.load(sys.stdin).get("stop_hook_active", False))' 2>/dev/null)
 [ "$active" = "True" ] && exit 0
-root="${CLAUDE_PROJECT_DIR:-.}"
-[ -d "$root/.worktrees" ] || exit 0
+kit="$(bash "$(dirname "$0")/kit-resolve.sh" "${CLAUDE_PROJECT_DIR:-$PWD}")" || exit 0
+[ -d "$kit/worktrees" ] || exit 0
 fail=""
-for wt in "$root"/.worktrees/*/; do
+for wt in "$kit"/worktrees/*/; do
   [ -e "$wt/.git" ] || continue
   [ -n "$(git -C "$wt" status --porcelain)" ] || continue
-  out=$(cd "$wt" && bash .ai/verify.sh --fast 2>&1) || fail="$fail
+  out=$(cd "$wt" && bash "$kit/.ai/verify.sh" --fast 2>&1) || fail="$fail
 == $wt
 $(printf '%s' "$out" | tail -30)"
 done

@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+# SessionStart: plain stdout becomes Claude's context. If this repo has a registered kit (kept outside the repo),
+# load its rules here, so the user just types `claude` in the repo. Also list the repo's own rule files: team rules win,
+# and any conflict between them and the kit is a question for the user, never a silent choice.
+here="$(dirname "$0")"
+cwd="$(python3 -c 'import json,sys; print(json.load(sys.stdin).get("cwd",""))' 2>/dev/null)"
+cwd="${cwd:-$PWD}"
+root="$(dirname "$(git -C "$cwd" rev-parse --path-format=absolute --git-common-dir 2>/dev/null)" 2>/dev/null)"
+
+if ! kit="$(bash "$here/kit-resolve.sh" "$cwd")"; then
+  if [ -n "$root" ] && [ "$root" != "." ]; then
+    echo "ai-kit: no kit registered for this repo ($root). If the user works on this project, offer once: \"setup the kit for this project\" (see ~/ai-kit-src or ~/ai-kit SETUP.md Phase 5)."
+  fi
+  exit 0
+fi
+
+echo "ai-kit: this repo's kit is KIT=$kit (outside the repo; nothing of it is in the repo)."
+echo "In the rules below, every path starting with .ai/ or AGENTS.md means \$KIT/... ; run kit scripts as bash $kit/.ai/bin/<name> from the repo."
+echo
+echo "Rule files this repo already has (team rules: they win over the kit; on any conflict ask the user, do not decide):"
+found=0
+for f in CLAUDE.md AGENTS.md .claude/CLAUDE.md CONTRIBUTING.md .github/copilot-instructions.md .cursorrules .editorconfig \
+         .pre-commit-config.yaml pyproject.toml .eslintrc .eslintrc.json .eslintrc.js eslint.config.js eslint.config.mjs \
+         .prettierrc .prettierrc.json commitlint.config.js .commitlintrc .commitlintrc.json .gitmessage; do
+  [ -e "$root/$f" ] && { echo "  - $f"; found=1; }
+done
+for d in .cursor/rules .claude/rules docs/adr; do [ -d "$root/$d" ] && { echo "  - $d/"; found=1; }; done
+[ $found -eq 1 ] || echo "  (none found)"
+echo
+for f in CLAUDE.local.md AGENTS.md; do
+  [ -f "$kit/$f" ] && { echo "===== kit $f ====="; cat "$kit/$f"; echo; }
+done
+pending=0
+[ -f "$kit/.ai/HOOKS.md" ] && pending=$(sed -n '/^## Candidates log/,$p' "$kit/.ai/HOOKS.md" | grep -ci '| *not now *|$')
+[ "$pending" -gt 0 ] && echo "ai-kit: $pending hook candidate(s) in \$KIT/.ai/HOOKS.md are 'not now': ask the user again when they come up."
+exit 0

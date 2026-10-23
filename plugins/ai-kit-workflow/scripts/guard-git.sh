@@ -6,8 +6,10 @@ input=$(cat)
 cmd=$(printf '%s' "$input" | python3 -c 'import json,sys; print(json.load(sys.stdin).get("tool_input",{}).get("command",""))' 2>/dev/null)
 cwd=$(printf '%s' "$input" | python3 -c 'import json,sys; print(json.load(sys.stdin).get("cwd",""))' 2>/dev/null)
 printf '%s' "$cmd" | grep -qE '(^|[^[:alnum:]_-])git([[:space:]]|$)' || exit 0
+# Only in repos that have a registered kit (other repos follow their own rules).
+bash "$(dirname "$0")/kit-resolve.sh" "${cwd:-$PWD}" >/dev/null || exit 0
 
-block() { echo "Blocked by .ai/hooks/guard-git.sh: $1" >&2; exit 2; }
+block() { echo "Blocked by ai-kit guard-git: $1" >&2; exit 2; }
 
 if printf '%s' "$cmd" | grep -qE 'git([[:space:]]+-C[[:space:]]+[^[:space:]]+)?[[:space:]]+push'; then
   printf '%s' "$cmd" | grep -qE '(--force|[[:space:]]-f([[:space:]]|$)|--force-with-lease|\+[^[:space:]]+)' && block "no force-push."
@@ -22,6 +24,6 @@ if printf '%s' "$cmd" | grep -qE 'git([[:space:]]+-C[[:space:]]+[^[:space:]]+)?[
   [ -z "$dir" ] && dir="$cwd"
   case "$dir" in /*) ;; *) dir="$cwd/$dir" ;; esac
   branch=$(git -C "$dir" branch --show-current 2>/dev/null)
-  case "$branch" in ai/*) ;; *) block "commit only on ai/* branches (this is '$branch'). Use .ai/bin/newsession, then .ai/bin/mergesession when the user asks." ;; esac
+  case "$branch" in ai/*) ;; *) block "commit only on ai/* branches (this is '$branch'). Use \$KIT/.ai/bin/newsession, then \$KIT/.ai/bin/story when the user asks." ;; esac
 fi
 exit 0

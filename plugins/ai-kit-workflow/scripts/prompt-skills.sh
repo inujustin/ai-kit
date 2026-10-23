@@ -2,9 +2,9 @@
 # UserPromptSubmit: the user writes short, high-level prompts and does not name skills. This hook reads the prompt,
 # matches keywords (Vietnamese and English) and prints skill hints; plain stdout is added to Claude's context.
 # Hints only: Claude still decides, invokes the skills that fit, says in one line which, and asks when unsure.
-# Keep the map in sync with .ai/SKILLS.md. Prints nothing for short replies such as "ok", "yes", "merge".
-python3 -c '
-import json, re, sys
+# Keep the map in sync with $KIT/.ai/SKILLS.md. Works in any repo; mentions the kit only where one is registered. Prints nothing for short replies such as "ok", "yes", "merge".
+KIT="$(bash "$(dirname "$0")/kit-resolve.sh" "$PWD" 2>/dev/null)" python3 -c '
+import json, os, re, sys
 try:
     p = json.load(sys.stdin).get("prompt", "")
 except Exception:
@@ -30,7 +30,9 @@ hits = [hint for pat, hint in rules if re.search(pat, text)]
 act = re.search(r"\b(làm|sửa|fix|thêm|xoá|xóa|tạo|viết|cài|chạy|implement|build|add|create|write|install|run|refactor|merge|push)\b", text)
 question = text.rstrip().endswith("?") or re.search(r"\b(là gì|tại sao|vì sao|thế nào|như nào|có nên|khác gì|how|what|why|which|should i|is it)\b", text)
 big = re.search(r"tính năng|chức năng|màn hình|module|thiết kế|design|kiến trúc|architecture|feature|migrate|nhiều file|toàn bộ|whole", text)
-print("ai-kit skill check: pick the skills that fit this prompt from .ai/SKILLS.md, invoke them, say in one line which; ask the user if unsure or if a missing skill would help.")
+kit = os.environ.get("KIT", "")
+map_ = (kit + "/.ai/SKILLS.md") if kit else "the installed skills"
+print("ai-kit skill check: pick the skills that fit this prompt from " + map_ + ", invoke them, say in one line which; ask the user if unsure or if a missing skill would help. Repo rules beat kit rules; on any conflict ask.")
 if question and not act:
     print("- mode: this looks like a question only: answer it; no edits, no state-changing commands, no agents.")
 elif big and act:
