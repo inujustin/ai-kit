@@ -36,9 +36,6 @@ Nothing stack-specific here: language servers, framework skills and packs are in
   is missing; never delete the user's own lines). Show the diff, ask. This carries the user's way of working to every machine.
 - `env` in `~/.claude/settings.json`: `PONYTAIL_DEFAULT_MODE=lite` (ponytail builds what was asked and only names smaller options).
 - context7: the user logs in once (the plugin's authenticate step opens a link); the AI cannot do it for them.
-- Screenshots: create `~/shots/` (outside every repo) and allow Claude to read it only: add
-  `"Edit(~/shots/**)"`, `"Write(~/shots/**)"` to `permissions.deny` in `~/.claude/settings.json` (show the diff, ask).
-  The user pastes screenshots by opening `~/shots/paste.md` in VS Code and pressing Ctrl+V (VS Code saves the image there).
 - Identity per folder: copy `machine/gitconfig-identity.template` to `~/.gitconfig-<name>` with the values the user gives,
   and add the `includeIf` block from `machine/gitconfig-snippet.txt` to `~/.gitconfig` (show the diff first).
 - Merge (never overwrite) the settings listed in MANIFEST C4 into `~/.claude/settings.json`; show the diff, ask.

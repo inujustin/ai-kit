@@ -43,4 +43,3 @@ registered kit, then report). One step per permission popup.
 - Sandbox stays on. Never read or print secrets (.env, keys, tokens). Never touch production.
 - Client/company data never leaves the machine and never goes into ~/ai-kit (it is a public repo).
 - Only Claude (plus Codex) models; no free model routers.
-- Screenshots I share live in ~/shots/ (outside every repo); read them, never edit or commit them; remind me to clear them.

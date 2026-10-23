@@ -11,7 +11,6 @@ Bộ setup AI mang đi mọi máy: Claude = não chính, Codex = thợ code + ng
    tạo kit + đăng ký. Từ đó chỉ cần gõ `claude` trong repo: plugin `ai-kit-workflow` tự nạp kit, hook gợi ý skill, chặn git…
    Repo công ty không bao giờ có file nào của kit.
 5. Cập nhật: nói **"update the kit"** → AI `git pull` bản gốc rồi chạy `bin/kit-update` (không đè file bạn đã sửa; hỏi bạn).
-6. Gửi ảnh chụp cho AI (Remote-SSH): mở `~/shots/paste.md` trong VS Code, Ctrl+V, rồi bảo AI xem `~/shots/`.
 
 ```
 ai-kit/
