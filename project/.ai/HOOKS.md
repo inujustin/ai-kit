@@ -39,6 +39,7 @@ The SessionStart hook (`.ai/hooks/session-start.sh`) reminds you of candidates s
 | stop-gate.sh | Stop | `verify.sh --fast` in AI worktrees with uncommitted changes |
 | git pre-push | git | ai/* branches never leave the machine (also for the user) |
 | session-start.sh | SessionStart | reminds Claude of hook candidates still "not now" and of the ask-first rules |
+| prompt-skills.sh | UserPromptSubmit | reads each prompt, prints skill hints by keyword (VI + EN) so skills are picked even for short high-level prompts |
 
 ## Candidates log
 | Date | Rule | Where it lives | Signal | Decision |

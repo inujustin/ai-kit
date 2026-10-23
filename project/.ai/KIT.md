@@ -17,6 +17,7 @@ CLAUDE.local.md               Claude-only, kept short: how to talk, ask on confl
 .ai/hooks/after-edit.sh       PostToolUse: team's pre-commit hooks on the edited file
 .ai/hooks/stop-gate.sh        Stop: verify --fast in AI worktrees with uncommitted changes
 .ai/hooks/session-start.sh    SessionStart: reminds Claude of ask-first rules and pending hook candidates
+.ai/hooks/prompt-skills.sh    UserPromptSubmit: skill hints from keywords in every prompt (keep in sync with SKILLS.md)
 .ai/git-hooks/pre-push        copy to .git/hooks/pre-push: ai/* never leaves the machine
 .ai/bin/newsession            ai/<agent>/<date>-<name> branch + worktree in .worktrees/
 .ai/bin/dispatch              Codex runs a ticket (role coder|tester) in a fresh context + worktree; script checks and commits

@@ -96,6 +96,16 @@
           }
         ]
       }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR\"/.ai/hooks/prompt-skills.sh"
+          }
+        ]
+      }
     ]
   },
   "env": {

@@ -3,6 +3,8 @@
 The user talks in plain language and does not remember skill names. **You pick and invoke them yourself**,
 and say in one line which ones you use. Never ask the user to type a slash command.
 Before relying on an entry, check it is really installed (`/skills`, `/plugin`); if not, see "Missing" below.
+The UserPromptSubmit hook `.ai/hooks/prompt-skills.sh` adds keyword hints to every prompt; they are hints, you decide.
+When you add a row here, add its keywords to that hook too.
 
 ## Map (situation -> what you use)
 | Situation | Use | Source |
