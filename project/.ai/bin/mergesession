@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Squash an ai/* branch into the branch checked out in the main repo folder: ONE clean commit on your branch.
 # The ai/* branch is kept, so its detailed commits stay traceable (the commit body names it).
-# Usage: bash .ai/bin/mergesession <ai-branch> "<commit message>" [--cleanup]   (--cleanup removes its worktree)
+# Usage: bash $KIT/.ai/bin/mergesession <ai-branch> "<commit message>" [--cleanup]   (--cleanup removes its worktree)
 # Undo (before pushing): git reset --soft HEAD~1 && git restore --staged .   (your branch only)
 set -euo pipefail
 branch="${1:?usage: mergesession <ai-branch> \"<message>\" [--cleanup]}"

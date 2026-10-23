@@ -1,8 +1,10 @@
 #!/usr/bin/env bash
 # Rule-coded grep checks on the files in $CHANGED (set by verify.sh), so old code does not block new work.
-# `bash .ai/check_antipatterns.sh --all` checks the whole repo instead (for a one-time audit).
+# `bash $KIT/.ai/check_antipatterns.sh --all` checks the whole repo instead (for a one-time audit).
 # A line that contains "<CODE>:" (e.g. "# FR-1: flush before enqueue") is an accepted exception.
 set -uo pipefail
+# shellcheck source=/dev/null
+. "$(dirname "$0")/lib.sh"
 cd "$(git rev-parse --show-toplevel)"
 if [ "${1:-}" = "--all" ]; then
   files="$(git ls-files)"
@@ -27,6 +29,6 @@ rule() {
 }
 
 # shellcheck source=/dev/null
-. .ai/antipatterns.rules.sh
+. "$KIT/.ai/antipatterns.rules.sh"
 [ $bad -eq 0 ] && echo "antipatterns: PASS"
 exit $bad

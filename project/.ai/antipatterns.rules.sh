@@ -7,8 +7,8 @@ rule G-1 "*.py,*.ts,*.tsx,*.js,*.jsx,*.vue,*.go,*.php,*.java,*.kt" "." "/tests?/
 
 PACKS=()
 # shellcheck source=/dev/null
-[ -f .ai/packs.conf ] && . .ai/packs.conf
+[ -f "$KIT/.ai/packs.conf" ] && . "$KIT/.ai/packs.conf"
 for p in "${PACKS[@]}"; do
   # shellcheck source=/dev/null
-  [ -f ".ai/packs/$p/antipatterns.rules.sh" ] && . ".ai/packs/$p/antipatterns.rules.sh"
+  [ -f "$KIT/.ai/packs/$p/antipatterns.rules.sh" ] && . "$KIT/.ai/packs/$p/antipatterns.rules.sh"
 done

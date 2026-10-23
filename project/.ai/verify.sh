@@ -1,8 +1,10 @@
 #!/usr/bin/env bash
 # The gate. Claude, Codex and the hooks all run this same script.
-#   bash .ai/verify.sh          full gate (before merge / PR / gate)
-#   bash .ai/verify.sh --fast   checks that finish in seconds
+#   bash $KIT/.ai/verify.sh          full gate (before merge / PR / gate); run from the repo or a worktree
+#   bash $KIT/.ai/verify.sh --fast   checks that finish in seconds
 set -uo pipefail
+# shellcheck source=/dev/null
+. "$(dirname "$0")/lib.sh"
 cd "$(git rev-parse --show-toplevel)"
 
 # Files changed on this branch since its base (set by newsession), plus uncommitted and untracked ones.
@@ -16,7 +18,7 @@ export CHANGED
 FAST=()
 FULL=()
 # shellcheck source=/dev/null
-. .ai/verify.conf
+. "$KIT/.ai/verify.conf"
 
 mode=full
 [ "${1:-}" = "--fast" ] && mode=fast
@@ -25,7 +27,7 @@ run() { printf '\n> %s\n' "$1"; bash -c "$1" || { printf 'FAILED: %s\n' "$1"; fa
 
 for c in "${FAST[@]}"; do run "$c"; done
 if [ "$mode" = full ]; then
-  [ ${#FULL[@]} -eq 0 ] && { echo "FULL is empty: fill .ai/verify.conf"; fail=1; }
+  [ ${#FULL[@]} -eq 0 ] && { echo "FULL is empty: fill $KIT/.ai/verify.conf"; fail=1; }
   for c in "${FULL[@]}"; do run "$c"; done
 fi
 

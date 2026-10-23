@@ -1,6 +1,6 @@
 # web-ts pack: copy into .ai/verify.conf during onboarding. Vue: vue-tsc instead of tsc. Use the project's package manager.
 FAST=(
-  "bash .ai/check_antipatterns.sh"
+  "bash \"$KIT/.ai/check_antipatterns.sh\""
   "printf '%s\\n' \"\$CHANGED\" | grep -E '\\.(ts|tsx|js|jsx|vue)$' | xargs -r npx --no-install eslint --max-warnings=0"
   "npx --no-install tsc --noEmit"
 )

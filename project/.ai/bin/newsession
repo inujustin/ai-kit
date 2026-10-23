@@ -1,23 +1,22 @@
 #!/usr/bin/env bash
-# Create a local AI branch ai/<agent>/<date>-<name> in its own worktree under .worktrees/.
-# The private files (AGENTS.md, CLAUDE.local.md, .ai, .claude/settings.local.json) are not tracked by git,
-# so they are copied (or linked) into the worktree. Prints the worktree path on the last line.
-# Usage: bash .ai/bin/newsession <claude|codex> <short-name> [base-branch]   (base default: current branch)
+# Create a local AI branch ai/<agent>/<date>-<name> in its own worktree inside the kit ($KIT/worktrees), never in the repo.
+# Prints the worktree path on the last line.
+# Usage: bash $KIT/.ai/bin/newsession <claude|codex> <short-name> [base-branch]   (base default: current branch)
 # Undo: git worktree remove <path> && git branch -D <branch>
 set -euo pipefail
 agent="${1:?usage: newsession <agent> <name> [base]}"
 name="${2:?usage: newsession <agent> <name> [base]}"
-root="$(dirname "$(git rev-parse --path-format=absolute --git-common-dir)")"
+# shellcheck source=/dev/null
+. "$(dirname "$0")/../lib.sh"
+root="$ROOT"
 base="${3:-$(git -C "$root" branch --show-current)}"
 [ -n "$base" ] || { echo "No base branch (detached HEAD?). Pass one." >&2; exit 1; }
 day="$(date +%F)"
 branch="ai/$agent/$day-$name"
-wt="$root/.worktrees/$day-$agent-$name"
+mkdir -p "$WT_DIR"
+wt="$WT_DIR/$day-$agent-$name"
 
 git -C "$root" worktree add -q -b "$branch" "$wt" "$base" >&2
 git -C "$root" config "branch.$branch.aibase" "$base"   # verify.sh diffs against this
-for f in AGENTS.md CLAUDE.local.md; do [ -f "$root/$f" ] && cp "$root/$f" "$wt/$f"; done
-ln -s "$root/.ai" "$wt/.ai"
-if [ -f "$root/.claude/settings.local.json" ]; then mkdir -p "$wt/.claude"; cp "$root/.claude/settings.local.json" "$wt/.claude/"; fi
 echo "branch=$branch base=$base" >&2
 echo "$wt"
