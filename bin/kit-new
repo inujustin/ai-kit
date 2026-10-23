@@ -23,6 +23,7 @@ reg="${XDG_CONFIG_HOME:-$HOME/.config}/ai-kit/projects.tsv"
 mkdir -p "$(dirname "$reg")"; touch "$reg"
 awk -F'\t' -v r="$root" '$1!=r' "$reg" > "$reg.tmp" && mv "$reg.tmp" "$reg"
 printf '%s\t%s\n' "$root" "$kit" >> "$reg"
+echo "$SRC" > "$(dirname "$reg")/source"   # the shared ai-kit source: project sessions must not edit it
 
 settings="$HOME/.claude/settings.json"
 [ -f "$settings" ] && cp "$settings" "$settings.bak-ai-kit"
