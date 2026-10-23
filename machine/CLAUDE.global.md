@@ -20,6 +20,19 @@ and ask me only for real decisions.
   project kit, hand clear tickets to Codex (`.ai/WORKFLOW.md`) without asking. Ask first only before running many
   agents at once, anything expensive, or anything that leaves this machine.
 
+## Setup changed
+When I say the setup or my ai-kit changed ("check the setup again", "kiểm tra lại setup", "update the kit"): follow
+"When the user says the setup or the kit changed" in ~/ai-kit/CLAUDE.md (pull, plugins, doctor, kit-update for every
+registered kit, then report). One step per permission popup.
+
+## Risk rule (everything you do)
+- Safe (read-only, local, easy to undo): just do it and say it in one line. E.g. reading, searching, `git pull` of ai-kit,
+  doctor, running tests/verify, planning, subagents for research, commits on your own ai/* branch.
+- Risky: ask first with AskUserQuestion: what changes, why, how to undo. E.g. installing or updating plugins, tools or
+  packages (new code that runs), sudo, merging into or rewriting my branches, push, PR, deleting, overwriting a file I
+  edited, editing global settings or ~/.claude/CLAUDE.md, anything that leaves this machine, many agents or costly runs.
+- Unsure which it is: treat it as risky.
+
 ## Ask first, always
 - Rules conflict (team vs kit vs skill vs my request): show both side by side with sources, recommend one, ask.
 - A rule is mechanical, repeated or forgotten: ask whether it should become a hook; ask again each time unless I

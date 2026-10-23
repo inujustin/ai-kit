@@ -32,6 +32,14 @@ I prompt at a high level and do not want to remember the process. You may, witho
 Ask first before: many agents at once or anything costly, installs, sudo, merge, push, PR, anything leaving this machine.
 The UserPromptSubmit hook adds hints (skills, "question → answer only", "big → plan first") to each prompt.
 
+## Risk rule (everything you do)
+- Safe (read-only, local, easy to undo): just do it and say it in one line. E.g. reading, searching, `git pull` of ai-kit,
+  doctor, running tests/verify, planning, subagents for research, commits on your own ai/* branch.
+- Risky: ask first with AskUserQuestion: what changes, why, how to undo. E.g. installing or updating plugins, tools or
+  packages (new code that runs), sudo, merging into or rewriting my branches, push, PR, deleting, overwriting a file I
+  edited, editing global settings or ~/.claude/CLAUDE.md, anything that leaves this machine, many agents or costly runs.
+- Unsure which it is: treat it as risky.
+
 ## When rules conflict: stop and ask
 Sources can disagree: the team's rules, this kit, a pack, a skill or plugin (e.g. ponytail vs the team's style),
 my request, or what the real code does. When two of them point different ways, do not pick silently:

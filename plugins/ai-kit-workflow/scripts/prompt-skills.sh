@@ -25,6 +25,7 @@ rules = [
     (r"giao diện|\bui\b|css|layout|console|network|trình duyệt|browser", "browser/UI: chrome-devtools-mcp"),
     (r"merge|push|pull request|\bpr\b|commit", "git: story commits per .ai/WORKFLOW.md (bash .ai/bin/story), PR body with the pr skill; ask before merge/push"),
     (r"hook|luật|rule|quy tắc|lặp lại|nhắc lại", "rules: check .ai/HOOKS.md, ask whether this should become a hook"),
+    (r"setup|cài đặt|update (the )?kit|cập nhật kit|kiểm tra lại|check (again|the setup)|ai-kit", "setup refresh: follow ~/ai-kit/CLAUDE.md \"When the user says the setup or the kit changed\" (pull, plugins, doctor, kit-update, report)"),
 ]
 hits = [hint for pat, hint in rules if re.search(pat, text)]
 act = re.search(r"\b(làm|sửa|fix|thêm|xoá|xóa|tạo|viết|cài|chạy|implement|build|add|create|write|install|run|refactor|merge|push)\b", text)
