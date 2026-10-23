@@ -28,6 +28,10 @@ Read this when you dispatch work, review, commit, merge, push or open a PR. Hard
 - When a piece of work is done and checked, ask whether to merge now (merge now / review first in lazygit or
   VS Code Git Graph / keep working). Default merge = a story (below). Squash with `bash $KIT/.ai/bin/mergesession <ai-branch> "<msg>"`
   only when the work really is one small change.
+## Plans and tickets stay local
+Plans: `~/.claude/plans/` (this machine only). Tickets and AI docs: `$KIT/.ai/`. Never commit or push them; only each
+ticket's code reaches the repo (ai/* → story → review). guard-git blocks staged kit, ticket or plan files.
+
 ## Story commits (what reaches the user's branch and the remote)
 The raw ai/* history (wip, retries) stays local. What lands on the user's branch is a story a reviewer can read top to bottom:
 1. `bash $KIT/.ai/bin/story start <ai-branch>`: story branch + worktree from the user's branch; prints the changes to tell.

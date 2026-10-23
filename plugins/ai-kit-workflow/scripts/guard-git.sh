@@ -21,8 +21,8 @@ fi
 # Kit files never go into a project repo: block a commit whose staged files look like kit files.
 if printf '%s' "$cmd" | grep -qE 'git([[:space:]]+-C[[:space:]]+[^[:space:]]+)?[[:space:]]+commit([[:space:]]|$)'; then
   kdir=$(printf '%s' "$cmd" | sed -nE 's/.*git[[:space:]]+-C[[:space:]]+("?)([^"[:space:]]+)\1.*/\2/p'); kdir="${kdir:-$cwd}"
-  leak=$(git -C "$kdir" diff --cached --name-only 2>/dev/null | grep -E '^(\.ai/|CLAUDE\.local\.md$|worktrees/)' | head -5)
-  [ -n "$leak" ] && block "these staged files look like ai-kit files, which must stay outside the repo: $leak. Unstage them (git restore --staged <file>)."
+  leak=$(git -C "$kdir" diff --cached --name-only 2>/dev/null | grep -E '^(\.ai/|CLAUDE\.local\.md$|worktrees/|\.claude/plans/)|(^|/)tickets/T[0-9]+[^/]*\.md$' | head -5)
+  [ -n "$leak" ] && block "these staged files look like ai-kit, ticket or plan files, which never enter the repo: $leak. Unstage them (git restore --staged <file>)."
 fi
 
 if printf '%s' "$cmd" | grep -qE 'git([[:space:]]+-C[[:space:]]+[^[:space:]]+)?[[:space:]]+(commit|cherry-pick|revert)([[:space:]]|$)'; then

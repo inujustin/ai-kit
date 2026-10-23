@@ -39,6 +39,11 @@ formatters with --write/--fix) on it; `.ai/verify.sh` already runs on a throw-aw
 files change only when I ask for that exact change, as a normal contribution through review. The plugin's guard-repo hook
 enforces this; I can lift it for a while with `touch $KIT/.ai/allow-root-edits`.
 
+## Plans and tickets never enter the repo
+Plans live only on this machine (`~/.claude/plans/`); tickets, specs, glossary and ADR drafts live in the kit
+(`$KIT/.ai/tickets/`, `$KIT/.ai/docs/`). No plan or ticket file is ever committed or pushed. Only the code of each ticket
+enters the repo: ai/* branch → story commits → my review. Commit messages and PR bodies describe the change, not the plan file.
+
 ## This kit is self-contained
 Everything you add for this project (rules, hooks, packs, commit style, notes) goes into THIS kit (`$KIT`), never into the
 shared ai-kit source (~/ai-kit, blocked by the guard-repo hook) and never into the repo. If something would help every
