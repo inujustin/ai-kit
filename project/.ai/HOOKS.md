@@ -19,7 +19,7 @@ each option = one rule + one line on what the hook would do), at these moments:
 - `/retro` and the end of a long task;
 - whenever you read a skill or guide longer than ~150 lines, or see the same rule in two files;
 - whenever a signal below shows up during work.
-The SessionStart hook (`.ai/hooks/session-start.sh`) reminds you of candidates still marked "not now".
+The SessionStart hook of the ai-kit-workflow plugin reminds you of candidates still marked "not now".
 
 ## What to do (every time a signal shows up)
 1. Ask the user with AskUserQuestion: the rule, where it lives, the signal, what the hook would do
@@ -28,18 +28,19 @@ The SessionStart hook (`.ai/hooks/session-start.sh`) reminds you of candidates s
    "no for this whole session".
 2. "not now": log it below and ask again next time it shows up. "no for this whole session": stop asking until the
    session ends (it is not a permanent no).
-3. "make the hook now": write it in `.ai/hooks/`, wire it in `.claude/settings.local.json`, test it on a fake case,
+3. "make the hook now": project-only check → a rule in the active pack's antipatterns.rules.sh (runs in verify);
+   a check for every project → a script in ~/ai-kit/plugins/ai-kit-workflow/ (bump its version), test it on a fake case,
    then remove the now-redundant text rule (one place only).
 
 ## Hooks already in this kit
 | Hook | Event | Enforces |
 |---|---|---|
-| guard-git.sh | PreToolUse(Bash) | commit only on ai/*, no push of ai/*, no force-push, no push to main/master/develop |
-| after-edit.sh | PostToolUse(Edit/Write) | the team's pre-commit hooks on the edited file |
-| stop-gate.sh | Stop | `verify.sh --fast` in AI worktrees with uncommitted changes |
+| plugin guard-git.sh | PreToolUse(Bash) | commit only on ai/*, no push of ai/*, no force-push, no push to main/master/develop |
+| plugin after-edit.sh | PostToolUse(Edit/Write) | the team's pre-commit hooks on the edited file |
+| plugin stop-gate.sh | Stop | `verify.sh --fast` in the kit's worktrees with uncommitted changes |
 | git pre-push | git | ai/* branches never leave the machine (also for the user) |
-| session-start.sh | SessionStart | reminds Claude of hook candidates still "not now" and of the ask-first rules |
-| prompt-skills.sh | UserPromptSubmit | reads each prompt, prints skill hints by keyword (VI + EN) so skills are picked even for short high-level prompts |
+| plugin session-start.sh | SessionStart | loads this kit's rules, lists the repo's own rule files, reminds of "not now" candidates |
+| plugin prompt-skills.sh | UserPromptSubmit | reads each prompt, prints skill hints by keyword (VI + EN) so skills are picked even for short high-level prompts |
 
 ## Candidates log
 | Date | Rule | Where it lives | Signal | Decision |

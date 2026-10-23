@@ -18,7 +18,7 @@ One or two sentences. What the user can do afterwards.
 ## Acceptance (each item checkable by a command or a test)
 - [ ] Given ..., when ..., then ...
 - [ ] tests/test_x.py::test_y fails before the change and passes after
-- [ ] bash .ai/verify.sh --fast passes
+- [ ] bash $KIT/.ai/verify.sh --fast passes
 
 ## Out of scope
 - ...

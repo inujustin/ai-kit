@@ -1,7 +1,7 @@
 # AGENTS.md (private AI kit)
 
-Private to one developer (listed in .git/info/exclude, never committed). Read by Codex directly and by Claude
-through CLAUDE.local.md. Precedence when instructions conflict:
+Personal kit, kept OUTSIDE the project repo (nothing of it is ever in the repo). Claude gets it at session start from
+the ai-kit-workflow plugin; Codex gets its path in every dispatched prompt. Precedence when instructions conflict:
 **the team's own rules (CLAUDE.md, a tracked AGENTS.md, CONTRIBUTING) > this file > skills > model habits.**
 Codex: if the repo has a `CLAUDE.md`, read it first; it is the team's contract even though its name says Claude.
 
@@ -12,7 +12,7 @@ Codex: if the repo has a `CLAUDE.md`, read it first; it is the team's contract e
 - Data: schemas and anonymised samples only. Never open real spreadsheets, CSV/JSON exports, SQL dumps or backups.
 
 ## Commands
-- Gate: `bash .ai/verify.sh` (full) · `bash .ai/verify.sh --fast`. Done = full gate green, or say exactly which part could not run.
+- Gate: `bash $KIT/.ai/verify.sh` (full) · `bash $KIT/.ai/verify.sh --fast`. Done = full gate green, or say exactly which part could not run.
 - Dev: TODO · Tests: TODO · Build: TODO
 
 ## Core rules (every project)

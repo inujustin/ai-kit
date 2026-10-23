@@ -1,7 +1,9 @@
-# Private AI kit (Claude only, never committed)
+# Personal AI kit for this project (lives OUTSIDE the repo; loaded by the ai-kit-workflow plugin at session start)
 
-The team's `CLAUDE.md` (if any) wins over this file. Shared rules: @AGENTS.md · Skill map: @.ai/SKILLS.md
-Read when relevant: `.ai/WORKFLOW.md` (roles, Codex, separate contexts, git, push/PR) · `.ai/HOOKS.md` (rule → hook)
+`$KIT` = this kit's folder (printed at session start). Every `.ai/...` path below means `$KIT/.ai/...`.
+The repo's own rules win over this kit: CLAUDE.md, AGENTS.md, CONTRIBUTING, lint and format configs, commit
+conventions, .cursor/.claude rules, ADRs. Work with them; when the kit and the repo disagree, ask (see "When rules conflict").
+Also read when relevant: `.ai/SKILLS.md` (skill map) · `.ai/WORKFLOW.md` (roles, Codex, separate contexts, git, push/PR) · `.ai/HOOKS.md` (rule → hook)
 · `.ai/KIT.md` (what each kit file does, onboarding, freshness check).
 
 ## First session in this project (do it, then delete this section)
@@ -26,7 +28,7 @@ I prompt at a high level and do not want to remember the process. You may, witho
 - answer only when my prompt is just a question (no edits, no state-changing commands, no agents);
 - enter plan mode for big or vague requests, then ask me to approve the plan;
 - use Explore/Plan subagents for wide searches and planning;
-- dispatch clear tickets to Codex and run `bash .ai/bin/gate` per `.ai/WORKFLOW.md` (tester/coder split for risky logic).
+- dispatch clear tickets to Codex and run `bash $KIT/.ai/bin/gate` per `.ai/WORKFLOW.md` (tester/coder split for risky logic).
 Ask first before: many agents at once or anything costly, installs, sudo, merge, push, PR, anything leaving this machine.
 The UserPromptSubmit hook adds hints (skills, "question → answer only", "big → plan first") to each prompt.
 

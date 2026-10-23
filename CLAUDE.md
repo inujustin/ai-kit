@@ -18,9 +18,15 @@ then installs the project kit (`project/`) into the folder the user names and st
 - Stop and ask when something is not in MANIFEST.md, when a source looks different from MANIFEST.md, or when a step fails twice.
 
 ## When the user says "setup the kit for this project" (from inside a project repo)
-Run SETUP.md Phase 5 for the current repo: copy `~/ai-kit/project/` without overwriting, add the exclude lines and the
-pre-push hook, install that stack's rows from MANIFEST "Per stack" (ask before each install), then start the onboarding
-in `.ai/KIT.md`. Without this step the project has none of the kit's hooks (skill hints, git guard, reminders).
+The kit never goes into the repo. Ask the user where to keep this project's kit (suggest a sibling or ~/kits/<repo>),
+then run `bash ~/ai-kit/bin/kit-new <repo> <kit-folder>` (explain in the popup what it changes), install that stack's rows
+from MANIFEST "Per stack" (ask before each), then tell the user to start a NEW claude session in the repo: the
+ai-kit-workflow plugin loads the kit, and the onboarding in `$KIT/.ai/KIT.md` starts.
+
+## When the user says "update the kit" (in a project repo, or for all kits)
+`git -C ~/ai-kit pull`, then `bash ~/ai-kit/bin/kit-update <kit-folder>` for this repo's kit (registry:
+~/.config/ai-kit/projects.tsv; for all kits, run it for each line). Files the user edited and upstream changed are listed
+as REVIEW: show each diff and ask which version to keep, or merge both. Also `claude plugin marketplace update ai-kit`.
 
 ## When the user says "add <tool/skill> to the kit"
 Check it like `project/.ai/SKILLS.md` "Missing" says (official source, stars, license, last release, what it sends out),

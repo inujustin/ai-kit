@@ -36,6 +36,7 @@ Scope: user = only this Linux user. sudo = system package (see SETUP.md "sudo").
 | chrome-devtools-mcp | claude-plugins-official | browser debugging for any web app |
 | codex | `openai/codex-plugin-cc` (OpenAI, Apache-2.0) | add marketplace first; then `/codex:setup` in Claude; turn off auto-update for this marketplace |
 | claude-hud | `jarrodwatts/claude-hud` (MIT, local only) | add marketplace first; then `/claude-hud:setup` in Claude |
+| ai-kit-workflow | **`inujustin/ai-kit`** (this repo, `plugins/ai-kit-workflow`) | `claude plugin install ai-kit-workflow@ai-kit`. The kit's hooks for every project with a registered kit; no-op elsewhere except skill hints |
 | ponytail | **`inujustin/ai-kit`** (this repo's marketplace, pinned sha 9cc65d03…, v5.1.0, MIT) | `claude plugin marketplace add inujustin/ai-kit` then `claude plugin install ponytail@ai-kit`. Hooks reviewed: local only, no network. Projects set `PONYTAIL_DEFAULT_MODE=lite` |
 
 Not installed on purpose: superpowers, ECC, gstack (clash with mattpocock); find-skills (unvetted registry);

@@ -26,13 +26,15 @@ Logins are the user's: `claude` (first run), `codex login`, `gh auth login`. Tel
 
 ## Phase 3: core plugins — MANIFEST C3
 `claude plugin marketplace add …` / `claude plugin install …@… ` one by one, including this repo's own marketplace
-(`claude plugin marketplace add inujustin/ai-kit`, then `claude plugin install ponytail@ai-kit`).
+(`claude plugin marketplace add inujustin/ai-kit`, then `claude plugin install ai-kit-workflow@ai-kit` and
+`claude plugin install ponytail@ai-kit`). ai-kit-workflow carries the kit's hooks for every project on this machine.
 Remind the user to run `/codex:setup` and `/claude-hud:setup` in a new Claude session.
 Nothing stack-specific here: language servers, framework skills and packs are installed in Phase 5, per project.
 
 ## Phase 4: git identity, global rules and settings — MANIFEST C4
 - Global rules: merge `machine/CLAUDE.global.md` into `~/.claude/CLAUDE.md` (append if the marker line `ai-kit global rules`
   is missing; never delete the user's own lines). Show the diff, ask. This carries the user's way of working to every machine.
+- `env` in `~/.claude/settings.json`: `PONYTAIL_DEFAULT_MODE=lite` (ponytail builds what was asked and only names smaller options).
 - context7: the user logs in once (the plugin's authenticate step opens a link); the AI cannot do it for them.
 - Screenshots: create `~/shots/` (outside every repo) and allow Claude to read it only: add
   `"Edit(~/shots/**)"`, `"Write(~/shots/**)"` to `permissions.deny` in `~/.claude/settings.json` (show the diff, ask).
@@ -41,15 +43,16 @@ Nothing stack-specific here: language servers, framework skills and packs are in
   and add the `includeIf` block from `machine/gitconfig-snippet.txt` to `~/.gitconfig` (show the diff first).
 - Merge (never overwrite) the settings listed in MANIFEST C4 into `~/.claude/settings.json`; show the diff, ask.
 
-## Phase 5: project kit
-For the folder the user names (must be a git repo):
-1. `cp -r --update=none ~/ai-kit/project/. <dir>/` (never overwrites team files).
-2. Append `~/ai-kit/project-exclude.txt` to `<dir>/.git/info/exclude`.
-3. `cp ~/ai-kit/project/.ai/git-hooks/pre-push <dir>/.git/hooks/pre-push` if none exists; otherwise show both and ask.
-4. In `<dir>`: `git status` must show none of the kit files.
-5. Detect the project's stack (manifests, lock files, framework files). Install only its rows from MANIFEST "Per stack"
+## Phase 5: project kit (per project; the kit stays OUTSIDE the repo)
+For each repo the user works on ("setup the kit for this project"):
+1. Ask where to keep this project's kit (the user decides; e.g. a sibling folder or ~/kits/<repo>).
+2. `bash ~/ai-kit/bin/kit-new <repo> <kit-folder>`: copies `project/` there, registers repo → kit in
+   ~/.config/ai-kit/projects.tsv, lets Claude use the folder (additionalDirectories), adds .git/hooks/pre-push and
+   graphify output names to .git/info/exclude. Nothing goes into the repo's files; `git status` stays clean.
+3. Detect the stack (manifests, lock files, framework files). Install only its rows from MANIFEST "Per stack"
    (LSP plugin + server, official framework skills). No matching row: follow "Other" and `project/.ai/packs/README.md`.
-6. Tell the user to open `claude` in `<dir>`; the onboarding in `.ai/KIT.md` starts there (packs, verify, team rules).
+4. Tell the user to open a NEW `claude` session in the repo: the plugin loads the kit and the onboarding in
+   `$KIT/.ai/KIT.md` starts (repo rules, packs, verify, commit style, rule → hook scan).
 
 ## Phase 6: done
 `bash bin/doctor` again. Report in a short table: installed (with versions), skipped (why), what the user still has to do

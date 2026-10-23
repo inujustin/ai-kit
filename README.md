@@ -7,8 +7,11 @@ Bộ setup AI mang đi mọi máy: Claude = não chính, Codex = thợ code + ng
 2. `cd ~/ai-kit && claude`
 3. Nói: **"setup everything"**. AI làm theo `SETUP.md`: kiểm máy (`bin/doctor`) → hỏi bạn → cài từng thứ trong `MANIFEST.md`
    (mỗi lệnh có popup giải thích tiếng Việt; lệnh sudo hiện cửa sổ nhập mật khẩu hoặc đưa bạn tự gõ) → cài kit vào project bạn chọn.
-4. Trong mỗi repo dự án: mở `claude` ở đó và nói **"setup the kit for this project"** → có hook gợi ý skill, chặn git, nhắc luật…
-5. Gửi ảnh chụp cho AI (Remote-SSH): mở `~/shots/paste.md` trong VS Code, Ctrl+V, rồi bảo AI xem `~/shots/`.
+4. Trong mỗi repo dự án: mở `claude` ở đó và nói **"setup the kit for this project"**. AI hỏi bạn để kit ở đâu (**ngoài** repo),
+   tạo kit + đăng ký. Từ đó chỉ cần gõ `claude` trong repo: plugin `ai-kit-workflow` tự nạp kit, hook gợi ý skill, chặn git…
+   Repo công ty không bao giờ có file nào của kit.
+5. Cập nhật: nói **"update the kit"** → AI `git pull` bản gốc rồi chạy `bin/kit-update` (không đè file bạn đã sửa; hỏi bạn).
+6. Gửi ảnh chụp cho AI (Remote-SSH): mở `~/shots/paste.md` trong VS Code, Ctrl+V, rồi bảo AI xem `~/shots/`.
 
 ```
 ai-kit/
@@ -19,7 +22,9 @@ ai-kit/
 ├── bin/askpass      cửa sổ nhập mật khẩu sudo
 ├── machine/         mẫu git identity theo thư mục, hướng dẫn VM
 ├── project/         kit chép vào từng project (AGENTS.md, CLAUDE.local.md, .ai/, .claude/)
-└── project-exclude.txt   dòng thêm vào .git/info/exclude của project
+├── plugins/ai-kit-workflow  hook của kit (cài 1 lần mỗi máy, dùng cho mọi project)
+├── bin/kit-new, kit-update   tạo kit cho 1 project (ngoài repo) / cập nhật kit an toàn
+└── project-exclude.txt   tên file graphify thêm vào .git/info/exclude
 ```
 
 ## Luật an toàn
@@ -31,5 +36,5 @@ ai-kit/
 - Thêm tool mới: nói "add <tên> to the kit"; AI kiểm nguồn chính chủ, hỏi bạn, rồi ghi vào MANIFEST.md.
 
 ## Gỡ
-Trong project: xoá `AGENTS.md`, `CLAUDE.local.md`, `.ai/`, `.worktrees/`, `.claude/settings.local.json`, `.git/hooks/pre-push`, các dòng trong `.git/info/exclude`.
+Một project: xoá thư mục kit của nó, dòng của nó trong `~/.config/ai-kit/projects.tsv`, `.git/hooks/pre-push`, các dòng graphify trong `.git/info/exclude`.
 Trên máy: `claude plugin uninstall <tên>`, `uv tool uninstall <tên>`, `npm uninstall -g <tên>`, `graphify uninstall`.
