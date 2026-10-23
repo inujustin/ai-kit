@@ -18,6 +18,13 @@ if printf '%s' "$cmd" | grep -qE 'git([[:space:]]+-C[[:space:]]+[^[:space:]]+)?[
   printf '%s' "$cmd" | grep -qE '[[:space:]:](main|master|develop)([[:space:]]|$)' && block "never push straight to main/master/develop; push your branch and open a PR."
 fi
 
+# Kit files never go into a project repo: block a commit whose staged files look like kit files.
+if printf '%s' "$cmd" | grep -qE 'git([[:space:]]+-C[[:space:]]+[^[:space:]]+)?[[:space:]]+commit([[:space:]]|$)'; then
+  kdir=$(printf '%s' "$cmd" | sed -nE 's/.*git[[:space:]]+-C[[:space:]]+("?)([^"[:space:]]+)\1.*/\2/p'); kdir="${kdir:-$cwd}"
+  leak=$(git -C "$kdir" diff --cached --name-only 2>/dev/null | grep -E '^(\.ai/|CLAUDE\.local\.md$|worktrees/)' | head -5)
+  [ -n "$leak" ] && block "these staged files look like ai-kit files, which must stay outside the repo: $leak. Unstage them (git restore --staged <file>)."
+fi
+
 if printf '%s' "$cmd" | grep -qE 'git([[:space:]]+-C[[:space:]]+[^[:space:]]+)?[[:space:]]+(commit|cherry-pick|revert)([[:space:]]|$)'; then
   dir=$(printf '%s' "$cmd" | sed -nE 's/.*git[[:space:]]+-C[[:space:]]+("?)([^"[:space:]]+)\1.*/\2/p')
   [ -z "$dir" ] && dir=$(printf '%s' "$cmd" | sed -nE 's/^[[:space:]]*cd[[:space:]]+("?)([^"[:space:]&;]+)\1.*/\2/p')

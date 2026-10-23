@@ -46,6 +46,7 @@ arena-skill (≈600 sub-agent calls per run, 1 commit, malware lookalike account
 
 ## C4. Settings (ask first, merge, never overwrite)
 - `~/.claude/settings.json`: env `DO_NOT_TRACK=1`, deny reads of ~/.ssh, ~/.aws, ~/.codex/auth.json, .env, *.pem, *.key; sandbox enabled.
+  Images are read-only for Claude: deny `Edit(**/*.png)`, `Write(**/*.png)` and the same for jpg, jpeg, gif, webp.
 - Codex: `codex mcp add context7 --url https://mcp.context7.com/mcp` (optional).
 - Privacy (user does it in the web UI): claude.ai › Settings › Privacy: model training off; ChatGPT › Data controls: "Improve the model" off.
 

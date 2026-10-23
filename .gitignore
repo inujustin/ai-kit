@@ -1,2 +1,12 @@
 *:Zone.Identifier
 *.log
+
+# Never publish screenshots or other images from a machine (this repo is public)
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.webp
+*.bmp
+buffer*/
+shots/
