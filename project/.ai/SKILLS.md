@@ -9,10 +9,12 @@ When you add a row here, add its keywords to ~/ai-kit/plugins/ai-kit-workflow/sc
 ## Map (situation -> what you use)
 | Situation | Use | Source |
 |---|---|---|
-| New feature, vague or big request | `grill-with-docs` (or `grill-me`), then `to-spec`, then `to-tickets` | mattpocock-skills |
+| New feature, vague or big request | `grilling` (question the plan) → `domain-modeling` (glossary, ADR) → plan mode → tickets from `.ai/tickets/TEMPLATE.md`; UI or state unsure: `prototype` | mattpocock-skills (+ this kit for tickets) |
+| Facts from docs or the codebase before deciding | `research`; module shape and seams: `codebase-design` | mattpocock-skills |
+| PR description | `pr` | mattpocock-skills |
 | Bug, error, "it does not work" | `diagnosing-bugs` | mattpocock-skills |
 | Write tests first for risky logic | `tdd` | mattpocock-skills |
-| End of a week or after a repeated mistake | `retro`, then propose a line for AGENTS.md or a CI rule | mattpocock-skills |
+| End of a week or after a repeated mistake | look back at the week's mistakes yourself, then propose an AGENTS.md line, a pack rule or a hook (HOOKS.md) | this kit |
 | Writing or editing any code | `code-style` if installed, plus the active packs' RULES.md | user skill (frappe/skills) |
 | Frappe projects only: DocType, controller, hook, whitelisted API, bench, permissions, Frappe test | `frappe-app-dev` | user skill (Frappe official) |
 | Frappe projects only: reviewing Frappe code | `frappe-code-review` | user skill (Frappe official) |

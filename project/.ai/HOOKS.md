@@ -16,7 +16,7 @@ Hooks are code Claude Code runs on every matching event, so they cannot be forgo
 Do a scan and show the result as one AskUserQuestion with `multiSelect` ("Which of these should become hooks?",
 each option = one rule + one line on what the hook would do), at these moments:
 - kit onboarding and "review the kit" (scan AGENTS.md, CLAUDE.local.md, the team's CLAUDE.md, active packs, installed skills);
-- `/retro` and the end of a long task;
+- the weekly look-back and the end of a long task;
 - whenever you read a skill or guide longer than ~150 lines, or see the same rule in two files;
 - whenever a signal below shows up during work.
 The SessionStart hook of the ai-kit-workflow plugin reminds you of candidates still marked "not now".
@@ -28,9 +28,12 @@ The SessionStart hook of the ai-kit-workflow plugin reminds you of candidates st
    "no for this whole session".
 2. "not now": log it below and ask again next time it shows up. "no for this whole session": stop asking until the
    session ends (it is not a permanent no).
-3. "make the hook now": project-only check → a rule in the active pack's antipatterns.rules.sh (runs in verify);
-   a check for every project → a script in ~/ai-kit/plugins/ai-kit-workflow/ (bump its version), test it on a fake case,
-   then remove the now-redundant text rule (one place only).
+3. "make the hook now": always inside THIS project's kit, never in the shared ai-kit source:
+   - a greppable code rule → a line in the active pack's antipatterns.rules.sh (runs in verify);
+   - anything else → a script `$KIT/.ai/hooks/<Event>/<name>.sh` (Event = SessionStart, UserPromptSubmit, PreToolUse,
+     PostToolUse or Stop; stdin = the hook JSON; exit 2 blocks and shows stderr). The plugin runs it for this project only.
+   Test it on a fake case, then remove the now-redundant text rule (one place only).
+   If it would help every project, say so and stop there: the user promotes it from a session opened inside ~/ai-kit.
 
 ## Hooks already in this kit
 | Hook | Event | Enforces |

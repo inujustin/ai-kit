@@ -30,7 +30,7 @@ Scope: user = only this Linux user. sudo = system package (see SETUP.md "sudo").
 ## C3. Claude Code plugins (user scope)
 | Plugin | Marketplace | Note |
 |---|---|---|
-| mattpocock-skills | claude-plugins-official (Anthropic) | harness: grill, spec, tickets, tdd, debug, retro. Never together with superpowers |
+| mattpocock-skills | claude-plugins-official (Anthropic) | harness skills enabled by the plugin: grilling, domain-modeling, research, codebase-design, prototype, tdd, diagnosing-bugs, code-review, pr, wizard. The repo has more folders (to-spec, to-tickets…) that the plugin does not enable: check `/skills`, never the folder list. Never together with superpowers |
 | context7 | claude-plugins-official | library docs for any stack; never put client code in queries |
 | chrome-devtools-mcp | claude-plugins-official | browser debugging for any web app |
 | codex | `openai/codex-plugin-cc` (OpenAI, Apache-2.0) | add marketplace first; then `/codex:setup` in Claude; turn off auto-update for this marketplace |

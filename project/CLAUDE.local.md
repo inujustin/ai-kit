@@ -39,6 +39,11 @@ formatters with --write/--fix) on it; `.ai/verify.sh` already runs on a throw-aw
 files change only when I ask for that exact change, as a normal contribution through review. The plugin's guard-repo hook
 enforces this; I can lift it for a while with `touch $KIT/.ai/allow-root-edits`.
 
+## This kit is self-contained
+Everything you add for this project (rules, hooks, packs, commit style, notes) goes into THIS kit (`$KIT`), never into the
+shared ai-kit source (~/ai-kit, blocked by the guard-repo hook) and never into the repo. If something would help every
+project, tell me; I promote it myself from a session opened inside ~/ai-kit.
+
 ## Risk rule (everything you do)
 - Safe (read-only, local, easy to undo): just do it and say it in one line. E.g. reading, searching, `git pull` of ai-kit,
   doctor, running tests/verify, planning, subagents for research, commits on your own ai/* branch.

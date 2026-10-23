@@ -11,6 +11,7 @@ CLAUDE.local.md               Claude-only, kept short: how to talk, ask on confl
 .ai/HOOKS.md                  rule → hook: signals, proactive scan, existing hooks, candidates log
 .ai/lib.sh                    sets KIT (this folder) and ROOT (the repo) for every script
 worktrees/                    AI worktrees (inside the kit, never in the repo)
+.ai/hooks/<Event>/*.sh        this project's own hooks (run by the plugin for this project only)
 .ai/SKILLS.md                 skill map + how to propose new skills
 .ai/packs.conf                PACKS=(...) active stack packs
 .ai/packs/<name>/             RULES.md, antipatterns.rules.sh, verify.conf.example
@@ -52,7 +53,7 @@ formatters or fixers on it (the guard-repo hook blocks this); everything you wri
 8. Rule → hook scan (`.ai/HOOKS.md` "Proactive scan"): one multiSelect question with every candidate you found.
 9. Show the user a short summary of what changed in the kit files, then delete step list "First session" from CLAUDE.local.md.
 
-## Freshness check (onboarding, "review the kit", /retro)
+## Freshness check (onboarding, "review the kit", weekly look-back)
 Look only at official sources, then propose changes to the user with AskUserQuestion (the user decides):
 - Claude Code: the CHANGELOG and docs (code.claude.com/docs), `/plugin` for updates in claude-plugins-official.
 - Codex: github.com/openai/codex releases, openai/codex-plugin-cc releases.

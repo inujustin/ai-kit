@@ -1,6 +1,6 @@
 {
   "name": "ai-kit-workflow",
-  "version": "1.1.0",
+  "version": "1.2.1",
   "description": "Personal AI kit hooks: load the project's kit (kept outside the repo) at session start, skill hints per prompt, git guard, lint after edit, fast gate before stop.",
   "author": { "name": "inujustin", "url": "https://github.com/inujustin" },
   "hooks": "./hooks/hooks.json"

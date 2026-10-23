@@ -13,7 +13,7 @@ text = p[:3000].lower()
 if len(text.strip()) < 15:
     sys.exit(0)
 rules = [
-    (r"tính năng|chức năng|màn hình|làm (cái|trang|module)|feature|implement|build|thêm mới|new page", "new or vague feature: grill-with-docs, then to-spec, then to-tickets (mattpocock); ask on reuse first (AGENTS.md)"),
+    (r"tính năng|chức năng|màn hình|làm (cái|trang|module)|feature|implement|build|thêm mới|new page", "new or vague feature: grilling, then domain-modeling, then plan mode and tickets from .ai/tickets/TEMPLATE.md (mattpocock + kit); ask on reuse first"),
     (r"lỗi|bug|error|không chạy|ko chạy|fail|crash|exception|traceback|sai rồi|hỏng", "bug: diagnosing-bugs (mattpocock); stuck after 2 tries: /codex:rescue"),
     (r"\btest|kiểm thử|tdd|unit", "tests: tdd (mattpocock); risky logic: tester/coder split (.ai/WORKFLOW.md)"),
     (r"review|xem lại|soát|check code|kiểm tra code", "review: code-review; Frappe code: frappe-code-review; risky diff: bash .ai/bin/gate"),
