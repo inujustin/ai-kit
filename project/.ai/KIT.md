@@ -22,7 +22,10 @@ CLAUDE.local.md               Claude-only, kept short: how to talk, ask on confl
 .ai/bin/newsession            ai/<agent>/<date>-<name> branch + worktree in .worktrees/
 .ai/bin/dispatch              Codex runs a ticket (role coder|tester) in a fresh context + worktree; script checks and commits
 .ai/roles/                    prompts for the tester and coder roles (fresh contexts)
-.ai/bin/mergesession          squash an ai/* branch into the user's branch (one clean commit)
+.ai/bin/story                 default merge: rebuild ai/* work as a clean story of commits; check (identical result,
+                              verify per commit, commit style) then fast-forward the user's branch
+.ai/commit-style.conf         commit subject rules for story check, set from the team's convention at onboarding
+.ai/bin/mergesession          squash merge, only for one small change
 .ai/bin/gate                  full verify + Codex adversarial review -> VERDICT PASS/BLOCK
 .ai/tickets/, .ai/docs/       tickets, spec, glossary, ADRs (private, not the team's docs/)
 .ai/logs/                     Codex outputs and review reports
@@ -41,8 +44,11 @@ Do this with the user, asking with AskUserQuestion at each decision. Change noth
 5. Check `.ai/SKILLS.md` against what is installed and what this stack needs. Propose missing ones (official only).
 6. Check the safety basics: private files excluded (`git status` shows none of them), pre-push hook in place,
    remote branch names, the user's default base branch. Ask for anything unclear.
-7. Rule → hook scan (`.ai/HOOKS.md` "Proactive scan"): one multiSelect question with every candidate you found.
-8. Show the user a short summary of what changed in the kit files, then delete step list "First session" from CLAUDE.local.md.
+7. Commit style: read the team's last ~50 commit subjects by other people (`git log --format=%s --author=...`), commitlint,
+   .gitmessage, CONTRIBUTING, and the commit rules of installed skills. Propose `.ai/commit-style.conf` from what the team
+   really does; if sources disagree with each other or with the kit default, ask which wins (show examples of each).
+8. Rule → hook scan (`.ai/HOOKS.md` "Proactive scan"): one multiSelect question with every candidate you found.
+9. Show the user a short summary of what changed in the kit files, then delete step list "First session" from CLAUDE.local.md.
 
 ## Freshness check (onboarding, "review the kit", /retro)
 Look only at official sources, then propose changes to the user with AskUserQuestion (the user decides):

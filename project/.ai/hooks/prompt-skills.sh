@@ -23,7 +23,7 @@ rules = [
     (r"ở đâu|where is|kiến trúc|architecture|luồng|flow|gọi tới|who calls|codebase", "find your way in the code: graphify, or an Explore subagent"),
     (r"gọn|đơn giản|simplif|refactor|clean ?up|thừa|dư thừa|bloat", "simplify: ponytail-review / ponytail-audit (list only), then /simplify"),
     (r"giao diện|\bui\b|css|layout|console|network|trình duyệt|browser", "browser/UI: chrome-devtools-mcp"),
-    (r"merge|push|pull request|\bpr\b|commit", "git: follow .ai/WORKFLOW.md (ask before merge/push, explain each step)"),
+    (r"merge|push|pull request|\bpr\b|commit", "git: story commits per .ai/WORKFLOW.md (bash .ai/bin/story), PR body with the pr skill; ask before merge/push"),
     (r"hook|luật|rule|quy tắc|lặp lại|nhắc lại", "rules: check .ai/HOOKS.md, ask whether this should become a hook"),
 ]
 hits = [hint for pat, hint in rules if re.search(pat, text)]
