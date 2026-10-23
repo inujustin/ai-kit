@@ -7,6 +7,8 @@ Bộ setup AI mang đi mọi máy: Claude = não chính, Codex = thợ code + ng
 2. `cd ~/ai-kit && claude`
 3. Nói: **"setup everything"**. AI làm theo `SETUP.md`: kiểm máy (`bin/doctor`) → hỏi bạn → cài từng thứ trong `MANIFEST.md`
    (mỗi lệnh có popup giải thích tiếng Việt; lệnh sudo hiện cửa sổ nhập mật khẩu hoặc đưa bạn tự gõ) → cài kit vào project bạn chọn.
+4. Trong mỗi repo dự án: mở `claude` ở đó và nói **"setup the kit for this project"** → có hook gợi ý skill, chặn git, nhắc luật…
+5. Gửi ảnh chụp cho AI (Remote-SSH): mở `~/shots/paste.md` trong VS Code, Ctrl+V, rồi bảo AI xem `~/shots/`.
 
 ```
 ai-kit/

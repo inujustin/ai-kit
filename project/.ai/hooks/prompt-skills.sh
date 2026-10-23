@@ -27,7 +27,14 @@ rules = [
     (r"hook|luật|rule|quy tắc|lặp lại|nhắc lại", "rules: check .ai/HOOKS.md, ask whether this should become a hook"),
 ]
 hits = [hint for pat, hint in rules if re.search(pat, text)]
+act = re.search(r"\b(làm|sửa|fix|thêm|xoá|xóa|tạo|viết|cài|chạy|implement|build|add|create|write|install|run|refactor|merge|push)\b", text)
+question = text.rstrip().endswith("?") or re.search(r"\b(là gì|tại sao|vì sao|thế nào|như nào|có nên|khác gì|how|what|why|which|should i|is it)\b", text)
+big = re.search(r"tính năng|chức năng|màn hình|module|thiết kế|design|kiến trúc|architecture|feature|migrate|nhiều file|toàn bộ|whole", text)
 print("ai-kit skill check: pick the skills that fit this prompt from .ai/SKILLS.md, invoke them, say in one line which; ask the user if unsure or if a missing skill would help.")
+if question and not act:
+    print("- mode: this looks like a question only: answer it; no edits, no state-changing commands, no agents.")
+elif big and act:
+    print("- mode: big or vague request: enter plan mode, plan (subagents allowed), then ask the user to approve before editing.")
 for h in hits[:4]:
     print("- hint: " + h)
 '

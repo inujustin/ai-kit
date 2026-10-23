@@ -63,6 +63,10 @@ for s in frappe-app-dev frappe-code-review code-style; do
   if [ -f "$HOME/.claude/skills/$s/SKILL.md" ]; then printf '%-26s %-8s %s\n' "$s" INFO "installed (frappe stack)"; fi
 done
 
+echo "== global rules"
+if grep -q 'ai-kit global rules' "$HOME/.claude/CLAUDE.md" 2>/dev/null; then row "~/.claude/CLAUDE.md" OK "ai-kit rules merged"; else row "~/.claude/CLAUDE.md" MISSING "merge machine/CLAUDE.global.md"; fi
+if [ -d "$HOME/shots" ]; then row "~/shots (screenshots)" OK ""; else row "~/shots (screenshots)" MISSING "mkdir ~/shots"; fi
+
 echo "== git identity"
 e="$(git config --global user.email)"
 if [ -n "$e" ]; then row "global user.email" OK "$e"; else row "global user.email" MISSING ""; fi

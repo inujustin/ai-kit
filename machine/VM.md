@@ -34,6 +34,8 @@ Rule: **the client's code, data and accounts live only in the VM.** The host is 
 Then: `git config --global user.name/user.email` = the company identity; `gh auth login` with the company account; `gh auth switch` to make it active.
 
 ## 4. Habits
+- Screenshots for Claude: open `~/shots/paste.md` in VS Code (Remote-SSH) and press Ctrl+V; VS Code saves the image in the VM.
+  Then point Claude at `~/shots/`. Images can hold client data: clear `~/shots/*.png` when done; never put them in a repo.
 - Separate browser profile for the client, no personal logins in it.
 - Never copy client files to the host, USB or personal cloud. Never paste client code or logs into web chat UIs.
 - Claude sandbox always on; the kit blocks reading .env, site configs, spreadsheets, dumps, backups.

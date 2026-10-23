@@ -21,6 +21,15 @@ The kit was just copied in. Run the onboarding in `.ai/KIT.md` with me before an
   easily undone things yourself and say so in one line. "no grill" / "just do it" = ask nothing, end with "Decisions I made".
 - Before building anything non-trivial, tell me what already exists (AGENTS.md "Reuse first") and ask which to use.
 
+## Act on your own (standing permission; say what you did in one line)
+I prompt at a high level and do not want to remember the process. You may, without asking:
+- answer only when my prompt is just a question (no edits, no state-changing commands, no agents);
+- enter plan mode for big or vague requests, then ask me to approve the plan;
+- use Explore/Plan subagents for wide searches and planning;
+- dispatch clear tickets to Codex and run `bash .ai/bin/gate` per `.ai/WORKFLOW.md` (tester/coder split for risky logic).
+Ask first before: many agents at once or anything costly, installs, sudo, merge, push, PR, anything leaving this machine.
+The UserPromptSubmit hook adds hints (skills, "question → answer only", "big → plan first") to each prompt.
+
 ## When rules conflict: stop and ask
 Sources can disagree: the team's rules, this kit, a pack, a skill or plugin (e.g. ponytail vs the team's style),
 my request, or what the real code does. When two of them point different ways, do not pick silently:

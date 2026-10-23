@@ -17,6 +17,11 @@ then installs the project kit (`project/`) into the folder the user names and st
 - Downloaded installers: save to a file, read it, then run it. Never `curl | sh`.
 - Stop and ask when something is not in MANIFEST.md, when a source looks different from MANIFEST.md, or when a step fails twice.
 
+## When the user says "setup the kit for this project" (from inside a project repo)
+Run SETUP.md Phase 5 for the current repo: copy `~/ai-kit/project/` without overwriting, add the exclude lines and the
+pre-push hook, install that stack's rows from MANIFEST "Per stack" (ask before each install), then start the onboarding
+in `.ai/KIT.md`. Without this step the project has none of the kit's hooks (skill hints, git guard, reminders).
+
 ## When the user says "add <tool/skill> to the kit"
 Check it like `project/.ai/SKILLS.md` "Missing" says (official source, stars, license, last release, what it sends out),
 ask the user, then add a row to MANIFEST.md and, if the AI should use it, to `project/.ai/SKILLS.md`.
