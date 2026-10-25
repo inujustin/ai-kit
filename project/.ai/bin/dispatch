@@ -1,15 +1,17 @@
 #!/usr/bin/env bash
 # Run one ticket with Codex in a fresh context, directly in the repo on the user's current branch, check it, commit it.
-# No clone, no copy, no worktree: one ticket at a time per repo (a lock makes parallel dispatches wait their turn).
+# No clone, no copy: one ticket at a time per checkout (a lock makes parallel dispatches wait their turn).
+# Parallel branches only with PARALLEL=worktree in mode.conf: give the branch and it runs in $KIT/worktrees/<branch>.
 # Codex edits files and runs tests but cannot commit (its sandbox cannot write .git); this script commits on PASS.
 # On FAIL the changes stay uncommitted for Claude to fix or show the user.
-# Usage: bash $KIT/.ai/bin/dispatch $KIT/.ai/tickets/T012-foo.md [coder|tester]
+# Usage: bash $KIT/.ai/bin/dispatch $KIT/.ai/tickets/T012-foo.md [coder|tester] [branch]
 #   tester: writes failing tests only, from the ticket (only when the ticket says "Tests: write").
 #   coder:  writes the code (default); if a tester commit for this ticket exists, it may not touch those test files.
 # Model: AI_CODEX_MODEL (default gpt-6.1-sol), effort: AI_CODEX_EFFORT (default medium; high for tricky tickets).
 # Pick both from the project's BUDGET in mode.conf; ask the user before raising them.
 set -euo pipefail
-ticket="$(readlink -f "${1:?usage: dispatch <ticket.md> [coder|tester]}")"
+ticket="$(readlink -f "${1:?usage: dispatch <ticket.md> [coder|tester] [branch]}")"
+want="${3:-}"
 role="${2:-coder}"
 case "$role" in coder|tester) ;; *) echo "role must be coder or tester" >&2; exit 1 ;; esac
 if [ "$role" = tester ] && ! grep -qiE "Tests:[[:space:]]*write" "$ticket"; then
@@ -17,7 +19,7 @@ if [ "$role" = tester ] && ! grep -qiE "Tests:[[:space:]]*write" "$ticket"; then
 fi
 # shellcheck source=/dev/null
 . "$(dirname "$0")/../lib.sh"
-PROTECTED_BRANCHES='^(main|master|develop|dev|release.*|production|staging)$'
+PROTECTED_BRANCHES='^(main|master|develop|dev|release.*|production|staging)$'; PARALLEL=no
 # shellcheck source=/dev/null
 [ -f "$KIT/.ai/mode.conf" ] && . "$KIT/.ai/mode.conf"
 id="$(basename "$ticket" .md)"
@@ -29,9 +31,20 @@ TEST_FILES_ERE='(^|/)tests?/'
 # shellcheck source=/dev/null
 . "$KIT/.ai/packs.conf"
 
-exec 9>"$KIT/.ai/run/dispatch.lock"
+work="$ROOT"
+if [ -n "$want" ] && [ "$want" != "$(git -C "$ROOT" branch --show-current)" ]; then
+  printf '%s' "$want" | grep -qE "$PROTECTED_BRANCHES" && { echo "'$want' is protected; ask the user which feature branch to use." >&2; exit 1; }
+  [ "$PARALLEL" = worktree ] || { echo "Branch '$want' is not the current one and PARALLEL=no: switch first (guard-git asks per BRANCHES), or ask the user to set PARALLEL=worktree." >&2; exit 1; }
+  work="$KIT/worktrees/$(printf '%s' "$want" | tr '/' '-')"
+  if [ ! -d "$work" ]; then
+    mkdir -p "$KIT/worktrees"
+    if git -C "$ROOT" rev-parse -q --verify "refs/heads/$want" >/dev/null; then git -C "$ROOT" worktree add -q "$work" "$want"
+    else git -C "$ROOT" worktree add -q -b "$want" "$work" "$(cd "$ROOT" && kit_base)"; fi
+  fi
+fi
+exec 9>"$KIT/.ai/run/dispatch-$(printf '%s' "$work" | md5sum | cut -c1-8).lock"
 flock 9
-cd "$ROOT"
+cd "$work"
 branch="$(git branch --show-current)"
 [ -n "$branch" ] || { echo "Not on a branch (detached HEAD). Ask the user which branch to use." >&2; exit 1; }
 printf '%s' "$branch" | grep -qE "$PROTECTED_BRANCHES" && { echo "'$branch' is protected; ask the user which feature branch to use." >&2; exit 1; }
@@ -39,7 +52,7 @@ printf '%s' "$branch" | grep -qE "$PROTECTED_BRANCHES" && { echo "'$branch' is p
 start="$(git rev-parse HEAD)"
 
 prompt="Project rules: read CLAUDE.md in the repo (team) and $KIT/AGENTS.md (kit; outside the repo, read-only for you).
-The kit gate is: bash $KIT/.ai/verify.sh --fast (run it from the repo).
+The kit gate is: bash $KIT/.ai/verify.sh --fast (run it from $work).
 
 $(cat "$KIT/.ai/roles/$role.md")
 
@@ -48,7 +61,7 @@ $(cat "$ticket")"
 
 run_codex() {
   codex exec --sandbox workspace-write -m "$model" -c model_reasoning_effort="$effort" \
-    -C "$ROOT" -o "$log/$name.md" "$prompt" >"$log/$name.log" 2>&1 || true
+    -C "$work" -o "$log/$name.md" "$prompt" >"$log/$name.log" 2>&1 || true
 }
 run_codex
 # Out of quota: only another CODEX account (~/ai-kit/bin/account), never another tool. ROTATE in
