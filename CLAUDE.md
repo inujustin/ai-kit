@@ -27,10 +27,12 @@ file the user edited, deleting anything, editing ~/.claude/settings.json or ~/.c
 1. `git -C ~/ai-kit pull` (or the user's ai-kit source folder).
 2. `claude plugin marketplace update ai-kit`, then install or update every plugin MANIFEST lists for this machine
    (`claude plugin install <name>@<marketplace>`; already installed → `claude plugin update <name>@<marketplace>`).
-3. `bash ~/ai-kit/bin/doctor`: fix what is MISSING (ask before installs and sudo), skip per-stack rows no project needs.
-4. For every kit in ~/.config/ai-kit/projects.tsv: `bash ~/ai-kit/bin/kit-update <kit>`; for each REVIEW file show the
+3. `bash ~/ai-kit/bin/global-rules --diff`: if it shows changes, show them and ask, then `--apply` (one marked block,
+   shared by every project on the machine; the user's own lines are untouched).
+4. `bash ~/ai-kit/bin/doctor`: fix what is MISSING (ask before installs and sudo), skip per-stack rows no project needs.
+5. For every kit in ~/.config/ai-kit/projects.tsv: `bash ~/ai-kit/bin/kit-update <kit>`; for each REVIEW file show the
    diff and ask which version to keep. A repo without a kit: offer "setup the kit for this project".
-5. Remind what only the user can do (logins, `/codex:setup`, `/claude-hud:setup`) and that hooks load in a NEW session.
+6. Remind what only the user can do (logins, `/codex:setup`, `/claude-hud:setup`) and that hooks load in a NEW session.
 
 ## When the user says "setup the kit for this project" (from inside a project repo)
 The kit never goes into the repo. Ask the user where to keep this project's kit (suggest a sibling or ~/kits/<repo>),

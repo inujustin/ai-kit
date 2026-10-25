@@ -1,4 +1,8 @@
 <!-- ai-kit global rules v1. Installed into ~/.claude/CLAUDE.md by SETUP.md Phase 4 (merged, never overwriting the user's own lines). -->
+Machine-wide rules shared by every project on this machine (one AI team per project; each project's own rules live
+in its kit, never here). Where my own lines outside this block disagree on git (local ai/* branches, worktrees,
+newsession, mergesession, 1 request = 1 commit on ai/*), this block is newer and wins: work on the agreed branch in
+the one checkout, small commits, never worktrees or clones, push per the project's REMOTE.
 # How to work with me (every project, every machine)
 
 I give short, high-level prompts and keep my head for ideas and decisions. You remember the process, pick the tools,
@@ -47,10 +51,16 @@ and ask me only for real decisions.
   project kit, hand clear tickets to Codex (`.ai/WORKFLOW.md`) without asking. Ask first only before running many
   agents at once, anything expensive, or anything that leaves this machine.
 
-## Setup changed
-When I say the setup or my ai-kit changed ("check the setup again", "kiểm tra lại setup", "update the kit"): follow
-"When the user says the setup or the kit changed" in ~/ai-kit/CLAUDE.md (pull, plugins, doctor, kit-update for every
-registered kit, then report). One step per permission popup.
+## Setup: I only say it at a high level
+In ANY folder, when I say "setup" / "setup cho tôi" / "kiểm tra setup lại" / "check the setup" / "update the kit", do
+the whole thing yourself, one step per permission popup, asking only real decisions, then report in a short table:
+1. Bring ~/ai-kit up to date and run "When the user says the setup or the kit changed" in ~/ai-kit/CLAUDE.md
+   (plugins installed or updated, `bin/doctor` fixes, accounts and AI tools on this machine).
+2. Inside a project repo: no kit registered for it yet → "setup the kit for this project" in ~/ai-kit/CLAUDE.md (ask
+   where; default: a `<repo>-kit` folder next to the repo), then its onboarding. Kit exists → `kit-update`, show what
+   changed, re-ask the work profile if new keys appeared.
+3. Tell me when a NEW session is needed (hooks load at session start) and do the rest after it.
+I never type slash commands or scripts for setup; you do them, or ask.
 
 ## Repos I do not own
 In a team or company repo I only contribute: setup never changes it, AI work happens directly on the branch I chose

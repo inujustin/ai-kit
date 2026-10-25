@@ -28,8 +28,9 @@ Remind the user to run `/codex:setup` and `/claude-hud:setup` in a new Claude se
 Nothing stack-specific here: language servers, framework skills and packs are installed in Phase 5, per project.
 
 ## Phase 4: git identity, global rules and settings — MANIFEST C4
-- Global rules: merge `machine/CLAUDE.global.md` into `~/.claude/CLAUDE.md` (append if the marker line `ai-kit global rules`
-  is missing; never delete the user's own lines). Show the diff, ask. This carries the user's way of working to every machine.
+- Global rules: `bash bin/global-rules --diff`, show it, ask, then `bash bin/global-rules --apply`. It keeps the kit's
+  rules as one marked block in `~/.claude/CLAUDE.md` (added on a new machine, replaced in place later, backup each
+  time); the user's own lines stay as they are. Never put one project's rules in there. This carries the user's way of working to every machine.
 - `env` in `~/.claude/settings.json`: `PONYTAIL_DEFAULT_MODE=lite` (ponytail builds what was asked and only names smaller options).
 - context7: the user logs in once (the plugin's authenticate step opens a link); the AI cannot do it for them.
 - Identity per folder: copy `machine/gitconfig-identity.template` to `~/.gitconfig-<name>` with the values the user gives,
