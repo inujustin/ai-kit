@@ -37,6 +37,10 @@ if [ -f "$kit/.ai/run/tasks.json" ]; then
     printf '%s\n' "$st" | sed 's/^/  /'
   fi
 fi
+if [ -x "$kit/.ai/bin/test-scan" ]; then
+  TEST_POLICY=ask; [ -f "$kit/.ai/mode.conf" ] && . "$kit/.ai/mode.conf"
+  echo "ai-kit: $(cd "$root" && bash "$kit/.ai/bin/test-scan" 2>/dev/null | head -1); TEST_POLICY=$TEST_POLICY. At the first code task of this session ask the user (AskUserQuestion) whether to write tests (recommend yes if the repo has tests, skip with manual checks if not)."
+fi
 pending=0
 [ -f "$kit/.ai/HOOKS.md" ] && pending=$(sed -n '/^## Candidates log/,$p' "$kit/.ai/HOOKS.md" | grep -ci '| *not now *|$')
 [ "$pending" -gt 0 ] && echo "ai-kit: $pending hook candidate(s) in \$KIT/.ai/HOOKS.md are 'not now': ask the user again when they come up."

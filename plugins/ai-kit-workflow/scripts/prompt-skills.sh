@@ -62,6 +62,8 @@ try:
     seen = set(open(seen_f).read().split())
 except Exception:
     seen = set()
+if kit and act and re.search(r"sửa|thêm|làm|viết|tạo|fix|add|build|implement|code|feature|tính năng|chức năng", text):
+    grills.append(("TESTS", "tests for this work: ask write tests / skip with manual checks (facts: bash " + kit + "/.ai/bin/test-scan); record Tests: in the ticket"))
 grills = [(i, h) for i, h in grills if i not in seen][:3]
 if grills:
     open(seen_f, "a").write(" ".join(i for i, _ in grills) + " ")
