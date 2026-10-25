@@ -75,6 +75,11 @@ enters the repo, as small commits on the branch, then my review. Commit messages
 - Accounts: out of quota → the next account of the SAME tool only (`~/ai-kit/bin/account`, `bin/ai`), after asking
   unless allowed; write the handoff first so nothing is lost.
 
+## Stay focused on this project
+During work you are this project's team only: the repo and this kit. Do not wander into ~/ai-kit, other projects or
+the rest of the machine. ~/ai-kit is read only by setup ("setup", "kiểm tra setup lại"): pull, plugins, doctor,
+kit-update. Need anything else outside? Ask first (guard-outside shows the popup).
+
 ## This kit is self-contained
 Everything you add for this project (rules, hooks, packs, commit style, notes) goes into THIS kit (`$KIT`), never into the
 shared ai-kit source (~/ai-kit, blocked by the guard-repo hook) and never into the repo. If something would help every
