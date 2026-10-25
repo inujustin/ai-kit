@@ -2,13 +2,14 @@
 """Long-run task list for this project (Anthropic's long-running agent harness, adapted).
 Tasks live in $KIT/.ai/run/tasks.json (JSON on purpose: hard to rewrite by accident). Progress notes in progress.md.
   run status                  counts + the next task to do
-  run add <id> "<desc>" "<check 1>" ["<check 2>" ...]   add a task (checks = how to verify it really works)
+  run add [--branch <b>] <id> "<desc>" "<check 1>" ["<check 2>" ...]   add a task (checks = how to verify it really works;
+                              --branch = the git branch this task is done on, for runs over several branches)
   run start <id>              mark in_progress and count an attempt; refuses after MAX_ATTEMPTS (then: rescue or ask)
   run pass <id> "<evidence>"  mark passing; evidence = the command/output that proved it (required)
   run block <id> "<why>"      mark blocked; the run moves on or stops to ask the user
   run note "<text>"           append a dated line to progress.md
 """
-import json, os, sys, datetime
+import json, os, subprocess, sys, datetime
 KIT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 RUN = os.path.join(KIT, ".ai", "run"); TASKS = os.path.join(RUN, "tasks.json"); PROG = os.path.join(RUN, "progress.md")
 MAX_ATTEMPTS = int(os.environ.get("AI_MAX_ATTEMPTS", "2"))
@@ -22,25 +23,34 @@ def find(d, i):
     for t in d["tasks"]:
         if t["id"] == i: return t
     sys.exit(f"no task {i}")
+def here():
+    try: return subprocess.run(["git", "branch", "--show-current"], capture_output=True, text=True).stdout.strip()
+    except Exception: return ""
+def where(t):
+    b = t.get("branch")
+    if not b: return ""
+    return f" [branch {b}]" + ("" if here() == b else f" (now on {here() or '?'}: switch to {b} first, guard-git asks per mode.conf)")
 a = sys.argv[1:] or ["status"]; d = load(); cmd = a[0]
 if cmd == "status":
     c = {}
     for t in d["tasks"]: c[t["status"]] = c.get(t["status"], 0) + 1
     print("tasks:", ", ".join(f"{k} {v}" for k, v in sorted(c.items())) or "none")
     nxt = next((t for t in d["tasks"] if t["status"] in ("in_progress", "pending")), None)
-    print("next:", f'{nxt["id"]} {nxt["description"]} (attempts {nxt["attempts"]}/{MAX_ATTEMPTS})' if nxt else "nothing left: report to the user")
+    print("next:", f'{nxt["id"]} {nxt["description"]} (attempts {nxt["attempts"]}/{MAX_ATTEMPTS}){where(nxt)}' if nxt else "nothing left: report to the user")
     for t in d["tasks"]:
         if t["status"] == "blocked": print(f'blocked: {t["id"]} {t.get("why","")}')
 elif cmd == "add":
+    br = None
+    if len(a) > 2 and a[1] == "--branch": br, a = a[2], [a[0]] + a[3:]
     i, desc, checks = a[1], a[2], a[3:]
     if not checks: sys.exit("give at least one check: how to verify it works")
     if any(t["id"] == i for t in d["tasks"]): sys.exit(f"{i} exists")
-    d["tasks"].append({"id": i, "description": desc, "checks": checks, "status": "pending", "attempts": 0}); save(d); print("added", i)
+    d["tasks"].append({"id": i, "description": desc, "checks": checks, "status": "pending", "attempts": 0, **({"branch": br} if br else {})}); save(d); print("added", i)
 elif cmd == "start":
     t = find(d, a[1])
     if t["attempts"] >= MAX_ATTEMPTS:
         sys.exit(f'STOP: {t["id"]} already tried {t["attempts"]} times. Hand it once to /codex:rescue, or `run block` it and ask the user. Do not loop.')
-    t["attempts"] += 1; t["status"] = "in_progress"; save(d); note(f'start {t["id"]} (attempt {t["attempts"]})'); print("started", t["id"], "attempt", t["attempts"])
+    t["attempts"] += 1; t["status"] = "in_progress"; save(d); note(f'start {t["id"]} (attempt {t["attempts"]})'); print("started", t["id"], "attempt", t["attempts"], where(t))
 elif cmd == "pass":
     t = find(d, a[1]); ev = " ".join(a[2:]).strip()
     if not ev: sys.exit("evidence required: the check you ran and what it showed")

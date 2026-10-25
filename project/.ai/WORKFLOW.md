@@ -1,35 +1,41 @@
 # Workflow: roles, separate contexts, git, push/PR
 
 Read this when you dispatch work, review, commit, merge, push or open a PR. Hard limits are enforced by hooks
-(plugin ai-kit-workflow guard-git, `.git/hooks/pre-push`); this file explains the flow around them.
+(plugin ai-kit-workflow guard-git, guard-repo, guard-outside); this file explains the flow around them.
+Nothing here is one fixed way of working: each project has a work profile (`.ai/mode.conf`: BUDGET, BRANCHES, REMOTE,
+TEST_POLICY) that the user picks at onboarding, and the AI asks again whenever the work changes shape.
 
 ## Roles: separate contexts, three by default (the user's rule)
 Nobody checks its own work. Default team = planner, developer, reviewer; add a tester only when the work is risky and
 `TEST_POLICY=tests` (mode.conf).
 - Claude = lead and planner: grill, spec, tickets, dispatch, integrate, explain. Do not write production code or tests
   yourself: every change goes to a developer context.
-- Developer = Codex (`dispatch <ticket>`), or a Claude subagent in an ai/* worktree for a tiny change. In direct mode the
-  reviewed result reaches the user's branch with `bash $KIT/.ai/bin/land <ai-branch> "<subject>"` (one commit, story style).
+- Developer = Codex (`dispatch <ticket>`), or a Claude subagent for a tiny change. Both edit the repo directly on the
+  current branch, one ticket at a time; each passed ticket = one commit there.
 - Tests are the user's call, asked often (TEST_POLICY in mode.conf, default ask): at onboarding, at the first code task of
   every session, and for every ticket. Give the facts from `bash $KIT/.ai/bin/test-scan`: the repo has tests → recommend
   writing them for logic changes; no tests → recommend skipping with "Manual checks". Record the answer in the ticket
   (`Tests: write | skip`). Tester (only for `Tests: write`) = a separate context writing tests from the ticket
   (`dispatch <ticket> tester`; dispatch refuses otherwise). `Tests: skip`: the user runs the Manual checks, the reviewer confirms.
 - Reviewer = a clean context that did not write the code: `gate` (Codex) plus your own read of the diff.
-- Executors are whatever this machine has (`bin/doctor` lists claude, codex, agy). Each machine uses its own accounts;
-  never rotate accounts to get around usage limits.
+- Executors are whatever this machine has (`bin/doctor` lists claude, codex, agy) on the accounts in
+  `~/ai-kit/bin/account list`. See "Accounts and sessions" below.
 
-## Sizing the team: you decide, no fixed numbers
-For each task choose how many tickets, how many run in parallel, which model and effort, from: the size and risk of
-the task, whether the tickets' "Owns" overlap (overlap = run in order), the context left in this session, and the
-quota left (claude-hud, `/usage`). Use the fewest agents that do the job well; spend more only on risky work. Not
-sure? Ask the user with AskUserQuestion (options with cost/time, recommended first). Say in one line what you chose.
+## Sizing the team: BUDGET decides, and you ask
+Saving is not always the goal: a startup project may get far more money, disk and quota than a small company task.
+Start from BUDGET in mode.conf (lean / normal / max), then choose tickets, model, effort and agents from the size and
+risk of the task, the context left and the quota left (claude-hud, `/usage`). Ask the user with AskUserQuestion
+(options with cost/time, recommended first) before: more agents than BUDGET suggests, a long or overnight run, a
+stronger model, or anything that uses a lot of disk. Never copy or clone the project "to be safe": that wastes disk
+and drifts from the real code. Say in one line what you chose and what it costs.
 
 ## Dispatch
-- Codex = executor for tickets; several independent ones in parallel:
-  `bash $KIT/.ai/bin/dispatch $KIT/.ai/tickets/<id>.md` as a background Bash command; run in parallel only if their "Owns" files
-  do not overlap. When one finishes, read `.ai/logs/<id>.md` and its diff and tell the user in a few lines whether it
-  meets the acceptance items.
+- Codex = executor for tickets: `bash $KIT/.ai/bin/dispatch $KIT/.ai/tickets/<id>.md` as a background Bash command.
+  It works in the repo on the current branch; a lock makes tickets of one repo run one after the other. PASS = one
+  commit; FAIL = changes left uncommitted for you to fix or show; QUOTA = ask the user (see Accounts).
+  When one finishes, read `.ai/logs/<id>-<role>.md` and the commit and tell the user in a few lines whether it meets
+  the acceptance items. Parallel work happens across projects (one kit each), or as read-only work (research,
+  review subagents) inside one project.
 - Codex = reviewer before a merge or PR: `bash $KIT/.ai/bin/gate <base>`. Summarise, do not paste.
 - AI files (specs, glossary, ADRs, tickets) live in `.ai/docs/` and `.ai/tickets/`, never in the team's docs/.
 
@@ -37,51 +43,56 @@ sure? Ask the user with AskUserQuestion (options with cost/time, recommended fir
 - Risky logic (money, tax, permissions, document states, APIs, data changes, calculations):
   1. tester: `bash $KIT/.ai/bin/dispatch <ticket> tester` writes failing tests from the ticket only.
   2. Review those tests with the user. If they are wrong, fix the ticket, not the tests.
-  3. coder: `bash $KIT/.ai/bin/dispatch <ticket>` starts from the tests branch and may not touch tests (the script checks).
+  3. coder: `bash $KIT/.ai/bin/dispatch <ticket>` runs on top of the tester's commit and may not touch those tests (checked).
   4. reviewer: `bash $KIT/.ai/bin/gate` plus your own review of the diff.
 - Small work (UI text, layout, rename, config) still goes developer → reviewer in separate contexts; only the tester
   step may be "no test needed". Unsure whether it is risky? Ask.
 - Your own code is reviewed by `/codex:review` or `gate`, never only by you. Wide searches: an Explore subagent.
-- You orchestrate without being asked: independent tickets (no overlap in "Owns") go to separate contexts in parallel;
-  dependent ones run in order. The user sees results and decisions, not the dispatching.
+- You orchestrate without being asked: tickets go to separate contexts in a sensible order; the user sees results and
+  decisions, not the dispatching.
 
-## Mode: direct or worktree (`.ai/mode.conf`)
-- direct (default): work on the user's current feature branch in the team checkout. Each finished ticket = one local
-  commit right away, subject in the project's commit style (guard-git checks it), body = why; give the SHA. Never commit
-  on protected branches (mode.conf). Small, ordered steps make the branch read as a story already; no worktree, no
-  story step. Codex: reviews (`/codex:review`, `gate`) or runs a ticket in a worktree only when tickets run in parallel.
-- worktree: everything below (ai/* branches, story). Use it for parallel Codex tickets or work you want fully separated.
-Push and PR are the same in both modes: ask first, step by step.
+## Branches: flexible, asked
+Sometimes the user works on one branch, sometimes several in turn, sometimes several at once. Ask at the start of a
+task that touches branches (the prompt hook reminds you): which branch(es), may the AI create and switch local
+branches by itself and with which names (BRANCHES=auto + AUTO_BRANCH_ERE, e.g. for an overnight run agreed in a grill).
+- Work directly in the repo. No clones, no copies, no worktrees unless the user asks for one (guard-git asks too).
+- Before switching: commit the finished step (or ask what to do with the unfinished one); never switch with a dirty
+  tree in silence. Say in one line "now on <branch>". guard-git shows a popup unless BRANCHES=auto allows it.
+- Several branches in one run: one task list (`.ai/run/tasks.json`), each task names its branch; switch, work,
+  commit, switch back. Never mix two branches' changes in one commit.
+- Never commit on protected branches (mode.conf). Never `reset --hard`, `clean`, rebase or delete work you did not
+  create; guard-git asks for each of those anyway.
 
-## Git (worktree mode: local AI branches, clean history)
-- Your work: `bash $KIT/.ai/bin/newsession claude <short-name>` → branch `ai/claude/<date>-<name>` in `$KIT/worktrees/`.
-  1 request = 1 commit there; give the SHA. Commit messages end with `Co-Authored-By: Claude <noreply@anthropic.com>`.
-- Commits only on ai/* branches (hook). ai/* branches never reach the remote (pre-push hook).
-- When a piece of work is done and checked, ask whether to merge now (merge now / review first in lazygit or
-  VS Code Git Graph / keep working). Default merge = a story (below). Squash with `bash $KIT/.ai/bin/mergesession <ai-branch> "<msg>"`
-  only when the work really is one small change.
 ## Plans and tickets stay local
 Plans: `~/.claude/plans/` (this machine only). Tickets and AI docs: `$KIT/.ai/`. Never commit or push them; only each
-ticket's code reaches the repo (ai/* → story → review). guard-git blocks staged kit, ticket or plan files.
+ticket's code reaches the repo, as commits on the branch. guard-git blocks staged kit, ticket or plan files.
 
-## Story commits (what reaches the user's branch and the remote)
-The raw ai/* history (wip, retries) stays local. What lands on the user's branch is a story a reviewer can read top to bottom:
-1. `bash $KIT/.ai/bin/story start <ai-branch>`: story branch + worktree from the user's branch; prints the changes to tell.
-2. Plan the story first and show it to the user as a short list: one commit per logical step, in an order that reads
-   naturally (preparation/refactor → behaviour, one rule or screen at a time → tests with the code they cover → docs).
-   Each subject says the behaviour a user or teammate can observe, not the code touched
-   (good: "feat(transport): a job can't be completed before its day"; bad: "update transport.py").
-   Body: why, and anything a reviewer must know. Keep `Co-Authored-By: Claude <noreply@anthropic.com>`.
-3. Build the commits in the story worktree: whole files with `git checkout <ai-branch> -- <paths>`, part of a file with
-   `git diff <base> <ai-branch> -- <file>` edited down and applied with `git apply --cached`.
-4. `bash $KIT/.ai/bin/story check`: end result must be identical to the ai/* branch, every commit passes `verify --fast`,
-   every subject matches `.ai/commit-style.conf`. Fix and re-check until PASS.
-5. Ask the user (show the story list), then `bash $KIT/.ai/bin/story finish` fast-forwards their branch. Undo before push:
-   `git reset --hard ORIG_HEAD` on their branch.
-Commit style: `.ai/commit-style.conf`. If the team's convention, a lint config, a skill's commit rules and this kit
-disagree, that is a rule conflict: ask which wins, then update the conf.
+## Commits: small steps a reviewer can follow
+- One logical step per commit, in an order that reads naturally (preparation/refactor → behaviour, one rule or screen
+  at a time → tests with the code they cover → docs). Never one big commit; give the SHA after each.
+- Subject = the behaviour a user or teammate can observe, in the project's commit style (`.ai/commit-style.conf`,
+  checked by guard-git): good "feat(transport): a job can't be completed before its day", bad "update transport.py".
+  Body: why, and anything a reviewer must know.
+- If the team's convention, a lint config, a skill's commit rules and this kit disagree, that is a rule conflict: ask
+  which wins, then update the conf.
 
+## Remote: REMOTE in mode.conf, always careful
+Local work can be freer; anything that reaches a server is asked carefully. REMOTE=ask: every push/pull/fetch/remote/gh
+shows a popup. REMOTE=feature: pushing the feature branch passes, the rest asks. REMOTE=never: give the user one `!` line.
+Detect when the situation changes (first push of a branch, a new remote, a PR, a release) and ask whether the level
+still fits.
 - Push and PR, step by step, each with the user's OK: show `git status` + `git log <base>..HEAD` → `bash $KIT/.ai/bin/gate <base>`
   PASS → `git push -u origin <branch>` → show PR title and body → `gh pr create`.
-  Never push ai/*, never force-push, never push straight to main/master/develop.
-- Never `reset --hard` / `clean` work you did not create, rewrite the user's branches, add remotes, or bare `git stash`.
+  Never force-push, never push straight to a protected branch (guard-git refuses both).
+
+## Accounts and sessions: few sessions, nothing lost
+- One lead session per project, started with `bash ~/ai-kit/bin/ai [account|purpose]` (Codex as the brain:
+  `--brain codex`). Everything else runs in the background from it (dispatch, subagents, auto-continue).
+- Accounts: `bash ~/ai-kit/bin/account list|add|next|out`. Each account has a purpose the user names (company,
+  startup, ...); use the one that fits the project. A tool only switches to another account of the SAME tool.
+- Out of quota: progress is always in `.ai/run/` and `handoff.md`. Claude: the user ends the session and picks `c` in
+  `ai` (same conversation, next Claude account). Codex in dispatch: `ROTATE=auto` in ~/.config/ai-kit/accounts.conf
+  retries on the next Codex account by itself; otherwise dispatch prints QUOTA and you ask the user.
+- Context full or new topic: write handoff.md, ask the user to renew (`/clear`, or `/exit` + `n` in `ai`); the old
+  chat stays in `claude --resume` / `codex resume`.
+- New account on this machine: the user says so; run `account add` and give the one login line they must type.
