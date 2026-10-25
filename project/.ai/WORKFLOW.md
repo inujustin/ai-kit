@@ -56,7 +56,7 @@ Sometimes the user works on one branch, sometimes several in turn, sometimes sev
 task that touches branches (the prompt hook reminds you): which branch(es), may the AI create and switch local
 branches by itself and with which names (BRANCHES=auto + AUTO_BRANCH_ERE, e.g. for an overnight run agreed in a grill).
 Typical styles, all set per project and per stage (ask; never assume one):
-  - company work: mostly local, one branch at a time, no new or parallel branches without asking (BRANCHES=ask).
+  - company work: mostly local, one branch at a time, no new branches without asking (BRANCHES=ask).
   - a long run agreed in a grill: the AI creates and switches the agreed branch names itself (BRANCHES=auto).
   - projects that want many branches: the AI plans them in a grill, then works them one after another in the same
     checkout, every branch kept as a clean story of small commits.
