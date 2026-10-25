@@ -3,15 +3,18 @@
 Read this when you dispatch work, review, commit, merge, push or open a PR. Hard limits are enforced by hooks
 (plugin ai-kit-workflow guard-git, `.git/hooks/pre-push`); this file explains the flow around them.
 
-## Roles: four independent contexts (the user's rule)
-Planner, developer, tester and reviewer are always separate contexts; none of them checks its own work.
-- Claude = lead and planner: grill, spec, tickets, dispatch, integrate, explain. Never write production code or tests
-  yourself, not even small fixes: every change goes to a developer context.
-- Developer = Codex (`dispatch <ticket>`) or, for a tiny change, a Claude subagent in an ai/* worktree.
-- Tester = a separate context (`dispatch <ticket> tester`) that writes tests from the ticket only. A change with no
-  behaviour (text, config, docs) may have "no test needed", written in the ticket; the reviewer confirms it.
-- Reviewer = a clean context that did not write the code: `gate` (Codex) for Claude-written code; for Codex-written
-  code, `gate` plus your own read of the diff.
+## Roles: separate contexts, three by default (the user's rule)
+Nobody checks its own work. Default team = planner, developer, reviewer; add a tester only when the work is risky and
+`TEST_POLICY=tests` (mode.conf).
+- Claude = lead and planner: grill, spec, tickets, dispatch, integrate, explain. Do not write production code or tests
+  yourself: every change goes to a developer context.
+- Developer = Codex (`dispatch <ticket>`), or a Claude subagent in an ai/* worktree for a tiny change. In direct mode the
+  reviewed result reaches the user's branch with `bash $KIT/.ai/bin/land <ai-branch> "<subject>"` (one commit, story style).
+- Tester (risky logic only) = a separate context writing tests from the ticket (`dispatch <ticket> tester`).
+  `TEST_POLICY=manual`: no automated tests; the ticket carries a "Manual checks" list the user runs, the reviewer confirms.
+- Reviewer = a clean context that did not write the code: `gate` (Codex) plus your own read of the diff.
+- Executors are whatever this machine has (`bin/doctor` lists claude, codex, agy). Each machine uses its own accounts;
+  never rotate accounts to get around usage limits.
 
 ## Sizing the team: you decide, no fixed numbers
 For each task choose how many tickets, how many run in parallel, which model and effort, from: the size and risk of
