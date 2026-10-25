@@ -62,6 +62,11 @@ for s in frappe-app-dev frappe-code-review code-style; do
   if [ -f "$HOME/.claude/skills/$s/SKILL.md" ]; then printf '%-26s %-8s %s\n' "$s" INFO "installed (frappe stack)"; fi
 done
 
+echo "== executors on this machine (the lead uses only what is here)"
+for c in claude codex agy; do
+  if command -v "$c" >/dev/null; then printf '%-26s %-8s %s\n' "$c" INFO "$("$c" --version 2>/dev/null | head -1)"; else printf '%-26s %-8s %s\n' "$c" INFO "not installed"; fi
+done
+
 echo "== global rules"
 if grep -q 'ai-kit global rules' "$HOME/.claude/CLAUDE.md" 2>/dev/null; then row "~/.claude/CLAUDE.md" OK "ai-kit rules merged"; else row "~/.claude/CLAUDE.md" MISSING "merge machine/CLAUDE.global.md"; fi
 

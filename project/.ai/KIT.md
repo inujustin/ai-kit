@@ -29,6 +29,9 @@ worktrees/                    AI worktrees (inside the kit, never in the repo)
 .ai/commit-style.conf         commit subject rules (story check, and guard-git in direct mode), set at onboarding
 .ai/mode.conf                 direct (commit steps on the feature branch) or worktree (ai/* branches + story)
 .ai/bin/mergesession          squash merge, only for one small change
+.ai/bin/land                  direct mode: bring a reviewed ai/* ticket onto the feature branch as one commit
+.ai/bin/run, .ai/LONGRUN.md   long runs: tasks.json, progress.md, two-attempt limit, optional auto run
+.ai/handoff.md                session snapshot for the next session (context-watch asks for it near ~70%)
 .ai/bin/gate                  full verify + Codex adversarial review -> VERDICT PASS/BLOCK
 .ai/tickets/, .ai/docs/       tickets, spec, glossary, ADRs (private, not the team's docs/)
 .ai/logs/                     Codex outputs and review reports
