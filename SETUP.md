@@ -33,7 +33,8 @@ Nothing stack-specific here: language servers, framework skills and packs are in
   time); the user's own lines stay as they are. Never put one project's rules in there. This carries the user's way of working to every machine.
 - `env` in `~/.claude/settings.json`: `PONYTAIL_DEFAULT_MODE=lite` (ponytail builds what was asked and only names smaller options).
 - context7: the user logs in once (the plugin's authenticate step opens a link); the AI cannot do it for them.
-- Identity per folder: copy `machine/gitconfig-identity.template` to `~/.gitconfig-<name>` with the values the user gives,
+- Identity per folder: copy `machine/gitconfig-identity.template` to `~/.gitconfig-<name>` with the values the user gives
+  (name, email and, when gh has several accounts, which GitHub account that folder uses for git and gh),
   and add the `includeIf` block from `machine/gitconfig-snippet.txt` to `~/.gitconfig` (show the diff first).
 - Merge (never overwrite) the settings listed in MANIFEST C4 into `~/.claude/settings.json`; show the diff, ask.
 - AI tools and accounts (set up everything from the start, wherever the kit goes): detect the CLIs on this machine

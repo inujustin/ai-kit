@@ -2,3 +2,11 @@
 [user]
 	name = <NAME>
 	email = <EMAIL>
+# Optional, when this folder uses its own GitHub account (gh logged in to several: `gh auth status`):
+# git pull/push use that account through gh, whatever account is active in gh ...
+[credential "https://github.com"]
+	helper =
+	helper = "!f() { test \"$1\" = get || exit 0; echo username=<GH_USER>; echo password=$(gh auth token -u <GH_USER>); }; f"
+# ... and the kit's guard-git hook runs `gh` commands here as that account (GH_TOKEN), saying so in the popup.
+[github]
+	user = <GH_USER>
