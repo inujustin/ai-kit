@@ -2,12 +2,13 @@
 # PreToolUse(Bash): git and remote commands follow the project's work profile ($KIT/.ai/mode.conf: BRANCHES, REMOTE,
 # PROTECTED_BRANCHES). Nothing risky runs in silence and nothing is locked for good: a permission popup (decision
 # "ask", also in auto mode) explains in Vietnamese what the command does, what it changes, the risk and how to undo.
-#   always refused: force-push, push --all/--mirror, push to a protected branch, kit/plan/ticket files in a commit,
+#   always refused: force-push, push --all/--mirror, push to a protected branch, a push whose commits contain
+#                   secret-looking or data-dump files (.env, *.pem, *.key, *.sql, *.dump, credentials...), kit/plan/ticket files in a commit,
 #                   commits on a protected branch (kit repos), commit subjects that break commit-style.conf (kit repos)
 #   remote (push, pull, fetch, remote, clone, gh ...): REMOTE=ask -> popup; feature -> feature-branch push and fetch
 #                   pass, the rest popup; never -> refused (the AI gives the user one `!` line)
 #   branches (switch, checkout <branch>, checkout -b, branch <new>/-d/-m): BRANCHES=auto passes local branches matching
-#                   AUTO_BRANCH_ERE on a clean tree; everything else popup
+#                   AUTO_BRANCH_ERE on a clean tree, and `branch -d` of merged ones; -D and everything else popup
 #   always popup:   reset --hard, clean -f, rebase, merge, stash drop/clear
 #   never:          git worktree add, and git clone from inside a kit repo (the user's rule: no extra checkout or copy
 #                   of a project, ever; branches are worked in turn in the one checkout)
@@ -84,6 +85,13 @@ for seg in re.split(r"&&|\|\||;|\||\n", cmd):
         if any(prot.search(x) for x in dst if x != "HEAD") or (any(r.split(":")[-1] == "HEAD" for r in refs) and prot.search(branch or "")):
             block("never push straight to a protected branch (" + ", ".join(dst) + "); push the feature branch and open a PR (ask the user).")
         if E["REMOTE"] == "never": block("REMOTE=never for this project: give the user one copy-ready `! git push ...` line instead.")
+        # Every push, allowed or not: no secret-looking or data-dump files in the commits that would leave the machine.
+        src = refs[0].split(":")[0] if refs and refs[0] else "HEAD"
+        up = git(d, "rev-parse", "--abbrev-ref", (src if src != "HEAD" else branch) + "@{u}")
+        rng = (up + ".." + src) if up else src + " --not --remotes"
+        files = git(d, "log", "--name-only", "--format=", *rng.split()).splitlines()
+        bad = sorted({f for f in files if re.search(r"(^|/)(\.env(\..*)?|.*\.(pem|key|p12|pfx|sql|dump|bak|backup)|id_(rsa|ed25519).*|credentials.*|secrets?\..*)$", f, re.I)})[:5]
+        if bad: block("these files are in the commits to push and look like secrets or data dumps: " + ", ".join(bad) + ". Never push them; show the user and ask how to remove them from the commits.")
         if E["REMOTE"] == "feature" and len(dst) == 1:
             allows.append("push " + dst[0] + " (REMOTE=feature)"); continue
         ask("push " + ", ".join(dst) + " lên remote " + (pos[0] if pos else "mặc định") + " (" + where + ")", "commit local được gửi lên server, đồng nghiệp/CI thấy được", "code rời khỏi máy này; nếu có secret hay dữ liệu khách trong commit thì đã lộ", "xoá nhánh trên remote (git push <remote> --delete <nhánh>) nhưng người khác có thể đã kéo về")
@@ -111,7 +119,9 @@ for seg in re.split(r"&&|\|\||;|\||\n", cmd):
             allows.append(sub + " " + target + " (BRANCHES=auto)"); continue
         ask(("tạo nhánh mới " if new else "chuyển sang nhánh ") + target + " (" + where + ")", "file trong repo đổi theo nhánh đích" + ("; các file chưa commit sẽ đi theo hoặc làm lệnh lỗi" if dirty else ""), "làm nhầm nhánh thì commit sau đó vào sai chỗ" + ("; file chưa commit có thể bị lẫn" if dirty else ""), "git switch " + (branch or "<nhánh cũ>") + " để quay lại")
     elif sub == "branch":
-        if any(x in ("-d", "-D", "--delete") for x in rest):
+        if "-d" in rest and "-D" not in rest and "--force" not in rest and E["BRANCHES"] == "auto" and pos and all(re.search(E["AUTO_ERE"], x) and x != branch for x in pos):
+            allows.append("branch -d " + " ".join(pos) + " (BRANCHES=auto; git refuses unmerged branches)")
+        elif any(x in ("-d", "-D", "--delete") for x in rest):
             ask("XOÁ nhánh local " + ", ".join(pos), "nhánh biến mất khỏi máy", "-D xoá cả khi chưa merge: commit chỉ còn trong reflog ~90 ngày", "git branch <tên> <sha> (lấy sha từ git reflog)")
         elif any(x in ("-m", "-M", "--move") for x in rest):
             ask("đổi tên nhánh " + " -> ".join(pos), "tên nhánh local đổi", "nhánh remote/PR cũ không theo tên mới", "git branch -m <tên mới> <tên cũ>")
