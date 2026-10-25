@@ -37,6 +37,9 @@ ai-kit/
 - **Chưa phải tự động 24/7 kiểu solopreneur.** Kit chạy khi có session trên máy bạn (kể cả chạy dài qua đêm). Chưa có:
   agent cloud tự nhận issue và mở PR khi máy tắt, CI làm cổng + tự merge PR xanh, deploy bản xem trước mỗi PR, job
   theo lịch, lỗi production tự thành ticket. Với project bạn làm chủ, AI sẽ đề xuất từng mục (PRACTICES.md BP-11).
+- **Chưa tự đổi sang session mới (renew) khi context đầy.** AI không tự gõ `/clear` được. Job chạy dài dựa vào tự nén
+  (auto-compact) của Claude Code + `handoff.md` + `tasks.json`; tự nén làm mất bớt chi tiết. Hướng sửa: `bin/ai` chạy mỗi
+  task bằng một session mới (`claude -p`), cần thiết kế quyền cho chạy không người trông trước (LONGRUN.md "Known weakness").
 - Chưa chạy thử với ticket thật nào; account agy đang thử nghiệm.
 
 ## Luật an toàn

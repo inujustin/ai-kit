@@ -38,6 +38,13 @@ at a time, verify before marking done, and a clean hand-over at the end of every
   (`$KIT/.ai/bin/ai`, pick `c`); Codex tickets switch Codex accounts by themselves only with ROTATE=auto.
 - Every session ends with `run note` + an updated handoff.md, so the next session starts from facts, not memory.
 
+## Known weakness: no automatic fresh session
+The AI cannot start a new session by itself (no self `/clear`). A long run keeps going through Claude Code's
+auto-compact; tasks.json, progress.md and handoff.md carry what matters, but a compacted context loses detail. So:
+keep handoff.md current after every task (context-watch reminds you, silently during unattended runs), one task at a
+time, and prefer small tasks. Planned fix (not built): `bin/ai` runs each task as its own fresh `claude -p` session,
+which first needs a safe permission set for unattended runs. Say this plainly when the user starts an overnight run.
+
 ## `/goal` (built into Claude Code)
 `/goal <condition>` keeps a session working until a checkable condition holds. Only the user can type it. Offer it as a
 one-line copy-ready option when a run has a single measurable end state (e.g. "`run status` shows nothing left and
