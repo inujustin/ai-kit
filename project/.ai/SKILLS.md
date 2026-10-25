@@ -28,7 +28,7 @@ When you add a row here, add its keywords to ~/ai-kit/plugins/ai-kit-workflow/sc
 | Big or unfamiliar codebase: where is X, what calls Y, how modules connect | graphify: `/graphify .` once (code is parsed locally; docs/PDFs go through this session's model), then query the graph instead of reading many files. Use `--code-only` on client repos | graphify CLI 0.9.80 (Graphify-Labs, Apache-2.0) |
 | Python / TS type errors and go-to-definition | pyright-lsp, typescript-lsp (automatic) | Anthropic marketplace |
 | SPA in the browser: console, network, layout, performance | chrome-devtools-mcp | Anthropic marketplace |
-| Several accounts, out of quota, new session from the handoff | `~/ai-kit/bin/account`, `~/ai-kit/bin/ai` (same tool only) | this kit |
+| Several accounts, out of quota, new session from the handoff | `$KIT/.ai/bin/account`, `$KIT/.ai/bin/ai` (same tool only) | this kit |
 | Context window and token use (status line) | claude-hud (local only, no network) | jarrodwatts/claude-hud, MIT |
 | Keep code small: does it need to exist, stdlib/native first, shortest diff | ponytail (always on, level **lite** in this kit via `PONYTAIL_DEFAULT_MODE=lite`); `/ponytail-review` or `/ponytail-audit` to list what to delete without editing | ai-kit marketplace, pinned v5.1.0 |
 

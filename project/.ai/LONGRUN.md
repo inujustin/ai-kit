@@ -35,7 +35,7 @@ at a time, verify before marking done, and a clean hand-over at the end of every
 - Stop and ask the user when: a decision is theirs, a check needs them (login, data, a device), quota looks low
   (claude-hud / `/usage`), or the auto turn budget runs out (AI_AUTO_MAX_TURNS, default 30).
 - Out of quota is not the end of a run: write the handoff; the user continues on the next account of the same tool
-  (`~/ai-kit/bin/ai`, pick `c`); Codex tickets switch Codex accounts by themselves only with ROTATE=auto.
+  (`$KIT/.ai/bin/ai`, pick `c`); Codex tickets switch Codex accounts by themselves only with ROTATE=auto.
 - Every session ends with `run note` + an updated handoff.md, so the next session starts from facts, not memory.
 
 ## `/goal` (built into Claude Code)

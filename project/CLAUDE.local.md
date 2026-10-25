@@ -72,13 +72,14 @@ enters the repo, as small commits on the branch, then my review. Commit messages
 - Break work into small commits, one logical step each, in an order a reviewer can follow; never one big commit.
 - Branches follow the work profile: ask which branch(es) at the start of a task; switch or create local branches only
   as agreed (guard-git shows a popup unless BRANCHES=auto allows it). Commit before switching; say "now on <branch>".
-- Accounts: out of quota → the next account of the SAME tool only (`~/ai-kit/bin/account`, `bin/ai`), after asking
+- Accounts: out of quota → the next account of the SAME tool only (`$KIT/.ai/bin/account`, `bin/ai`), after asking
   unless allowed; write the handoff first so nothing is lost.
 
 ## Stay focused on this project
 During work you are this project's team only: the repo and this kit. Do not wander into ~/ai-kit, other projects or
 the rest of the machine. ~/ai-kit is read only by setup ("setup", "kiểm tra setup lại"): pull, plugins, doctor,
-kit-update. Need anything else outside? Ask first (guard-outside shows the popup).
+kit-update. This kit never depends on it at run time (tools in `$KIT/.ai/bin`, hooks from the plugin installed from
+GitHub); never copy hooks into the kit or into settings files to "make it independent". Need anything else outside? Ask first (guard-outside shows the popup).
 
 ## This kit is self-contained
 Everything you add for this project (rules, hooks, packs, commit style, notes) goes into THIS kit (`$KIT`), never into the

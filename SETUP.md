@@ -22,7 +22,8 @@ Logins are the user's: `claude` (first run), `codex login`, `gh auth login`. Tel
 
 ## Phase 3: core plugins — MANIFEST C3
 `claude plugin marketplace add …` / `claude plugin install …@… ` one by one, including this repo's own marketplace
-(`claude plugin marketplace add inujustin/ai-kit`, then `claude plugin install ai-kit-workflow@ai-kit` and
+(`claude plugin marketplace add inujustin/ai-kit` from GitHub, never a local folder path: the installed copy must not
+depend on ~/ai-kit, which the user may delete; then `claude plugin install ai-kit-workflow@ai-kit` and
 `claude plugin install ponytail@ai-kit`). ai-kit-workflow carries the kit's hooks for every project on this machine.
 Remind the user to run `/codex:setup` and `/claude-hud:setup` in a new Claude session.
 Nothing stack-specific here: language servers, framework skills and packs are installed in Phase 5, per project.
@@ -46,7 +47,7 @@ Nothing stack-specific here: language servers, framework skills and packs are in
   its terms; the user decides. Later "I added an account" = the same steps for that one.
 - Starting profile for new projects: ask the user's usual BUDGET / BRANCHES / REMOTE / ACCOUNT_GROUP and write them
   to ~/.config/ai-kit/profile-defaults.conf (KEY=value); kit-new copies them, the onboarding still asks.
-- Lead launcher: tell the user that `bash ~/ai-kit/bin/ai [account|purpose]` starts the lead session; when it ends,
+- Lead launcher: tell the user that `bash $KIT/.ai/bin/ai [account|purpose]` starts the lead session; when it ends,
   `c` continues on the next account of the same tool, `n` starts fresh from handoff.md (offer a shell alias, ask).
 
 ## Phase 5: project kit (per project; the kit stays OUTSIDE the repo)

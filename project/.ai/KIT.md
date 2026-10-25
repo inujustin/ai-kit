@@ -2,6 +2,9 @@
 
 Kit v3 (2026-10-23). The kit lives OUTSIDE the project repo, in a folder the user picks, registered in ~/.config/ai-kit/projects.tsv
 (`bash ~/ai-kit/bin/kit-new <repo> <kit>`). Hooks come from the ai-kit-workflow plugin, not from files in the repo.
+A kit never needs ~/ai-kit while it runs: its tools are in `$KIT/.ai/bin` (dispatch, gate, run, account, ai, projects),
+its hooks come from the plugin installed from GitHub (a copy in ~/.claude/plugins), its registry is ~/.config/ai-kit.
+~/ai-kit may be deleted; only setup and updates need a source, and setup clones it again from GitHub when missing.
 Update from the source with `bash ~/ai-kit/bin/kit-update <kit>` (never overwrites your edits; lists them to review).
 
 ```
@@ -26,8 +29,8 @@ CLAUDE.local.md               Claude-only, kept short: how to talk, ask on confl
 .ai/commit-style.conf         commit subject rules (checked by guard-git), set at onboarding
 .ai/mode.conf                 work profile: BUDGET, BRANCHES, REMOTE, PROTECTED_BRANCHES, TEST_POLICY (asked, re-asked)
 .ai/bin/run, .ai/LONGRUN.md   long runs: tasks.json (a task may name its branch), progress.md, two-attempt limit, auto run
-~/ai-kit/bin/projects         (machine) read-only table of every project kit, most urgent first
-~/ai-kit/bin/account, bin/ai  (machine) accounts per tool + purpose; one-terminal lead launcher (quota -> next account of
+$KIT/.ai/bin/projects         (machine) read-only table of every project kit, most urgent first
+$KIT/.ai/bin/account, bin/ai  (machine) accounts per tool + purpose; one-terminal lead launcher (quota -> next account of
                               the same tool, context full -> new session from handoff.md), Claude or Codex as the brain
 .ai/footprints/               HTML catch-up pages per big change (TEMPLATE.html, INDEX.md); never in the repo
 .ai/handoff.md                session snapshot for the next session (context-watch asks for it near ~70%)
@@ -63,8 +66,8 @@ formatters or fixers on it (the guard-repo hook blocks this); everything you wri
 6b. Work profile (mode.conf), one AskUserQuestion with up to 4 questions, each value explained in plain words:
    BUDGET (lean / normal / max: is this a small company task or something the user invests in?), BRANCHES (ask /
    auto + which names), REMOTE (ask / feature / never; per run: allow-push), PROTECTED_BRANCHES of this repo, ACCOUNT_GROUP (which accounts,
-   `~/ai-kit/bin/account list`), ROLE_LEAD/DEV/REVIEW/TINY (who does what, proposed from `~/ai-kit/bin/account plan`:
-   which tools, accounts and plans this machine has; e.g. Claude subagents develop when Codex is small), PROVIDERS (which AIs: Claude + Codex, plus agy/Gemini for tiny tasks? max 4), PRIORITY (auto / high / normal / low against the other projects, `~/ai-kit/bin/projects`). Say these are re-asked whenever the work changes shape.
+   `$KIT/.ai/bin/account list`), ROLE_LEAD/DEV/REVIEW/TINY (who does what, proposed from `$KIT/.ai/bin/account plan`:
+   which tools, accounts and plans this machine has; e.g. Claude subagents develop when Codex is small), PROVIDERS (which AIs: Claude + Codex, plus agy/Gemini for tiny tasks? max 4), PRIORITY (auto / high / normal / low against the other projects, `$KIT/.ai/bin/projects`). Say these are re-asked whenever the work changes shape.
 7. Commit style: read the team's last ~50 commit subjects by other people (`git log --format=%s --author=...`), commitlint,
    .gitmessage, CONTRIBUTING, and the commit rules of installed skills. Propose `.ai/commit-style.conf` from what the team
    really does; if sources disagree with each other or with the kit default, ask which wins (show examples of each).

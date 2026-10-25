@@ -7,7 +7,7 @@ TEST_POLICY) that the user picks at onboarding, and the AI asks again whenever t
 
 ## Roles: separate contexts, three by default (the user's rule)
 Who plays each role is per project (ROLE_LEAD / ROLE_DEV / ROLE_REVIEW / ROLE_TINY in mode.conf), chosen at onboarding
-from the resources this machine has (`~/ai-kit/bin/account plan`) and re-asked whenever they change. The text below
+from the resources this machine has (`$KIT/.ai/bin/account plan`) and re-asked whenever they change. The text below
 uses the default split (Claude lead, Codex developer and reviewer); swap the names when the project says otherwise.
 Nobody checks its own work. Default team = planner, developer, reviewer; add a tester only when the work is risky and
 `TEST_POLICY=tests` (mode.conf).
@@ -22,7 +22,7 @@ Nobody checks its own work. Default team = planner, developer, reviewer; add a t
   (`dispatch <ticket> tester`; dispatch refuses otherwise). `Tests: skip`: the user runs the Manual checks, the reviewer confirms.
 - Reviewer = a clean context that did not write the code: `gate` (Codex) plus your own read of the diff.
 - Executors are whatever this machine has (`bin/doctor` lists claude, codex, agy, gemini) on the accounts in
-  `~/ai-kit/bin/account list`, limited by the project's PROVIDERS. See "Providers" and "Accounts and sessions" below.
+  `$KIT/.ai/bin/account list`, limited by the project's PROVIDERS. See "Providers" and "Accounts and sessions" below.
 
 ## Sizing the team: BUDGET decides, and you ask
 Saving is not always the goal: a startup project may get far more money, disk and quota than a small company task.
@@ -120,7 +120,7 @@ At the end: the report (branches, commits, checks, pushed or local, decisions le
 - Roles: Claude = lead, planner, reviewer. Codex = developer and second reviewer. agy / Gemini CLI (free, fast to run
   out, weaker code) = only tickets marked `Size: tiny` (rename, text, comment, one-file format, a few config lines):
   `dispatch <ticket> tiny`. Their result is never committed unreviewed: read the diff, fix or drop extras, commit.
-- Who works now and the rotation order: `bash ~/ai-kit/bin/account plan [purpose]` (counts usable accounts and plans).
+- Who works now and the rotation order: `bash $KIT/.ai/bin/account plan [purpose]` (counts usable accounts and plans).
 - Out of quota, in this order: next account of the SAME tool → fallback (ask first): no Codex left = a Claude
   subagent develops in its own context until Codex resets, reviewer stays separate; no Claude left = handoff, wait for
   reset (or Codex as the brain via `bin/ai --brain codex`, ask) → wait for reset. Tiny tasks fall back to Codex.
@@ -138,7 +138,7 @@ copy `$KIT/.ai/footprints/TEMPLATE.html` to `<date>-<slug>.html`, fill it, add o
 - Each project = its own kit, its own lead session, its own memory (tickets, run, handoff). Never read, copy or mix
   another project's code, notes or rules; company and startup work stay apart.
 - Machine-wide (global): `~/.claude/CLAUDE.md` rules, plugins/hooks, skills, accounts, `~/.config/ai-kit/
-  profile-defaults.conf` (starting values for new kits), and `python3 ~/ai-kit/bin/projects` (read-only table of
+  profile-defaults.conf` (starting values for new kits), and `python3 $KIT/.ai/bin/projects` (read-only table of
   every kit: branch, run state, budget, priority, account group). Packs and practices stay per project; a lesson that
   helps every project is promoted by the user through ~/ai-kit.
 - Accounts: ACCOUNT_GROUP in mode.conf (asked at onboarding, empty = ask each session, may change any time).
@@ -148,9 +148,9 @@ copy `$KIT/.ai/footprints/TEMPLATE.html` to `<date>-<slug>.html`, fill it, add o
 
 ## Accounts and sessions: few sessions, nothing lost
 - One lead session per project (one terminal tab each; no extra ADE app needed), started with
-  `bash ~/ai-kit/bin/ai [account|purpose]` (default: the project's ACCOUNT_GROUP) (Codex as the brain:
+  `bash $KIT/.ai/bin/ai [account|purpose]` (default: the project's ACCOUNT_GROUP) (Codex as the brain:
   `--brain codex`). Everything else runs in the background from it (dispatch, subagents, auto-continue).
-- Accounts: `bash ~/ai-kit/bin/account list|add|next|out`. Each account has a purpose the user names (company,
+- Accounts: `bash $KIT/.ai/bin/account list|add|next|out`. Each account has a purpose the user names (company,
   startup, ...); use the one that fits the project. A tool only switches to another account of the SAME tool.
 - Out of quota: progress is always in `.ai/run/` and `handoff.md`. Claude: the user ends the session and picks `c` in
   `ai` (same conversation, next Claude account). Codex in dispatch: `ROTATE=auto` in ~/.config/ai-kit/accounts.conf

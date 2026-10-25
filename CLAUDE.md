@@ -24,7 +24,8 @@ Safe, just do and say it: `git pull` of ai-kit, `claude plugin marketplace updat
 Risky, ask first (AskUserQuestion with what changes and how to undo): installing or updating any plugin, tool or package
 (new code that will run), anything with sudo, `kit-update` (show what upstream changed first), keeping or overwriting a
 file the user edited, deleting anything, editing ~/.claude/settings.json or ~/.claude/CLAUDE.md.
-1. `git -C ~/ai-kit pull` (or the user's ai-kit source folder).
+1. `git -C ~/ai-kit pull` (or the user's ai-kit source folder). No source on this machine (the user deleted it)? Clone
+   it again from GitHub (ask where; default ~/ai-kit). Kits and the installed plugin keep working without it.
 2. `claude plugin marketplace update ai-kit`, then install or update every plugin MANIFEST lists for this machine
    (`claude plugin install <name>@<marketplace>`; already installed → `claude plugin update <name>@<marketplace>`).
 3. `bash ~/ai-kit/bin/global-rules --diff`: if it shows changes, show them and ask, then `--apply` (one marked block,

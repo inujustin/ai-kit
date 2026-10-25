@@ -12,10 +12,10 @@ Bộ setup AI mang đi mọi máy: Claude = não chính, Codex = thợ code + ng
    Repo công ty không bao giờ có file nào của kit.
 5. Nhiều AI, nhiều account: `bin/account add <claude|codex|agy|gemini> <tên> <mục đích> <gói>` rồi đăng nhập 1 lần;
    `bin/account plan` cho biết ai làm gì và thứ tự luân phiên khi hết quota (Claude + Codex luôn trước; agy/Gemini chỉ việc siêu dễ). Mở session lead bằng
-   `bash ~/ai-kit/bin/ai [tên|mục đích]` (Codex làm não: `--brain codex`). Hết session: `c` = hết quota, chạy tiếp
+   `bash $KIT/.ai/bin/ai [tên|mục đích]` (Codex làm não: `--brain codex`). Hết session: `c` = hết quota, chạy tiếp
    cùng cuộc trò chuyện trên account kế tiếp **cùng loại**; `n` = session mới đọc `handoff.md`, session cũ vẫn mở lại được.
 6. Nhiều project trên 1 máy: mỗi project 1 team (kit + session lead riêng, mỗi project 1 tab terminal).
-   Xem tổng: `python3 ~/ai-kit/bin/projects` (nhánh, chạy dài, ưu tiên, nhóm account).
+   Xem tổng: `python3 $KIT/.ai/bin/projects` (nhánh, chạy dài, ưu tiên, nhóm account).
 7. Cập nhật: nói **"update the kit"** → AI `git pull` bản gốc rồi chạy `bin/kit-update` (không đè file bạn đã sửa; hỏi bạn).
 
 ```

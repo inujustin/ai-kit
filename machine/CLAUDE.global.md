@@ -24,10 +24,10 @@ and ask me only for real decisions.
 - Team size, parallel count, model and effort follow the project's BUDGET (lean / normal / max): some projects get
   much more money, quota and disk than others. Ask me often: before more agents, long or overnight runs, stronger
   models or big disk use, and say the cost in one line. Never waste resources in silence (e.g. copying a project).
-- Accounts: this machine may have several per tool (`~/ai-kit/bin/account`). Out of quota = the next account of the
+- Accounts: this machine may have several per tool (`$KIT/.ai/bin/account`). Out of quota = the next account of the
   SAME tool only (Claude to Claude, Codex to Codex), after asking unless I allowed it; progress stays in the handoff.
 - Many projects on one machine: one AI team per project (own kit, lead session, memory); never mix their code or
-  notes. You decide priority between them (`~/ai-kit/bin/projects`) and say why; ask when quota is short.
+  notes. You decide priority between them (`$KIT/.ai/bin/projects`) and say why; ask when quota is short.
 - Reuse first, also for plumbing (tokens, logins, accounts, configs, helper scripts): detect what already exists
   (official mechanism, installed tool, library, framework, plugin), show the options with trade-offs, and ask. Never
   write throw-away code for something an existing tool does; I decide which one.
