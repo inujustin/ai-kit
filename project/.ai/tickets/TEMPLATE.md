@@ -1,7 +1,7 @@
 # T000: short title in GLOSSARY words
 
 Spec: .ai/docs/spec/<file>.md#section · ADR: none · Size: S (one agent-hour at most) · Depends on: none
-Executor: codex | claude · Split: yes (risky: tester then coder) | no
+Executor: codex | claude · Split: yes (risky: tester then coder) | no · Tests: write | skip (asked the user on <date>)
 
 ## Goal
 One or two sentences. What the user can do afterwards.
@@ -17,7 +17,11 @@ One or two sentences. What the user can do afterwards.
 
 ## Acceptance (each item checkable by a command or a test)
 - [ ] Given ..., when ..., then ...
-- [ ] tests/test_x.py::test_y fails before the change and passes after
+- [ ] Tests: write → tests/test_x.py::test_y fails before the change and passes after
+- [ ] Tests: skip → every item under "Manual checks" done by the user and confirmed by the reviewer
+
+## Manual checks (Tests: skip; steps the user runs, e.g. bench console or a screen, with the expected result)
+- ...
 - [ ] bash $KIT/.ai/verify.sh --fast passes
 
 ## Out of scope

@@ -10,6 +10,9 @@ set -euo pipefail
 ticket="$(readlink -f "${1:?usage: dispatch <ticket.md> [coder|tester] [base]}")"
 role="${2:-coder}"
 case "$role" in coder|tester) ;; *) echo "role must be coder or tester" >&2; exit 1 ;; esac
+if [ "$role" = tester ] && ! grep -qiE "Tests:[[:space:]]*write" "$ticket"; then
+  echo "This ticket does not say 'Tests: write'. Ask the user whether to write tests for it (bin/test-scan shows what the repo has), record the answer in the ticket, then dispatch the tester." >&2; exit 1
+fi
 # shellcheck source=/dev/null
 . "$(dirname "$0")/../lib.sh"
 root="$ROOT"

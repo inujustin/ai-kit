@@ -13,7 +13,7 @@ When you add a row here, add its keywords to ~/ai-kit/plugins/ai-kit-workflow/sc
 | Facts from docs or the codebase before deciding | `research`; module shape and seams: `codebase-design` | mattpocock-skills |
 | PR description | `pr` | mattpocock-skills |
 | Bug, error, "it does not work" | `diagnosing-bugs` | mattpocock-skills |
-| Write tests first for risky logic | `tdd` | mattpocock-skills |
+| Write tests first, only for a ticket marked `Tests: write` (ask the user first, WORKFLOW.md) | `tdd` | mattpocock-skills |
 | End of a week or after a repeated mistake | look back at the week's mistakes (PRACTICES.md BP-1: this repo's session transcripts, locally), then propose an AGENTS.md line, a pack rule or a hook (HOOKS.md) | this kit |
 | A tip, link or screenshot I paste; a best practice that fits the task | `.ai/PRACTICES.md`: check the lead, log it, grill me (apply now / not now) | this kit |
 | Writing or editing any code | `code-style` if installed, plus the active packs' RULES.md | user skill (frappe/skills) |

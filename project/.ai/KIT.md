@@ -52,6 +52,8 @@ formatters or fixers on it (the guard-repo hook blocks this); everything you wri
 5. Check `.ai/SKILLS.md` against what is installed and what this stack needs. Propose missing ones (official only).
 6. Check the safety basics: private files excluded (`git status` shows none of them), pre-push hook in place,
    remote branch names, the user's default base branch. Ask for anything unclear.
+6c. Tests: run `bash $KIT/.ai/bin/test-scan`, show the result, and ask the user TEST_POLICY (ask / tests / manual);
+   write it to mode.conf. Whatever they pick, the AI re-asks at session start and per ticket.
 6b. Mode: ask direct (default, simplest to follow) or worktree (parallel Codex tickets, full separation); write mode.conf
    and the protected branches of this repo.
 7. Commit style: read the team's last ~50 commit subjects by other people (`git log --format=%s --author=...`), commitlint,

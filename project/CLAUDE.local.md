@@ -29,8 +29,10 @@ I prompt at a high level and do not want to remember the process. You may, witho
 - answer only when my prompt is just a question (no edits, no state-changing commands, no agents);
 - enter plan mode for big or vague requests, then ask me to approve the plan;
 - use Explore/Plan subagents for wide searches and planning;
-- dispatch tickets to Codex and run `bash $KIT/.ai/bin/gate` per `.ai/WORKFLOW.md` (planner, developer, tester and reviewer
-  are separate contexts; you choose how many agents and at what effort, and ask me when unsure).
+- dispatch tickets to Codex and run `bash $KIT/.ai/bin/gate` per `.ai/WORKFLOW.md` (planner, developer and reviewer are
+  separate contexts, a tester only when the ticket says `Tests: write`; you choose how many agents and at what effort).
+- Tests: never decide alone. Ask me often (start of each session, each ticket) with the facts from `.ai/bin/test-scan`:
+  the repo has tests → recommend writing them; none → recommend skipping with manual checks.
 Ask first before: many agents at once or anything costly, installs, sudo, merge, push, PR, anything leaving this machine.
 The UserPromptSubmit hook adds hints (skills, "question → answer only", "big → plan first") to each prompt.
 

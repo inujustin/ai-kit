@@ -10,8 +10,11 @@ Nobody checks its own work. Default team = planner, developer, reviewer; add a t
   yourself: every change goes to a developer context.
 - Developer = Codex (`dispatch <ticket>`), or a Claude subagent in an ai/* worktree for a tiny change. In direct mode the
   reviewed result reaches the user's branch with `bash $KIT/.ai/bin/land <ai-branch> "<subject>"` (one commit, story style).
-- Tester (risky logic only) = a separate context writing tests from the ticket (`dispatch <ticket> tester`).
-  `TEST_POLICY=manual`: no automated tests; the ticket carries a "Manual checks" list the user runs, the reviewer confirms.
+- Tests are the user's call, asked often (TEST_POLICY in mode.conf, default ask): at onboarding, at the first code task of
+  every session, and for every ticket. Give the facts from `bash $KIT/.ai/bin/test-scan`: the repo has tests → recommend
+  writing them for logic changes; no tests → recommend skipping with "Manual checks". Record the answer in the ticket
+  (`Tests: write | skip`). Tester (only for `Tests: write`) = a separate context writing tests from the ticket
+  (`dispatch <ticket> tester`; dispatch refuses otherwise). `Tests: skip`: the user runs the Manual checks, the reviewer confirms.
 - Reviewer = a clean context that did not write the code: `gate` (Codex) plus your own read of the diff.
 - Executors are whatever this machine has (`bin/doctor` lists claude, codex, agy). Each machine uses its own accounts;
   never rotate accounts to get around usage limits.

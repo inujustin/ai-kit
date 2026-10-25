@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+# Read-only: does this repo already have automated tests? Prints one summary line, then up to 5 example files.
+# Used by the session-start hook and at onboarding so the AI can ask the user about tests with facts.
+set -uo pipefail
+# shellcheck source=/dev/null
+. "$(dirname "$0")/../lib.sh"
+files="$(git -C "$ROOT" ls-files | grep -E '(^|/)(tests?|__tests__|spec)/|(^|/)test_[^/]+\.py$|_test\.(py|go)$|\.(spec|test)\.[cm]?[jt]sx?$' )"
+n=$(printf '%s' "$files" | grep -c . || true)
+runners="$(cd "$ROOT" && ls pytest.ini setup.cfg tox.ini vitest.config.* jest.config.* playwright.config.* 2>/dev/null | tr '\n' ' ')"
+grep -q '"test"[[:space:]]*:' "$ROOT/package.json" 2>/dev/null && runners="$runners package.json:test"
+[ -d "$ROOT/frontend" ] && grep -q '"test"[[:space:]]*:' "$ROOT/frontend/package.json" 2>/dev/null && runners="$runners frontend/package.json:test"
+if [ "$n" -gt 0 ]; then echo "tests: the repo has $n test file(s)${runners:+; runners: $runners}"; printf '%s\n' "$files" | head -5 | sed 's/^/  e.g. /'
+else echo "tests: no automated test files found in the repo${runners:+ (runner config present: $runners)}"; fi
