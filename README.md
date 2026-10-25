@@ -33,6 +33,12 @@ ai-kit/
 └── project-exclude.txt   tên file graphify thêm vào .git/info/exclude
 ```
 
+## Chưa có (giới hạn hiện tại)
+- **Chưa phải tự động 24/7 kiểu solopreneur.** Kit chạy khi có session trên máy bạn (kể cả chạy dài qua đêm). Chưa có:
+  agent cloud tự nhận issue và mở PR khi máy tắt, CI làm cổng + tự merge PR xanh, deploy bản xem trước mỗi PR, job
+  theo lịch, lỗi production tự thành ticket. Với project bạn làm chủ, AI sẽ đề xuất từng mục (PRACTICES.md BP-11).
+- Chưa chạy thử với ticket thật nào; account agy đang thử nghiệm.
+
 ## Luật an toàn
 - Repo này **public**. Không bao giờ chứa tên, email, code, tài liệu của công ty/khách.
 - Plugin bên thứ ba đã kiểm tra nằm trong `.claude-plugin/marketplace.json`, khoá theo commit: `claude plugin marketplace add inujustin/ai-kit`.

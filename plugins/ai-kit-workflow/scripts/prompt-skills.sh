@@ -53,6 +53,7 @@ bps = [
     ("BP-5", r"mỗi ngày|hằng ngày|mỗi sáng|hàng tuần|định kỳ|every (day|week|morning)", "scheduled job instead of doing it by hand"),
     ("BP-7", r"chuyển qua|việc khác|task khác|giờ làm|new task|switch to|unrelated", "topic changed: delegate it to a subagent or Codex ticket to keep this session clean; never ask the user for /clear"),
     ("BP-8", r"mai làm tiếp|để sau|tạm dừng|hết limit|continue tomorrow|pick up later", "write the session handoff before stopping"),
+    ("BP-11", r"24/7|tự động hết|chạy cả ngày|lúc tôi ngủ|solopreneur|solo preneur|không cần mở máy|while i sleep", "24/7 automation for owned projects is not in the kit yet: research the official options (cloud agents, CI gate, auto-merge, preview deploys, nightly jobs) and offer them one by one"),
     ("BP-10", r"không hiểu|giải thích|chạy thế nào|luồng này|how does it work|explain", "explain in levels: short text first, diagram on request, always with file:line and test evidence"),
 ]
 grills = [] if nogrill else [(i, h) for i, pat, h in bps if re.search(pat, text)]

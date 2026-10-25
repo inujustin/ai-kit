@@ -58,6 +58,8 @@ formatters or fixers on it (the guard-repo hook blocks this); everything you wri
    Which AI files does the repo already have (team rules win)? Kit under version control (KIT_GIT none / local /
    remote private repo next to the code repo; `git init` in the kit for local)? Ask again if signs change (the user
    says they own it, a new empty repo, no other committers).
+   REPO_ROLE=owner: say plainly that the kit alone is not 24/7 automation yet and offer PRACTICES.md BP-11 (cloud
+   agents, CI gate and auto-merge, preview deploys, nightly jobs, errors to tickets), one item at a time.
 6b. Work profile (mode.conf), one AskUserQuestion with up to 4 questions, each value explained in plain words:
    BUDGET (lean / normal / max: is this a small company task or something the user invests in?), BRANCHES (ask /
    auto + which names), REMOTE (ask / feature / never; per run: allow-push), PROTECTED_BRANCHES of this repo, ACCOUNT_GROUP (which accounts,
