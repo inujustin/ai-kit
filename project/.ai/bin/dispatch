@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Run one ticket with Codex in a fresh context, directly in the repo on the user's current branch, check it, commit it.
-# No clone, no copy: one ticket at a time per checkout (a lock makes parallel dispatches wait their turn).
-# Parallel branches only with PARALLEL=worktree in mode.conf: give the branch and it runs in $KIT/worktrees/<branch>.
+# No worktree, no clone, no copy: one ticket at a time in the one checkout (a lock makes other dispatches wait).
+# [branch] = the branch the ticket belongs to; dispatch refuses when the checkout is on another one.
 # Codex edits files and runs tests but cannot commit (its sandbox cannot write .git); this script commits on PASS.
 # On FAIL the changes stay uncommitted for Claude to fix or show the user.
 # Usage: bash $KIT/.ai/bin/dispatch $KIT/.ai/tickets/T012-foo.md [coder|tester] [branch]
@@ -19,7 +19,7 @@ if [ "$role" = tester ] && ! grep -qiE "Tests:[[:space:]]*write" "$ticket"; then
 fi
 # shellcheck source=/dev/null
 . "$(dirname "$0")/../lib.sh"
-PROTECTED_BRANCHES='^(main|master|develop|dev|release.*|production|staging)$'; PARALLEL=no
+PROTECTED_BRANCHES='^(main|master|develop|dev|release.*|production|staging)$'
 # shellcheck source=/dev/null
 [ -f "$KIT/.ai/mode.conf" ] && . "$KIT/.ai/mode.conf"
 id="$(basename "$ticket" .md)"
@@ -33,14 +33,7 @@ TEST_FILES_ERE='(^|/)tests?/'
 
 work="$ROOT"
 if [ -n "$want" ] && [ "$want" != "$(git -C "$ROOT" branch --show-current)" ]; then
-  printf '%s' "$want" | grep -qE "$PROTECTED_BRANCHES" && { echo "'$want' is protected; ask the user which feature branch to use." >&2; exit 1; }
-  [ "$PARALLEL" = worktree ] || { echo "Branch '$want' is not the current one and PARALLEL=no: switch first (guard-git asks per BRANCHES), or ask the user to set PARALLEL=worktree." >&2; exit 1; }
-  work="$KIT/worktrees/$(printf '%s' "$want" | tr '/' '-')"
-  if [ ! -d "$work" ]; then
-    mkdir -p "$KIT/worktrees"
-    if git -C "$ROOT" rev-parse -q --verify "refs/heads/$want" >/dev/null; then git -C "$ROOT" worktree add -q "$work" "$want"
-    else git -C "$ROOT" worktree add -q -b "$want" "$work" "$(cd "$ROOT" && kit_base)"; fi
-  fi
+  echo "Ticket is for branch '$want' but the checkout is on '$(git -C "$ROOT" branch --show-current)'. Commit, switch to '$want' (guard-git asks per BRANCHES), then dispatch again. Never a worktree or clone." >&2; exit 1
 fi
 exec 9>"$KIT/.ai/run/dispatch-$(printf '%s' "$work" | md5sum | cut -c1-8).lock"
 flock 9

@@ -8,8 +8,9 @@
 #                   pass, the rest popup; never -> refused (the AI gives the user one `!` line)
 #   branches (switch, checkout <branch>, checkout -b, branch <new>/-d/-m): BRANCHES=auto passes local branches matching
 #                   AUTO_BRANCH_ERE on a clean tree; everything else popup
-#   always popup:   reset --hard, clean -f, rebase, merge, stash drop/clear, worktree add (unless PARALLEL=worktree and
-#                   the worktree goes in $KIT/worktrees/)
+#   always popup:   reset --hard, clean -f, rebase, merge, stash drop/clear
+#   never:          git worktree add, and git clone from inside a kit repo (the user's rule: no extra checkout or copy
+#                   of a project, ever; branches are worked in turn in the one checkout)
 #   push for one run: $KIT/.ai/run/allow-push (created only after the user said "push by yourself" for this run; ends
 #                   with the run or after 24 h) makes REMOTE=feature for that time.
 # Agreed cases get an explicit "allow" (so an overnight run does not stop at a popup); deny rules in settings still win.
@@ -19,7 +20,7 @@ input=$(cat)
 cwd=$(printf '%s' "$input" | python3 -c 'import json,sys; print(json.load(sys.stdin).get("cwd",""))' 2>/dev/null); cwd="${cwd:-$PWD}"
 printf '%s' "$input" | grep -qE '(^|[^[:alnum:]_-])(git|gh)([[:space:]]|\\"|$)' || exit 0
 kit="$(bash "$here/kit-resolve.sh" "$cwd" 2>/dev/null)" || kit=""
-BRANCHES=ask; REMOTE=ask; PARALLEL=no; AUTO_BRANCH_ERE='^(feat|fix|chore|refactor|docs|test)/'
+BRANCHES=ask; REMOTE=ask; AUTO_BRANCH_ERE='^(feat|fix|chore|refactor|docs|test)/'
 PROTECTED_BRANCHES='^(main|master|develop|dev|release.*|production|staging)$'
 SUBJECT_ERE=''; BAD_SUBJECT_ERE=''; COMMIT_STYLE_SOURCE=''
 # shellcheck source=/dev/null
@@ -30,7 +31,7 @@ ap="$kit/.ai/run/allow-push"
 if [ -n "$kit" ] && [ -f "$ap" ] && [ "$REMOTE" != never ]; then
   if [ $(( $(date +%s) - $(stat -c %Y "$ap") )) -lt 86400 ]; then REMOTE=feature; else rm -f "$ap"; fi
 fi
-printf '%s' "$input" | KIT="$kit" CWD="$cwd" BRANCHES="$BRANCHES" REMOTE="$REMOTE" PARALLEL="$PARALLEL" AUTO_ERE="$AUTO_BRANCH_ERE" \
+printf '%s' "$input" | KIT="$kit" CWD="$cwd" BRANCHES="$BRANCHES" REMOTE="$REMOTE" AUTO_ERE="$AUTO_BRANCH_ERE" \
   PROT="$PROTECTED_BRANCHES" SUBJ="$SUBJECT_ERE" BADSUBJ="$BAD_SUBJECT_ERE" STYLE="$COMMIT_STYLE_SOURCE" python3 -c '
 import json, os, re, shlex, subprocess, sys
 E = os.environ
@@ -86,6 +87,10 @@ for seg in re.split(r"&&|\|\||;|\||\n", cmd):
         if E["REMOTE"] == "feature" and len(dst) == 1:
             allows.append("push " + dst[0] + " (REMOTE=feature)"); continue
         ask("push " + ", ".join(dst) + " lên remote " + (pos[0] if pos else "mặc định") + " (" + where + ")", "commit local được gửi lên server, đồng nghiệp/CI thấy được", "code rời khỏi máy này; nếu có secret hay dữ liệu khách trong commit thì đã lộ", "xoá nhánh trên remote (git push <remote> --delete <nhánh>) nhưng người khác có thể đã kéo về")
+    elif sub == "worktree" and pos[:1] == ["add"]:
+        block("never create a worktree (rule set by the user): work branches in turn in the one checkout; ask the user if this seems needed.")
+    elif sub == "clone" and kit:
+        block("never clone or copy a project (rule set by the user): work directly in this repo.")
     elif sub in ("pull", "fetch", "remote", "ls-remote", "clone", "submodule"):
         if E["REMOTE"] == "never": block("REMOTE=never for this project: give the user one copy-ready `! git " + sub + " ...` line instead.")
         if E["REMOTE"] == "feature" and sub == "fetch":
@@ -123,10 +128,6 @@ for seg in re.split(r"&&|\|\||;|\||\n", cmd):
         ask("git " + sub + " " + " ".join(pos) + " (" + where + ")", "viết lại lịch sử" if sub == "rebase" else "gộp nhánh khác vào " + (branch or "?"), "có thể conflict; rebase đổi sha của commit đã chia sẻ", "git reset --hard ORIG_HEAD ngay sau đó")
     elif sub == "stash" and pos[:1] and pos[0] in ("drop", "clear"):
         ask("git stash " + pos[0], "xoá thay đổi đã cất trong stash", "khó lấy lại", "chỉ cứu được qua git fsck nếu may")
-    elif sub == "worktree" and pos[:1] == ["add"] and E["PARALLEL"] == "worktree" and kit and len(pos) > 1 and os.path.realpath(os.path.join(d, pos[1])).startswith(os.path.realpath(kit) + "/worktrees/"):
-        allows.append("worktree add in the kit (PARALLEL=worktree)")
-    elif sub == "worktree" and pos[:1] == ["add"]:
-        ask("git worktree add (tạo thêm một thư mục làm việc của repo)", "thêm thư mục và nhánh", "kit dặn làm thẳng trong repo; thêm bản sao tốn dung lượng và dễ quên dọn", "git worktree remove <thư mục>")
     elif sub in ("commit", "cherry-pick", "revert") and kit:
         if prot.search(branch or ""): block("never commit on protected branch \"" + branch + "\". Ask the user (AskUserQuestion) which feature branch to use.")
         if sub == "commit":
