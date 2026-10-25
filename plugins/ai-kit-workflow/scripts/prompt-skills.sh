@@ -75,11 +75,13 @@ if kit and not nogrill:
             if m: prof[m.group(1)] = m.group(2).strip("\x27\"")
     except Exception:
         pass
-    cur = ", ".join(k + "=" + prof.get(k, "?") for k in ("BUDGET", "BRANCHES", "REMOTE", "TEST_POLICY"))
+    cur = ", ".join(k + "=" + prof.get(k, "?") for k in ("BUDGET", "BRANCHES", "REMOTE", "PROVIDERS", "TEST_POLICY"))
     if act:
         grills.append(("PROFILE", "work profile (" + cur + ", from " + kit + "/.ai/mode.conf): at the first task of this session show these values in plain words and ask whether they still fit this work"))
     if re.search(r"nhánh|branch|checkout|song song|parallel|nhiều project|multi", text):
         grills.append(("PROFILE-BRANCH", "branches: ask how to work this time: one branch / several in turn; which branch names the AI may create or switch by itself (BRANCHES ask|auto, AUTO_BRANCH_ERE); branches are done in turn in the one checkout, never a worktree, clone or copy; a new feature = commit, then a new branch from the base (WORKFLOW.md Branches)"))
+    if re.search(r"thêm (ai|acc|account|tài khoản)|account mới|tài khoản mới|agy|gemini|antigravity|provider|nhà cung cấp|model khác|\bai khác", text):
+        grills.append(("PROFILE-PROVIDERS", "AI providers: the user mentions an AI or account: ask whether to add it on this machine (~/ai-kit/bin/account add <tool> <name> <purpose> <plan>) and to this project (PROVIDERS, max 4; Claude + Codex first, free ones only Size: tiny tickets); show bash ~/ai-kit/bin/account plan"))
     if re.search(r"push|pull request|\bpr\b|remote|github|gitlab|deploy|release", text):
         grills.append(("PROFILE-REMOTE", "remote: ask how careful to be in this project: popup every time / feature-branch push without popup / never (REMOTE ask|feature|never); for one long run only: may the AI push by itself (touch $KIT/.ai/run/allow-push) or commit only and the user pushes later"))
     if re.search(r"xuyên đêm|qua đêm|overnight|chạy dài|long.?run|cả ngày|nhiều agent|song song|parallel|tối đa|\bmax\b|tiết kiệm|quota|limit|tốn|chi phí|cost|bản sao|clone|copy", text):

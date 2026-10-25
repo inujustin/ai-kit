@@ -43,7 +43,7 @@ if [ -x "$kit/.ai/bin/test-scan" ]; then
 fi
 if [ -f "$kit/.ai/mode.conf" ]; then
   BUDGET=normal; BRANCHES=ask; REMOTE=ask; . "$kit/.ai/mode.conf"
-  echo "ai-kit: work profile BUDGET=$BUDGET BRANCHES=$BRANCHES REMOTE=$REMOTE TEST_POLICY=${TEST_POLICY:-ask}, now on branch $(git -C "$root" branch --show-current 2>/dev/null). It is never fixed: at the first task of this session show it in plain words and ask (AskUserQuestion, with the tests question) whether it still fits; write changes to \$KIT/.ai/mode.conf."
+  echo "ai-kit: work profile BUDGET=$BUDGET BRANCHES=$BRANCHES REMOTE=$REMOTE PROVIDERS=\"${PROVIDERS:-claude codex}\" TEST_POLICY=${TEST_POLICY:-ask}, now on branch $(git -C "$root" branch --show-current 2>/dev/null). It is never fixed: at the first task of this session show it in plain words and ask (AskUserQuestion, with the tests question) whether it still fits; write changes to \$KIT/.ai/mode.conf."
 fi
 if [ -f "$kit/.ai/mode.conf" ]; then
   ACCOUNT_GROUP=""; . "$kit/.ai/mode.conf"

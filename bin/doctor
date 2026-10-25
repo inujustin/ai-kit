@@ -63,7 +63,7 @@ for s in frappe-app-dev frappe-code-review code-style; do
 done
 
 echo "== executors on this machine (the lead uses only what is here)"
-for c in claude codex agy; do
+for c in claude codex agy gemini; do
   if command -v "$c" >/dev/null; then printf '%-26s %-8s %s\n' "$c" INFO "$("$c" --version 2>/dev/null | head -1)"; else printf '%-26s %-8s %s\n' "$c" INFO "not installed"; fi
 done
 
