@@ -6,9 +6,10 @@
 KIT="$(bash "$(dirname "$0")/kit-resolve.sh" "$PWD" 2>/dev/null)" python3 -c '
 import json, os, re, sys
 try:
-    p = json.load(sys.stdin).get("prompt", "")
+    d_in = json.load(sys.stdin)
 except Exception:
     sys.exit(0)
+p, sid = d_in.get("prompt", ""), d_in.get("session_id", "x")
 text = p[:3000].lower()
 if len(text.strip()) < 15:
     sys.exit(0)
@@ -54,8 +55,18 @@ bps = [
 grills = [] if nogrill else [(i, h) for i, pat, h in bps if re.search(pat, text)]
 if not nogrill and not grills and act and len(text.split()) < 12 and not re.search(r"[\w-]+\.\w{1,4}\b|/", text):
     grills.append(("BP-6", "short action prompt without details: ask for goal, acceptance, example first"))
-for i, h in grills[:3]:
-    print("- grill: " + i + " " + h + ": the prompt shows the user may have forgotten it. Check its status in .ai/PRACTICES.md; proposed or not now: ask with AskUserQuestion (apply now / not now / no for this session).")
+# Grill each practice at most once per session (the user decides once; "not now" is asked again in a later session).
+import tempfile
+seen_f = os.path.join(tempfile.gettempdir(), "ai-kit-grilled-" + sid)
+try:
+    seen = set(open(seen_f).read().split())
+except Exception:
+    seen = set()
+grills = [(i, h) for i, h in grills if i not in seen][:3]
+if grills:
+    open(seen_f, "a").write(" ".join(i for i, _ in grills) + " ")
+for i, h in grills:
+    print("- grill NOW: " + i + " " + h + ": the prompt shows the user may have forgotten it. Before doing anything else in this turn, check its status in .ai/PRACTICES.md; proposed or not now: ask with AskUserQuestion (apply now / not now / no for this session).")
 if re.search(r"https?://|tip|mẹo|best practice|thực hành tốt|video|tiktok|facebook|github\.com", text):
     print("- lead: a pasted tip or link is a lead: check the real source (SKILLS.md Missing), add it to .ai/PRACTICES.md, ask.")
 for h in hits[:4]:

@@ -21,7 +21,7 @@ with open(path, "rb") as f:
             e = json.loads(line)
         except Exception:
             continue
-        u = (e.get("message") or {}).get("usage") if e.get("type") == "assistant" else None
+        u = (e.get("message") or {}).get("usage") if e.get("type") == "assistant" and not e.get("isSidechain") else None
         if u:
             used = sum(u.get(k, 0) or 0 for k in ("input_tokens", "cache_read_input_tokens", "cache_creation_input_tokens", "output_tokens"))
 window = int(os.environ.get("AI_CONTEXT_WINDOW", "200000"))
