@@ -85,8 +85,21 @@ still fits.
   PASS → `git push -u origin <branch>` → show PR title and body → `gh pr create`.
   Never force-push, never push straight to a protected branch (guard-git refuses both).
 
+## Many projects on one machine: one team per project
+- Each project = its own kit, its own lead session, its own memory (tickets, run, handoff). Never read, copy or mix
+  another project's code, notes or rules; company and startup work stay apart.
+- Machine-wide (global): `~/.claude/CLAUDE.md` rules, plugins/hooks, skills, accounts, `~/.config/ai-kit/
+  profile-defaults.conf` (starting values for new kits), and `python3 ~/ai-kit/bin/projects` (read-only table of
+  every kit: branch, run state, budget, priority, account group). Packs and practices stay per project; a lesson that
+  helps every project is promoted by the user through ~/ai-kit.
+- Accounts: ACCOUNT_GROUP in mode.conf (asked at onboarding, empty = ask each session, may change any time).
+- Priority: PRIORITY=auto means you decide from `bin/projects` and say why in one line; when quota is short, say which
+  project should yield and ask. While several run, at most once a day check official sources (Anthropic, OpenAI docs on
+  usage and rate limits, long agent runs) and log news in PRACTICES.md; general words only, never project details.
+
 ## Accounts and sessions: few sessions, nothing lost
-- One lead session per project, started with `bash ~/ai-kit/bin/ai [account|purpose]` (Codex as the brain:
+- One lead session per project (one terminal tab each; no extra ADE app needed), started with
+  `bash ~/ai-kit/bin/ai [account|purpose]` (default: the project's ACCOUNT_GROUP) (Codex as the brain:
   `--brain codex`). Everything else runs in the background from it (dispatch, subagents, auto-continue).
 - Accounts: `bash ~/ai-kit/bin/account list|add|next|out`. Each account has a purpose the user names (company,
   startup, ...); use the one that fits the project. A tool only switches to another account of the SAME tool.

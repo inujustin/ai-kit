@@ -40,6 +40,8 @@ Nothing stack-specific here: language servers, framework skills and packs are in
   then give the user its one login line. Ask whether Codex may switch accounts by itself on quota (ROTATE=auto in
   ~/.config/ai-kit/accounts.conf; default ask). Say once: several accounts of one provider to get more quota may break
   its terms; the user decides. Later "I added an account" = the same steps for that one.
+- Starting profile for new projects: ask the user's usual BUDGET / BRANCHES / REMOTE / ACCOUNT_GROUP and write them
+  to ~/.config/ai-kit/profile-defaults.conf (KEY=value); kit-new copies them, the onboarding still asks.
 - Lead launcher: tell the user that `bash ~/ai-kit/bin/ai [account|purpose]` starts the lead session; when it ends,
   `c` continues on the next account of the same tool, `n` starts fresh from handoff.md (offer a shell alias, ask).
 

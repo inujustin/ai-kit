@@ -26,6 +26,7 @@ CLAUDE.local.md               Claude-only, kept short: how to talk, ask on confl
 .ai/commit-style.conf         commit subject rules (checked by guard-git), set at onboarding
 .ai/mode.conf                 work profile: BUDGET, BRANCHES, REMOTE, PROTECTED_BRANCHES, TEST_POLICY (asked, re-asked)
 .ai/bin/run, .ai/LONGRUN.md   long runs: tasks.json (a task may name its branch), progress.md, two-attempt limit, auto run
+~/ai-kit/bin/projects         (machine) read-only table of every project kit, most urgent first
 ~/ai-kit/bin/account, bin/ai  (machine) accounts per tool + purpose; one-terminal lead launcher (quota -> next account of
                               the same tool, context full -> new session from handoff.md), Claude or Codex as the brain
 .ai/handoff.md                session snapshot for the next session (context-watch asks for it near ~70%)
@@ -54,8 +55,8 @@ formatters or fixers on it (the guard-repo hook blocks this); everything you wri
    write it to mode.conf. Whatever they pick, the AI re-asks at session start and per ticket.
 6b. Work profile (mode.conf), one AskUserQuestion with up to 4 questions, each value explained in plain words:
    BUDGET (lean / normal / max: is this a small company task or something the user invests in?), BRANCHES (ask /
-   auto + which names), REMOTE (ask / feature / never), PROTECTED_BRANCHES of this repo. Which account (purpose) this
-   project uses (`~/ai-kit/bin/account list`). Say these are re-asked whenever the work changes shape.
+   auto + which names), REMOTE (ask / feature / never), PROTECTED_BRANCHES of this repo, ACCOUNT_GROUP (which accounts,
+   `~/ai-kit/bin/account list`), PRIORITY (auto / high / normal / low against the other projects, `~/ai-kit/bin/projects`). Say these are re-asked whenever the work changes shape.
 7. Commit style: read the team's last ~50 commit subjects by other people (`git log --format=%s --author=...`), commitlint,
    .gitmessage, CONTRIBUTING, and the commit rules of installed skills. Propose `.ai/commit-style.conf` from what the team
    really does; if sources disagree with each other or with the kit default, ask which wins (show examples of each).

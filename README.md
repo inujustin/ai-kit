@@ -13,7 +13,9 @@ Bộ setup AI mang đi mọi máy: Claude = não chính, Codex = thợ code + ng
 5. Nhiều account: `bin/account add <claude|codex|agy> <tên> <mục đích>` rồi đăng nhập 1 lần. Mở session lead bằng
    `bash ~/ai-kit/bin/ai [tên|mục đích]` (Codex làm não: `--brain codex`). Hết session: `c` = hết quota, chạy tiếp
    cùng cuộc trò chuyện trên account kế tiếp **cùng loại**; `n` = session mới đọc `handoff.md`, session cũ vẫn mở lại được.
-6. Cập nhật: nói **"update the kit"** → AI `git pull` bản gốc rồi chạy `bin/kit-update` (không đè file bạn đã sửa; hỏi bạn).
+6. Nhiều project trên 1 máy: mỗi project 1 team (kit + session lead riêng, mỗi project 1 tab terminal).
+   Xem tổng: `python3 ~/ai-kit/bin/projects` (nhánh, chạy dài, ưu tiên, nhóm account).
+7. Cập nhật: nói **"update the kit"** → AI `git pull` bản gốc rồi chạy `bin/kit-update` (không đè file bạn đã sửa; hỏi bạn).
 
 ```
 ai-kit/
@@ -25,6 +27,7 @@ ai-kit/
 ├── project/         kit chép vào từng project (AGENTS.md, CLAUDE.local.md, .ai/, .claude/)
 ├── plugins/ai-kit-workflow  hook của kit (cài 1 lần mỗi máy, dùng cho mọi project)
 ├── bin/kit-new, kit-update   tạo kit cho 1 project (ngoài repo) / cập nhật kit an toàn
+├── bin/projects             bảng tổng mọi project trên máy (chỉ đọc)
 ├── bin/account, bin/ai      nhiều account mỗi tool; launcher 1 terminal (đổi account cùng loại, session mới từ handoff)
 └── project-exclude.txt   tên file graphify thêm vào .git/info/exclude
 ```

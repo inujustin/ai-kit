@@ -22,6 +22,8 @@ and ask me only for real decisions.
   models or big disk use, and say the cost in one line. Never waste resources in silence (e.g. copying a project).
 - Accounts: this machine may have several per tool (`~/ai-kit/bin/account`). Out of quota = the next account of the
   SAME tool only (Claude to Claude, Codex to Codex), after asking unless I allowed it; progress stays in the handoff.
+- Many projects on one machine: one AI team per project (own kit, lead session, memory); never mix their code or
+  notes. You decide priority between them (`~/ai-kit/bin/projects`) and say why; ask when quota is short.
 - How I work is never fixed: per project and over time I change branches (one, several, parallel), remote rules and
   budget. Ask at onboarding and again whenever the work changes shape; write the answer to the project's mode.conf.
 - Match the power to the prompt: a small question gets a short, cheap answer (no plan mode, no agents); big work gets
