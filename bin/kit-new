@@ -16,6 +16,14 @@ case "$(realpath -m "$kit")/" in "$root"/*) echo "The kit must live outside the 
 mkdir -p "$kit"; kit="$(cd "$kit" && pwd)"
 cp -r "$SRC/project/." "$kit/"
 mkdir -p "$kit/.ai/logs" "$kit/.ai/tickets" "$kit/.ai/docs"
+# Machine-wide defaults for a new project's work profile (optional): ~/.config/ai-kit/profile-defaults.conf, KEY=value
+# lines for mode.conf keys (BUDGET, BRANCHES, REMOTE, ACCOUNT_GROUP, PRIORITY, TEST_POLICY). The onboarding still asks.
+defs="${XDG_CONFIG_HOME:-$HOME/.config}/ai-kit/profile-defaults.conf"
+if [ -f "$defs" ]; then
+  grep -E '^[A-Z_]+=' "$defs" | while IFS='=' read -r k v; do
+    grep -qE "^$k=" "$kit/.ai/mode.conf" && python3 -c 'import re,sys; p,k,v=sys.argv[1:]; s=open(p).read(); open(p,"w").write(re.sub(r"(?m)^"+k+"=.*$", lambda m: k+"="+v, s))' "$kit/.ai/mode.conf" "$k" "$v"
+  done
+fi
 (cd "$SRC/project" && find . -type f -print0 | sort -z | xargs -0 sha256sum) > "$kit/.ai/.kit-baseline"
 git -C "$SRC" rev-parse --short HEAD > "$kit/.ai/.kit-source" 2>/dev/null || echo unknown > "$kit/.ai/.kit-source"
 
