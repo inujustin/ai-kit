@@ -30,6 +30,13 @@ echo
 for f in CLAUDE.local.md AGENTS.md; do
   [ -f "$kit/$f" ] && { echo "===== kit $f ====="; cat "$kit/$f"; echo; }
 done
+if [ -f "$kit/.ai/run/tasks.json" ]; then
+  st="$(python3 "$kit/.ai/bin/run" status 2>/dev/null)"
+  if ! printf '%s' "$st" | grep -q "nothing left" || printf '%s' "$st" | grep -q "^blocked:"; then
+    echo "ai-kit: a long run is in progress. Get up to speed first (\$KIT/.ai/LONGRUN.md): read \$KIT/.ai/run/progress.md and git log, then:"
+    printf '%s\n' "$st" | sed 's/^/  /'
+  fi
+fi
 pending=0
 [ -f "$kit/.ai/HOOKS.md" ] && pending=$(sed -n '/^## Candidates log/,$p' "$kit/.ai/HOOKS.md" | grep -ci '| *not now *|$')
 [ "$pending" -gt 0 ] && echo "ai-kit: $pending hook candidate(s) in \$KIT/.ai/HOOKS.md are 'not now': ask the user again when they come up."
