@@ -11,7 +11,6 @@ CLAUDE.local.md               Claude-only, kept short: how to talk, ask on confl
 .ai/HOOKS.md                  rule → hook: signals, proactive scan, existing hooks, candidates log
 .ai/PRACTICES.md              best practices the AI must notice and grill the user about; leads already checked
 .ai/lib.sh                    sets KIT (this folder) and ROOT (the repo) for every script
-worktrees/                    AI worktrees (inside the kit, never in the repo)
 .ai/hooks/<Event>/*.sh        this project's own hooks (run by the plugin for this project only)
 .ai/SKILLS.md                 skill map + how to propose new skills
 .ai/packs.conf                PACKS=(...) active stack packs
@@ -19,18 +18,16 @@ worktrees/                    AI worktrees (inside the kit, never in the repo)
 .ai/verify.sh + verify.conf   the gate: --fast (seconds) and full (tests, build)
 .ai/check_antipatterns.sh     rule-coded greps on CHANGED files only (old code does not block new work)
 (plugin ai-kit-workflow)      hooks: session-start (loads this kit + lists the repo's rule files), prompt-skills,
-                              guard-git, after-edit (team pre-commit), stop-gate (verify --fast in kit worktrees)
-.ai/git-hooks/pre-push        copy to .git/hooks/pre-push: ai/* never leaves the machine
-.ai/bin/newsession            ai/<agent>/<date>-<name> branch + worktree in $KIT/worktrees/
-.ai/bin/dispatch              Codex runs a ticket (role coder|tester) in a fresh context + worktree; script checks and commits
+                              guard-git, after-edit (team pre-commit), guard-outside, guard-repo, stop-gate (verify --fast on uncommitted
+                              changes), context-watch, auto-continue
+.ai/bin/dispatch              Codex runs a ticket (role coder|tester) in a fresh context, in the repo on the current branch,
+                              one at a time; script checks and commits on PASS; QUOTA -> next Codex account if allowed
 .ai/roles/                    prompts for the tester and coder roles (fresh contexts)
-.ai/bin/story                 default merge: rebuild ai/* work as a clean story of commits; check (identical result,
-                              verify per commit, commit style) then fast-forward the user's branch
-.ai/commit-style.conf         commit subject rules (story check, and guard-git in direct mode), set at onboarding
-.ai/mode.conf                 direct (commit steps on the feature branch) or worktree (ai/* branches + story)
-.ai/bin/mergesession          squash merge, only for one small change
-.ai/bin/land                  direct mode: bring a reviewed ai/* ticket onto the feature branch as one commit
-.ai/bin/run, .ai/LONGRUN.md   long runs: tasks.json, progress.md, two-attempt limit, optional auto run
+.ai/commit-style.conf         commit subject rules (checked by guard-git), set at onboarding
+.ai/mode.conf                 work profile: BUDGET, BRANCHES, REMOTE, PROTECTED_BRANCHES, TEST_POLICY (asked, re-asked)
+.ai/bin/run, .ai/LONGRUN.md   long runs: tasks.json (a task may name its branch), progress.md, two-attempt limit, auto run
+~/ai-kit/bin/account, bin/ai  (machine) accounts per tool + purpose; one-terminal lead launcher (quota -> next account of
+                              the same tool, context full -> new session from handoff.md), Claude or Codex as the brain
 .ai/handoff.md                session snapshot for the next session (context-watch asks for it near ~70%)
 .ai/bin/gate                  full verify + Codex adversarial review -> VERDICT PASS/BLOCK
 .ai/tickets/, .ai/docs/       tickets, spec, glossary, ADRs (private, not the team's docs/)
@@ -47,15 +44,18 @@ formatters or fixers on it (the guard-repo hook blocks this); everything you wri
 3. Compare kit rules with the team's rules and real code. List conflicts and rules that do not match; ask which to keep.
    The team's rules always win. Fill the "Project" section and TODOs in AGENTS.md.
 4. Fill `.ai/verify.conf` with commands that really exist here. Ask how to run tests (docker or native, site name).
-   Run `bash $KIT/.ai/verify.sh --all` (it runs on a throw-away copy of HEAD, never on the user's checkout). Red on the
+   Ask before running `bash $KIT/.ai/verify.sh --all`: it runs in place and reports any file a check rewrote (restore
+   those with `git checkout -- <file>` if the user agrees; they were not yours to change). Red on the
    current code is the team's state, not yours to fix: report it and ask; adjust only the kit's verify.conf.
 5. Check `.ai/SKILLS.md` against what is installed and what this stack needs. Propose missing ones (official only).
-6. Check the safety basics: private files excluded (`git status` shows none of them), pre-push hook in place,
-   remote branch names, the user's default base branch. Ask for anything unclear.
+6. Check the safety basics: private files excluded (`git status` shows none of them), remote names, the user's default
+   base branch (`git config branch.<b>.aibase` if it is not develop/main/master). Ask for anything unclear.
 6c. Tests: run `bash $KIT/.ai/bin/test-scan`, show the result, and ask the user TEST_POLICY (ask / tests / manual);
    write it to mode.conf. Whatever they pick, the AI re-asks at session start and per ticket.
-6b. Mode: ask direct (default, simplest to follow) or worktree (parallel Codex tickets, full separation); write mode.conf
-   and the protected branches of this repo.
+6b. Work profile (mode.conf), one AskUserQuestion with up to 4 questions, each value explained in plain words:
+   BUDGET (lean / normal / max: is this a small company task or something the user invests in?), BRANCHES (ask /
+   auto + which names), REMOTE (ask / feature / never), PROTECTED_BRANCHES of this repo. Which account (purpose) this
+   project uses (`~/ai-kit/bin/account list`). Say these are re-asked whenever the work changes shape.
 7. Commit style: read the team's last ~50 commit subjects by other people (`git log --format=%s --author=...`), commitlint,
    .gitmessage, CONTRIBUTING, and the commit rules of installed skills. Propose `.ai/commit-style.conf` from what the team
    really does; if sources disagree with each other or with the kit default, ask which wins (show examples of each).

@@ -41,15 +41,14 @@ The SessionStart hook of the ai-kit-workflow plugin reminds you of candidates st
 | Hook | Event | Enforces |
 |---|---|---|
 | plugin guard-outside.sh | PreToolUse(Read/Edit/Write/Glob/Grep/Bash) | outside the workspace and, on WSL, the Windows side (/mnt, *.exe): always a popup with the full explanation (also in auto mode); bulk deletes/moves there denied |
-| plugin guard-git.sh | PreToolUse(Bash) | commit only on ai/*, no push of ai/*, no force-push, no push to main/master/develop |
-| plugin guard-repo.sh | PreToolUse(Edit/Write/Bash) | no edits in the team's checkout (only ai/* worktrees), no whole-repo fixers there |
+| plugin guard-git.sh | PreToolUse(Bash) | per mode.conf: branch switch/create/delete, every remote command, reset --hard, clean, rebase, merge, clone, worktree add → popup with the full explanation (BRANCHES=auto / REMOTE=feature let some pass); refused: force-push, push --all/--mirror, push to protected branches, commits on protected branches, kit files in a commit, subjects off commit-style.conf |
+| plugin guard-repo.sh | PreToolUse(Edit/Write/Bash) | no whole-repo fixers in the repo; a project session never edits the ai-kit source |
 | plugin after-edit.sh | PostToolUse(Edit/Write) | the team's pre-commit hooks on the edited file |
-| plugin stop-gate.sh | Stop | `verify.sh --fast` in the kit's worktrees with uncommitted changes |
-| git pre-push | git | ai/* branches never leave the machine (also for the user) |
+| plugin stop-gate.sh | Stop | `verify.sh --fast` when the repo has uncommitted changes |
 | plugin session-start.sh | SessionStart | loads this kit's rules, lists the repo's own rule files, reminds of "not now" hook candidates and open best practices |
 | plugin auto-continue.sh | Stop | approved long run only ($KIT/.ai/run/auto): start the next task; stop when none left, only blocked, or AI_AUTO_MAX_TURNS used |
 | plugin context-watch.sh | UserPromptSubmit | context about 70% full (AI_CONTEXT_RENEW_PCT, AI_CONTEXT_WINDOW): write handoff.md, ask whether to renew; again every +10% |
-| plugin prompt-skills.sh | UserPromptSubmit | reads each prompt, prints skill hints by keyword (VI + EN) so skills are picked even for short high-level prompts; reminds to check PRACTICES.md and to log pasted tips as leads |
+| plugin prompt-skills.sh | UserPromptSubmit | reads each prompt, prints skill hints by keyword (VI + EN) so skills are picked even for short high-level prompts; reminds to check PRACTICES.md and to log pasted tips as leads; grills the work profile (budget, branches, remote) each session and when the prompt brings them up |
 
 ## Candidates log
 | Date | Rule | Where it lives | Signal | Decision |

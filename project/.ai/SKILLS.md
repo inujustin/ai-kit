@@ -23,11 +23,12 @@ When you add a row here, add its keywords to ~/ai-kit/plugins/ai-kit-workflow/sc
 | Auth, permissions, uploads, raw input, secrets | `/security-review` | built-in |
 | Cleanup after a feature works | `/simplify` | built-in |
 | Second opinion, stuck for 2 tries, plan critique | `/codex:review`, `/codex:rescue` | codex plugin (OpenAI) |
-| Any code change (one ticket or several independent ones) | `bash $KIT/.ai/bin/dispatch $KIT/.ai/tickets/<id>.md` (background, parallel) | this kit |
+| Any code change (one ticket or several independent ones) | `bash $KIT/.ai/bin/dispatch $KIT/.ai/tickets/<id>.md` (background, one at a time per repo) | this kit |
 | Library or framework API you are unsure of | Context7 (never put client code or data in the query) | context7 plugin |
 | Big or unfamiliar codebase: where is X, what calls Y, how modules connect | graphify: `/graphify .` once (code is parsed locally; docs/PDFs go through this session's model), then query the graph instead of reading many files. Use `--code-only` on client repos | graphify CLI 0.9.80 (Graphify-Labs, Apache-2.0) |
 | Python / TS type errors and go-to-definition | pyright-lsp, typescript-lsp (automatic) | Anthropic marketplace |
 | SPA in the browser: console, network, layout, performance | chrome-devtools-mcp | Anthropic marketplace |
+| Several accounts, out of quota, new session from the handoff | `~/ai-kit/bin/account`, `~/ai-kit/bin/ai` (same tool only) | this kit |
 | Context window and token use (status line) | claude-hud (local only, no network) | jarrodwatts/claude-hud, MIT |
 | Keep code small: does it need to exist, stdlib/native first, shortest diff | ponytail (always on, level **lite** in this kit via `PONYTAIL_DEFAULT_MODE=lite`); `/ponytail-review` or `/ponytail-audit` to list what to delete without editing | ai-kit marketplace, pinned v5.1.0 |
 
@@ -51,6 +52,6 @@ When you add a row here, add its keywords to ~/ai-kit/plugins/ai-kit-workflow/sc
 4. The user runs the install. Then add a row to the map above (this file is the kit's memory).
 
 ## Tools the user reviews with (offer them, do not install)
-- Terminal: `lazygit` (branches, commits, diffs, worktrees). Closer look: VS Code with the Git Graph extension.
+- Terminal: `lazygit` (branches, commits, diffs). Closer look: VS Code with the Git Graph extension.
 - When you finish work the user should review, name the branch and commits so they can find them in lazygit or Git Graph.
 - Conflicts: explain each one in plain words and ask which side to keep; never resolve silently.

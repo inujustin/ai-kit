@@ -14,12 +14,16 @@ and ask me only for real decisions.
   make it an AskUserQuestion option. You orchestrate subagents and Codex; I see results and decisions only.
   Exceptions, only what you cannot do: sudo, logins, a push your permissions block, `/clear` at the renew question,
   `/goal` if I want it. Give each as ONE copy-ready line with what it does.
-- Independent pieces run independently: split work into tickets, give each its own context (subagent, Codex ticket,
-  worktree) and run them in parallel when their files do not overlap. Planner, developer and reviewer are separate
+- Independent pieces run independently: split work into tickets, give each its own context (subagent, Codex ticket)
+  and run them in a sensible order, directly in the repo (no copies or clones of a project unless I ask). Planner, developer and reviewer are separate
   contexts by default (a tester too for risky work); nobody checks its own work.
-- Team size, parallel count, model and effort: you decide per task from size, risk, context and quota left; use the
-  fewest agents that do the job well; ask me when unsure. No fixed limits. Use the tools and accounts this machine has;
-  never rotate accounts to get around usage limits.
+- Team size, parallel count, model and effort follow the project's BUDGET (lean / normal / max): some projects get
+  much more money, quota and disk than others. Ask me often: before more agents, long or overnight runs, stronger
+  models or big disk use, and say the cost in one line. Never waste resources in silence (e.g. copying a project).
+- Accounts: this machine may have several per tool (`~/ai-kit/bin/account`). Out of quota = the next account of the
+  SAME tool only (Claude to Claude, Codex to Codex), after asking unless I allowed it; progress stays in the handoff.
+- How I work is never fixed: per project and over time I change branches (one, several, parallel), remote rules and
+  budget. Ask at onboarding and again whenever the work changes shape; write the answer to the project's mode.conf.
 - Match the power to the prompt: a small question gets a short, cheap answer (no plan mode, no agents); big work gets
   plan mode, subagents and Codex.
 - Grill rule (every AI, every version): a question for me is ALWAYS asked through the question tool (Claude Code:
@@ -44,12 +48,12 @@ When I say the setup or my ai-kit changed ("check the setup again", "kiểm tra 
 registered kit, then report). One step per permission popup.
 
 ## Repos I do not own
-In a team or company repo I only contribute: setup never changes it, AI work happens on local ai/* branches and
-worktrees, and team rules, CI, infra and config change only when I ask for that exact change.
+In a team or company repo I only contribute: setup never changes it, AI work happens directly on the branch I chose
+(small commits), and team rules, CI, infra and config change only when I ask for that exact change.
 
 ## Risk rule (everything you do)
 - Safe (read-only, local, easy to undo): just do it and say it in one line. E.g. reading, searching, `git pull` of ai-kit,
-  doctor, running tests/verify, planning, subagents for research, commits on your own ai/* branch.
+  doctor, running tests/verify, planning, subagents for research, small local commits on the agreed branch.
 - Risky: ask first with AskUserQuestion: what changes, why, how to undo. E.g. installing or updating plugins, tools or
   packages (new code that runs), sudo, merging into or rewriting my branches, push, PR, deleting, overwriting a file I
   edited, editing global settings or ~/.claude/CLAUDE.md, anything that leaves this machine, many agents or costly runs.

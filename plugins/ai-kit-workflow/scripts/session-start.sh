@@ -41,6 +41,10 @@ if [ -x "$kit/.ai/bin/test-scan" ]; then
   TEST_POLICY=ask; [ -f "$kit/.ai/mode.conf" ] && . "$kit/.ai/mode.conf"
   echo "ai-kit: $(cd "$root" && bash "$kit/.ai/bin/test-scan" 2>/dev/null | head -1); TEST_POLICY=$TEST_POLICY. At the first code task of this session ask the user (AskUserQuestion) whether to write tests (recommend yes if the repo has tests, skip with manual checks if not)."
 fi
+if [ -f "$kit/.ai/mode.conf" ]; then
+  BUDGET=normal; BRANCHES=ask; REMOTE=ask; . "$kit/.ai/mode.conf"
+  echo "ai-kit: work profile BUDGET=$BUDGET BRANCHES=$BRANCHES REMOTE=$REMOTE TEST_POLICY=${TEST_POLICY:-ask}, now on branch $(git -C "$root" branch --show-current 2>/dev/null). It is never fixed: at the first task of this session show it in plain words and ask (AskUserQuestion, with the tests question) whether it still fits; write changes to \$KIT/.ai/mode.conf."
+fi
 pending=0
 [ -f "$kit/.ai/HOOKS.md" ] && pending=$(sed -n '/^## Candidates log/,$p' "$kit/.ai/HOOKS.md" | grep -ci '| *not now *|$')
 [ "$pending" -gt 0 ] && echo "ai-kit: $pending hook candidate(s) in \$KIT/.ai/HOOKS.md are 'not now': ask the user again when they come up."

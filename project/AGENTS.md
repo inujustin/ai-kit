@@ -51,5 +51,5 @@ whether official examples exist for our use case, and a version at least 2 weeks
 
 ## Workflow for agents
 - Work from a ticket in `.ai/tickets/` when one exists. Change only files under its "Owns". Need more? Stop and say which and why.
-- Codex (executor): never run git that writes and never push; the dispatch script commits your work on an ai/* branch.
+- Codex (executor): never run git that writes and never push; the dispatch script commits your work on the current branch.
 - Final message: changed files, verify and test output verbatim, open questions.

@@ -35,12 +35,19 @@ Nothing stack-specific here: language servers, framework skills and packs are in
 - Identity per folder: copy `machine/gitconfig-identity.template` to `~/.gitconfig-<name>` with the values the user gives,
   and add the `includeIf` block from `machine/gitconfig-snippet.txt` to `~/.gitconfig` (show the diff first).
 - Merge (never overwrite) the settings listed in MANIFEST C4 into `~/.claude/settings.json`; show the diff, ask.
+- Accounts (set up everything from the start): ask how many accounts this machine has per tool (Claude, Codex, agy)
+  and the purpose of each (company, startup, ...). For each extra one: `bash bin/account add <tool> <name> <purpose>`,
+  then give the user its one login line. Ask whether Codex may switch accounts by itself on quota (ROTATE=auto in
+  ~/.config/ai-kit/accounts.conf; default ask). Say once: several accounts of one provider to get more quota may break
+  its terms; the user decides. Later "I added an account" = the same steps for that one.
+- Lead launcher: tell the user that `bash ~/ai-kit/bin/ai [account|purpose]` starts the lead session; when it ends,
+  `c` continues on the next account of the same tool, `n` starts fresh from handoff.md (offer a shell alias, ask).
 
 ## Phase 5: project kit (per project; the kit stays OUTSIDE the repo)
 For each repo the user works on ("setup the kit for this project"):
 1. Ask where to keep this project's kit (the user decides; e.g. a sibling folder or ~/kits/<repo>).
 2. `bash ~/ai-kit/bin/kit-new <repo> <kit-folder>`: copies `project/` there, registers repo → kit in
-   ~/.config/ai-kit/projects.tsv, lets Claude use the folder (additionalDirectories), adds .git/hooks/pre-push and
+   ~/.config/ai-kit/projects.tsv, lets Claude use the folder (additionalDirectories), adds
    graphify output names to .git/info/exclude. Nothing goes into the repo's files; `git status` stays clean.
 3. Detect the stack (manifests, lock files, framework files). Install only its rows from MANIFEST "Per stack"
    (LSP plugin + server, official framework skills). No matching row: follow "Other" and `project/.ai/packs/README.md`.

@@ -10,7 +10,10 @@ Bộ setup AI mang đi mọi máy: Claude = não chính, Codex = thợ code + ng
 4. Trong mỗi repo dự án: mở `claude` ở đó và nói **"setup the kit for this project"**. AI hỏi bạn để kit ở đâu (**ngoài** repo),
    tạo kit + đăng ký. Từ đó chỉ cần gõ `claude` trong repo: plugin `ai-kit-workflow` tự nạp kit, hook gợi ý skill, chặn git…
    Repo công ty không bao giờ có file nào của kit.
-5. Cập nhật: nói **"update the kit"** → AI `git pull` bản gốc rồi chạy `bin/kit-update` (không đè file bạn đã sửa; hỏi bạn).
+5. Nhiều account: `bin/account add <claude|codex|agy> <tên> <mục đích>` rồi đăng nhập 1 lần. Mở session lead bằng
+   `bash ~/ai-kit/bin/ai [tên|mục đích]` (Codex làm não: `--brain codex`). Hết session: `c` = hết quota, chạy tiếp
+   cùng cuộc trò chuyện trên account kế tiếp **cùng loại**; `n` = session mới đọc `handoff.md`, session cũ vẫn mở lại được.
+6. Cập nhật: nói **"update the kit"** → AI `git pull` bản gốc rồi chạy `bin/kit-update` (không đè file bạn đã sửa; hỏi bạn).
 
 ```
 ai-kit/
@@ -22,6 +25,7 @@ ai-kit/
 ├── project/         kit chép vào từng project (AGENTS.md, CLAUDE.local.md, .ai/, .claude/)
 ├── plugins/ai-kit-workflow  hook của kit (cài 1 lần mỗi máy, dùng cho mọi project)
 ├── bin/kit-new, kit-update   tạo kit cho 1 project (ngoài repo) / cập nhật kit an toàn
+├── bin/account, bin/ai      nhiều account mỗi tool; launcher 1 terminal (đổi account cùng loại, session mới từ handoff)
 └── project-exclude.txt   tên file graphify thêm vào .git/info/exclude
 ```
 
@@ -34,5 +38,5 @@ ai-kit/
 - Thêm tool mới: nói "add <tên> to the kit"; AI kiểm nguồn chính chủ, hỏi bạn, rồi ghi vào MANIFEST.md.
 
 ## Gỡ
-Một project: xoá thư mục kit của nó, dòng của nó trong `~/.config/ai-kit/projects.tsv`, `.git/hooks/pre-push`, các dòng graphify trong `.git/info/exclude`.
+Một project: xoá thư mục kit của nó, dòng của nó trong `~/.config/ai-kit/projects.tsv`, `.git/hooks/pre-push` (chỉ kit cũ mới có), các dòng graphify trong `.git/info/exclude`.
 Trên máy: `claude plugin uninstall <tên>`, `uv tool uninstall <tên>`, `npm uninstall -g <tên>`, `graphify uninstall`.

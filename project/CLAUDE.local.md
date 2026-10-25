@@ -36,26 +36,36 @@ I prompt at a high level and do not want to remember the process. You may, witho
   separate contexts, a tester only when the ticket says `Tests: write`; you choose how many agents and at what effort).
 - Tests: never decide alone. Ask me often (start of each session, each ticket) with the facts from `.ai/bin/test-scan`:
   the repo has tests → recommend writing them; none → recommend skipping with manual checks.
-Ask first before: many agents at once or anything costly, installs, sudo, merge, push, PR, anything leaving this machine.
+Ask first before: more agents or spend than BUDGET suggests, long/overnight runs, installs, sudo, merge, push, PR,
+anything leaving this machine.
+
+## How I work is never fixed: ask (work profile, `.ai/mode.conf`)
+This kit is a portable SE team: company work with colleagues, my own startup, many projects and branches. Each project
+has its own profile: BUDGET (lean / normal / max: some projects get far more money, quota and disk), BRANCHES (one,
+several in turn, several at once; may you create/switch local branches by yourself), REMOTE (how careful with push,
+pull, PR), TEST_POLICY. Ask at onboarding, at the first task of each session, and whenever the work changes shape
+(new branch, overnight run, first push, costly task). Write each answer to mode.conf and say so in one line.
+Local work can be freer; remote is always careful. Never copy or clone the project to be safe, never spend in silence.
 The UserPromptSubmit hook adds hints (skills, "question → answer only", "big → plan first") to each prompt.
 
 ## The team's repo is hands-off
-I am a contributor, not the owner. Setup and onboarding only READ the repo. Code changes follow `.ai/mode.conf`: direct =
-on my current feature branch, one local commit per finished step (never on protected branches); worktree = only in your
-ai/* worktrees. In every mode: never run whole-repo fixers (pre-commit --all-files,
-formatters with --write/--fix) on it; `.ai/verify.sh` already runs on a throw-away copy. Team rules, CI, infra and config
-files change only when I ask for that exact change, as a normal contribution through review. The plugin's guard-repo hook
-enforces this; I can lift it for a while with `touch $KIT/.ai/allow-root-edits`.
+I am a contributor, not the owner. Setup and onboarding only READ the repo. Code changes happen directly on the branch
+we agreed, one local commit per finished step (never on protected branches). Never run whole-repo fixers
+(pre-commit --all-files, formatters with --write/--fix) on it; if `.ai/verify.sh` reports files a check rewrote, tell me.
+Team rules, CI, infra and config files change only when I ask for that exact change, as a normal contribution through
+review. The plugin's guard-repo hook blocks the fixers; I can lift it for a while with `touch $KIT/.ai/allow-root-edits`.
 
 ## Plans and tickets never enter the repo
 Plans live only on this machine (`~/.claude/plans/`); tickets, specs, glossary and ADR drafts live in the kit
 (`$KIT/.ai/tickets/`, `$KIT/.ai/docs/`). No plan or ticket file is ever committed or pushed. Only the code of each ticket
-enters the repo: ai/* branch → story commits → my review. Commit messages and PR bodies describe the change, not the plan file.
+enters the repo, as small commits on the branch, then my review. Commit messages and PR bodies describe the change, not the plan file.
 
 ## Commits and branches
 - Break work into small commits, one logical step each, in an order a reviewer can follow; never one big commit.
-- Stay on the branch I am on. Never `git switch` / `git checkout <branch>` on your own (the guard-git hook blocks it);
-  changing branch is my decision, ask with AskUserQuestion.
+- Branches follow the work profile: ask which branch(es) at the start of a task; switch or create local branches only
+  as agreed (guard-git shows a popup unless BRANCHES=auto allows it). Commit before switching; say "now on <branch>".
+- Accounts: out of quota → the next account of the SAME tool only (`~/ai-kit/bin/account`, `bin/ai`), after asking
+  unless allowed; write the handoff first so nothing is lost.
 
 ## This kit is self-contained
 Everything you add for this project (rules, hooks, packs, commit style, notes) goes into THIS kit (`$KIT`), never into the
@@ -64,7 +74,7 @@ project, tell me; I promote it myself from a session opened inside ~/ai-kit.
 
 ## Risk rule (everything you do)
 - Safe (read-only, local, easy to undo): just do it and say it in one line. E.g. reading, searching, `git pull` of ai-kit,
-  doctor, running tests/verify, planning, subagents for research, commits on your own ai/* branch.
+  doctor, running tests/verify, planning, subagents for research, small local commits on the agreed branch.
 - Risky: ask first with AskUserQuestion: what changes, why, how to undo. E.g. installing or updating plugins, tools or
   packages (new code that runs), sudo, merging into or rewriting my branches, push, PR, deleting, overwriting a file I
   edited, editing global settings or ~/.claude/CLAUDE.md, anything that leaves this machine, many agents or costly runs.
