@@ -1,13 +1,15 @@
 #!/usr/bin/env bash
-# Run one ticket with Codex in a fresh context and its own worktree, check it, then commit on its ai/codex/* branch.
-# Codex edits files and runs tests but cannot commit (its sandbox cannot write the main .git); this script commits.
-# Usage: bash $KIT/.ai/bin/dispatch $KIT/.ai/tickets/T012-foo.md [coder|tester] [base-branch]
-#   tester: writes failing tests only, from the ticket (branch ai/codex/<date>-<id>-tests).
-#   coder:  writes the code (default). If a tests branch for this ticket exists, it starts from it and may not touch tests.
-# Risky logic: run tester first, review the tests with the user, then coder. Claude runs both as background commands.
+# Run one ticket with Codex in a fresh context, directly in the repo on the user's current branch, check it, commit it.
+# No clone, no copy, no worktree: one ticket at a time per repo (a lock makes parallel dispatches wait their turn).
+# Codex edits files and runs tests but cannot commit (its sandbox cannot write .git); this script commits on PASS.
+# On FAIL the changes stay uncommitted for Claude to fix or show the user.
+# Usage: bash $KIT/.ai/bin/dispatch $KIT/.ai/tickets/T012-foo.md [coder|tester]
+#   tester: writes failing tests only, from the ticket (only when the ticket says "Tests: write").
+#   coder:  writes the code (default); if a tester commit for this ticket exists, it may not touch those test files.
 # Model: AI_CODEX_MODEL (default gpt-6.1-sol), effort: AI_CODEX_EFFORT (default medium; high for tricky tickets).
+# Pick both from the project's BUDGET in mode.conf; ask the user before raising them.
 set -euo pipefail
-ticket="$(readlink -f "${1:?usage: dispatch <ticket.md> [coder|tester] [base]}")"
+ticket="$(readlink -f "${1:?usage: dispatch <ticket.md> [coder|tester]}")"
 role="${2:-coder}"
 case "$role" in coder|tester) ;; *) echo "role must be coder or tester" >&2; exit 1 ;; esac
 if [ "$role" = tester ] && ! grep -qiE "Tests:[[:space:]]*write" "$ticket"; then
@@ -15,30 +17,29 @@ if [ "$role" = tester ] && ! grep -qiE "Tests:[[:space:]]*write" "$ticket"; then
 fi
 # shellcheck source=/dev/null
 . "$(dirname "$0")/../lib.sh"
-root="$ROOT"
+PROTECTED_BRANCHES='^(main|master|develop|dev|release.*|production|staging)$'
+# shellcheck source=/dev/null
+[ -f "$KIT/.ai/mode.conf" ] && . "$KIT/.ai/mode.conf"
 id="$(basename "$ticket" .md)"
 model="${AI_CODEX_MODEL:-gpt-6.1-sol}"
 effort="${AI_CODEX_EFFORT:-medium}"
-log="$KIT/.ai/logs"
-mkdir -p "$log"
+log="$KIT/.ai/logs"; mkdir -p "$log" "$KIT/.ai/run"
+name="$id-$role"
 TEST_FILES_ERE='(^|/)tests?/'
 # shellcheck source=/dev/null
 . "$KIT/.ai/packs.conf"
 
-base="${3:-}"
-name="$id"
-if [ "$role" = tester ]; then
-  name="$id-tests"
-elif [ -z "$base" ]; then
-  base="$(git -C "$root" for-each-ref --sort=-committerdate --format='%(refname:short)' "refs/heads/ai/codex/*-$id-tests" | head -1)"
-fi
-tests_base="$base"
-wt="$(bash "$KIT/.ai/bin/newsession" codex "$name" ${base:+"$base"} | tail -1)"
-branch="$(git -C "$wt" branch --show-current)"
-start="$(git -C "$wt" rev-parse HEAD)"
+exec 9>"$KIT/.ai/run/dispatch.lock"
+flock 9
+cd "$ROOT"
+branch="$(git branch --show-current)"
+[ -n "$branch" ] || { echo "Not on a branch (detached HEAD). Ask the user which branch to use." >&2; exit 1; }
+printf '%s' "$branch" | grep -qE "$PROTECTED_BRANCHES" && { echo "'$branch' is protected; ask the user which feature branch to use." >&2; exit 1; }
+[ -z "$(git status --porcelain)" ] || { echo "The working tree has uncommitted changes; commit or ask the user first, so this ticket's diff is only its own." >&2; exit 1; }
+start="$(git rev-parse HEAD)"
 
 prompt="Project rules: read CLAUDE.md in the repo (team) and $KIT/AGENTS.md (kit; outside the repo, read-only for you).
-The kit gate is: bash $KIT/.ai/verify.sh --fast (run it from the worktree).
+The kit gate is: bash $KIT/.ai/verify.sh --fast (run it from the repo).
 
 $(cat "$KIT/.ai/roles/$role.md")
 
@@ -46,25 +47,29 @@ Ticket $id:
 $(cat "$ticket")"
 
 codex exec --sandbox workspace-write -m "$model" -c model_reasoning_effort="$effort" \
-  -C "$wt" -o "$log/$name.md" "$prompt" >"$log/$name.log" 2>&1 || true
+  -C "$ROOT" -o "$log/$name.md" "$prompt" >"$log/$name.log" 2>&1 || true
 
-if (cd "$wt" && bash "$KIT/.ai/verify.sh" --fast >"$log/$name.verify.log" 2>&1); then status=PASS; else status=FAIL; fi
+if bash "$KIT/.ai/verify.sh" --fast >"$log/$name.verify.log" 2>&1; then status=PASS; else status=FAIL; fi
 
-git -C "$wt" add -A
-if git -C "$wt" diff --cached --quiet; then
-  echo "FAIL $id ($role) branch=$branch: Codex changed nothing. See $log/$name.md"; exit 1
-fi
-changed="$(git -C "$wt" diff --cached --name-only "$start")"
+[ -n "$(git status --porcelain)" ] || { echo "FAIL $id ($role) branch=$branch: Codex changed nothing. See $log/$name.md"; exit 1; }
+changed="$( { git diff --name-only "$start"; git ls-files --others --exclude-standard; } | sort -u)"
 if [ "$role" = tester ]; then
   bad="$(printf '%s\n' "$changed" | grep -vE "$TEST_FILES_ERE" || true)"
   [ -n "$bad" ] && { status=FAIL; echo "tester changed non-test files:"; echo "$bad"; } >>"$log/$name.verify.log"
-elif [ -n "$tests_base" ]; then
-  bad="$(printf '%s\n' "$changed" | grep -E "$TEST_FILES_ERE" || true)"
-  [ -n "$bad" ] && { status=FAIL; echo "coder changed test files written by the tester:"; echo "$bad"; } >>"$log/$name.verify.log"
+else
+  tc="$(git log --format=%H --grep="^Ticket: $id$" --grep="^Role: tester" --all-match "$start" | head -1)"
+  if [ -n "$tc" ]; then
+    bad="$(printf '%s\n' "$changed" | grep -Fx -f <(git show --name-only --format= "$tc") || true)"
+    [ -n "$bad" ] && { status=FAIL; echo "coder changed test files written by the tester:"; echo "$bad"; } >>"$log/$name.verify.log"
+  fi
 fi
 
+if [ "$status" = FAIL ]; then
+  echo "FAIL $id ($role) branch=$branch: changes left UNCOMMITTED for review. summary=$log/$name.md checks=$log/$name.verify.log"; exit 1
+fi
 title="$(sed -n '1s/^#* *//p' "$ticket")"
-git -C "$wt" commit -q -m "${title:-$id}${role:+ ($role)}" -m "Ticket: $id
-Role: $role. Executor: Codex $model ($effort). Checks: $status${tests_base:+. Tests from: $tests_base}"
-echo "$status $id ($role) branch=$branch sha=$(git -C "$wt" rev-parse --short HEAD) worktree=$wt summary=$log/$name.md checks=$log/$name.verify.log"
-[ "$status" = PASS ]
+git add -A
+git commit -q -m "${title:-$id}" -m "Ticket: $id
+Role: $role
+Executor: Codex $model ($effort). Checks: PASS"
+echo "PASS $id ($role) branch=$branch sha=$(git rev-parse --short HEAD) summary=$log/$name.md checks=$log/$name.verify.log"
