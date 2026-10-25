@@ -1,0 +1,131 @@
+#!/usr/bin/env bash
+# AI accounts on this machine. Each account is its own config folder, so several can be logged in at once and used in
+# parallel or in turn. A tool only ever switches to another account of the SAME tool (Claude -> Claude, Codex -> Codex);
+# when every account of a tool is out, the lead follows the fallback in `account plan` (asks the user first).
+#   bash $KIT/.ai/bin/account list
+#   bash $KIT/.ai/bin/account add <claude|codex|agy|gemini> <name> <purpose> [plan]
+#        purpose: the user's words (company, startup, any ...); plan: pro, max5, max20, plus, team, free, ...
+#   bash $KIT/.ai/bin/account plan [purpose]          who does what now, and the order to rotate in (read-only)
+#   bash $KIT/.ai/bin/account run <tool> <name> -- <command...>   run a command as that account
+#   bash $KIT/.ai/bin/account env <tool> <name>       export line (claude, codex)
+#   bash $KIT/.ai/bin/account next <tool> [purpose]   next usable account of that tool (skips ones marked out)
+#   bash $KIT/.ai/bin/account out <tool> <name> [hours]   mark an account out of quota (default 5 hours)
+#   bash $KIT/.ai/bin/account sync                    re-share new settings/plugins/skills with every account folder
+# How accounts are kept apart (the default account is the normal folder):
+#   claude  CLAUDE_CONFIG_DIR; everything of ~/.claude is shared by symlink except .credentials.json / .claude.json.
+#   codex   CODEX_HOME with its own config.toml (a copy) forcing cli_auth_credentials_store = "file", so the login is
+#           this folder's auth.json; the rest of ~/.codex is shared by symlink.
+#   agy     EXPERIMENTAL: a separate HOME whose .gemini/antigravity-cli shares everything with yours except the login
+#           (antigravity-oauth-token). agy has no documented config-dir variable; check the first login works.
+#   gemini  recorded only until Gemini CLI is installed and its account folder is checked.
+# Free plans (agy, gemini free) only take tiny tasks (WORKFLOW.md "Providers"); Claude and Codex always come first.
+# Files (outside every repo, contain logins): ~/.config/ai-kit/accounts.tsv, accounts.out, accounts/<tool>-<name>/.
+# Using several accounts of one provider to get more quota may break that provider's terms; the user decided to accept that.
+set -euo pipefail
+cfg="${XDG_CONFIG_HOME:-$HOME/.config}/ai-kit"
+reg="$cfg/accounts.tsv"; outf="$cfg/accounts.out"
+mkdir -p "$cfg"; touch "$reg" "$outf"
+
+home_of() { case "$1" in claude) echo "$HOME/.claude" ;; codex) echo "$HOME/.codex" ;; agy) echo "$HOME/.gemini/antigravity-cli" ;; *) echo "" ;; esac; }
+var_of()  { case "$1" in claude) echo CLAUDE_CONFIG_DIR ;; codex) echo CODEX_HOME ;; *) echo "" ;; esac; }
+private() { case "$1" in claude) echo '^(\.credentials\.json|\.claude\.json.*)$' ;; codex) echo '^(auth\.json|config\.toml)$' ;; agy) echo '^antigravity-oauth-token$' ;; *) echo '.' ;; esac; }
+dir_of()  { awk -F'\t' -v t="$1" -v n="$2" '$1==t && $2==n {print $4}' "$reg" | tail -1; }
+plan_of() { [ "$2" = default ] && { awk -F'\t' -v t="$1" '$1==t && $2=="default" {print $5}' "$reg" | tail -1; return; }; awk -F'\t' -v t="$1" -v n="$2" '$1==t && $2==n {print $5}' "$reg" | tail -1; }
+is_out()  { now=$(date +%s); awk -F'\t' -v t="$1" -v n="$2" -v now="$now" '$1==t && $2==n && $3>now {f=1} END {exit !f}' "$outf"; }
+installed() { command -v "$1" >/dev/null 2>&1; }
+
+link_all() {  # link every entry of $1 into $2 except names matching $3
+  local from="$1" to="$2" skip="$3"
+  [ -d "$from" ] || return 0
+  for e in "$from"/* "$from"/.[!.]*; do
+    [ -e "$e" ] || continue
+    b="$(basename "$e")"
+    printf '%s' "$b" | grep -qE "$skip" && continue
+    [ -e "$to/$b" ] || ln -s "$e" "$to/$b"
+  done
+}
+share() {
+  local tool="$1" dir="$2"
+  case "$tool" in
+    claude) link_all "$HOME/.claude" "$dir" "$(private claude)" ;;
+    codex)  link_all "$HOME/.codex" "$dir" "$(private codex)"
+            if [ ! -f "$dir/config.toml" ]; then
+              { [ -f "$HOME/.codex/config.toml" ] && grep -v '^cli_auth_credentials_store' "$HOME/.codex/config.toml"; } | \
+                { printf 'cli_auth_credentials_store = "file"\n'; cat; } > "$dir/config.toml"
+            fi ;;
+    agy)    mkdir -p "$dir/home/.gemini/antigravity-cli"
+            link_all "$HOME/.gemini" "$dir/home/.gemini" '^antigravity-cli$'
+            link_all "$HOME/.gemini/antigravity-cli" "$dir/home/.gemini/antigravity-cli" "$(private agy)"
+            for f in .gitconfig .config .local; do [ -e "$HOME/$f" ] && [ ! -e "$dir/home/$f" ] && ln -s "$HOME/$f" "$dir/home/$f"; done ;;
+  esac
+}
+
+case "${1:-list}" in
+  list)
+    printf '%-7s %-12s %-10s %-7s %-5s %-4s %s\n' TOOL NAME PURPOSE PLAN STATE CLI FOLDER
+    for t in claude codex agy gemini; do
+      installed "$t" || [ -n "$(awk -F'\t' -v t="$t" '$1==t' "$reg")" ] || continue
+      d="$(home_of "$t")"; [ -n "$d" ] && printf '%-7s %-12s %-10s %-7s %-5s %-4s %s\n' "$t" default any "$(plan_of "$t" default || true)" "$(is_out "$t" default && echo OUT || echo ok)" "$(installed "$t" && echo yes || echo no)" "$d"
+    done
+    while IFS=$'\t' read -r t n p d pl; do [ -n "$t" ] && [ "$n" != default ] && printf '%-7s %-12s %-10s %-7s %-5s %-4s %s\n' "$t" "$n" "$p" "${pl:-?}" "$(is_out "$t" "$n" && echo OUT || echo ok)" "$(installed "$t" && echo yes || echo no)" "$d"; done < "$reg" ;;
+  add)
+    tool="${2:?tool}"; name="${3:?name}"; purpose="${4:?purpose}"; plan="${5:-}"
+    case "$tool" in claude|codex|agy|gemini) ;; *) echo "tool must be claude, codex, agy or gemini" >&2; exit 1 ;; esac
+    if [ "$name" = default ]; then  # only records purpose/plan of the normal login
+      printf '%s\t%s\t%s\t%s\t%s\n' "$tool" default "$purpose" "$(home_of "$tool")" "$plan" >> "$reg"; echo "recorded $tool/default ($purpose, ${plan:-plan ?})"; exit 0
+    fi
+    [ -n "$(dir_of "$tool" "$name")" ] && { echo "$tool/$name already exists"; exit 1; }
+    dir="$cfg/accounts/$tool-$name"; mkdir -p "$dir"; chmod 700 "$cfg/accounts" "$dir"
+    printf '%s\t%s\t%s\t%s\t%s\n' "$tool" "$name" "$purpose" "$dir" "$plan" >> "$reg"
+    share "$tool" "$dir"
+    case "$tool" in
+      claude) echo "Log in once: CLAUDE_CONFIG_DIR=$dir claude   then /login with the account '$name', then /exit" ;;
+      codex)  echo "Log in once: CODEX_HOME=$dir codex login" ;;
+      agy)    echo "Log in once (experimental): HOME=$dir/home agy   then sign in with the account '$name'. Check \`bash $0 list\` and that your default agy login still works." ;;
+      gemini) echo "Recorded gemini/$name. Gemini CLI: install it first (ask), then the kit checks how it keeps accounts apart." ;;
+    esac ;;
+  sync)
+    while IFS=$'\t' read -r t n p d pl; do [ -n "$t" ] && [ "$n" != default ] && [ -d "$d" ] && share "$t" "$d" && echo "synced $t/$n"; done < "$reg" ;;
+  env)
+    tool="${2:?tool}"; name="${3:?name}"; v="$(var_of "$tool")"
+    [ -n "$v" ] || { echo "use: account run $tool $name -- <command>" >&2; exit 1; }
+    [ "$name" = default ] && { echo "unset $v"; exit 0; }
+    d="$(dir_of "$tool" "$name")"; [ -n "$d" ] || { echo "no account $tool/$name" >&2; exit 1; }
+    echo "export $v=$d" ;;
+  run)
+    tool="${2:?tool}"; name="${3:?name}"; shift 3; [ "${1:-}" = -- ] && shift
+    if [ "$name" = default ]; then exec "$@"; fi
+    d="$(dir_of "$tool" "$name")"; [ -n "$d" ] || { echo "no account $tool/$name" >&2; exit 1; }
+    case "$tool" in
+      claude) CLAUDE_CONFIG_DIR="$d" exec "$@" ;;
+      codex)  CODEX_HOME="$d" exec "$@" ;;
+      agy)    HOME="$d/home" exec "$@" ;;
+      *)      echo "$tool accounts cannot run yet" >&2; exit 1 ;;
+    esac ;;
+  next)
+    tool="${2:?tool}"; purpose="${3:-}"; v="$(var_of "$tool")"; cur="${v:+${!v:-}}"
+    names=(default); while IFS=$'\t' read -r t n p d pl; do [ "$t" = "$tool" ] && [ "$n" != default ] && { [ -z "$purpose" ] || [ "$p" = "$purpose" ] || [ "$p" = any ]; } && names+=("$n"); done < "$reg"
+    i=0; for k in "${!names[@]}"; do [ -n "$cur" ] && [ "$(dir_of "$tool" "${names[$k]}")" = "$cur" ] && i=$k; done
+    for s in $(seq 1 "${#names[@]}"); do n="${names[$(( (i + s) % ${#names[@]} ))]}"; is_out "$tool" "$n" || { echo "$n"; exit 0; }; done
+    echo "every $tool account is out of quota" >&2; exit 1 ;;
+  out)
+    tool="${2:?tool}"; name="${3:?name}"; h="${4:-5}"
+    printf '%s\t%s\t%s\n' "$tool" "$name" "$(( $(date +%s) + h * 3600 ))" >> "$outf"; echo "$tool/$name marked out for ${h}h" ;;
+  plan)
+    purpose="${2:-}"
+    usable() { local t="$1" c=0 n; for n in default $(awk -F'\t' -v t="$t" -v p="$purpose" '$1==t && $2!="default" && (p=="" || $3==p || $3=="any") {print $2}' "$reg"); do
+                 { [ "$n" != default ] || installed "$t"; } && ! is_out "$t" "$n" && c=$((c+1)); done; echo "$c"; }
+    for t in claude codex agy gemini; do eval "u_$t=$(usable "$t")"; done
+    echo "Resources${purpose:+ for '$purpose'}: claude $u_claude usable, codex $u_codex, agy $u_agy, gemini $u_gemini (bash $0 list for plans)."
+    echo "Roles now (Claude + Codex always first; free plans only tiny tasks, always reviewed):"
+    [ "$u_claude" -gt 0 ] && echo "  lead/planner/reviewer: claude" || echo "  lead: NO Claude account left -> write handoff, wait for reset (or Codex as the brain: bin/ai --brain codex, ask)"
+    if [ "$u_codex" -gt 0 ]; then echo "  developer: codex (dispatch); rotate Codex accounts in order on quota"
+    elif [ "$u_claude" -gt 0 ]; then echo "  developer: NO Codex left -> ask the user: a Claude subagent develops (own context; reviewer stays separate) until Codex resets"
+    else echo "  developer: none left -> stop, handoff, report reset times"; fi
+    tiny=""; [ "$u_agy" -gt 0 ] && tiny="agy"; [ "$u_gemini" -gt 0 ] && tiny="${tiny:+$tiny, }gemini"
+    echo "  tiny tasks (rename, text, comment, one-file format): ${tiny:-claude/codex as usual}; only if the project's PROVIDERS lists them"
+    echo "Order when quota runs out: next account of the same tool -> the fallback above (ask first) -> wait for reset."
+    echo "This is a suggestion from what is usable now; each project decides its roles (ROLE_* in \$KIT/.ai/mode.conf) and re-asks when resources change."
+    ;;
+  *) sed -n '2,13p' "$0"; exit 1 ;;
+esac

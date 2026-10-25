@@ -47,13 +47,12 @@ if [ -f "$kit/.ai/mode.conf" ]; then
 fi
 if [ -f "$kit/.ai/mode.conf" ]; then
   ACCOUNT_GROUP=""; . "$kit/.ai/mode.conf"
-  [ -z "$ACCOUNT_GROUP" ] && echo "ai-kit: ACCOUNT_GROUP is empty for this project: with the profile question, ask which account group it uses (facts: bash ~/ai-kit/bin/account list); flexible, re-ask when it looks wrong."
+  [ -z "$ACCOUNT_GROUP" ] && echo "ai-kit: ACCOUNT_GROUP is empty for this project: with the profile question, ask which account group it uses (facts: bash $KIT/.ai/bin/account list); flexible, re-ask when it looks wrong."
 fi
-src="$(cat "${XDG_CONFIG_HOME:-$HOME/.config}/ai-kit/source" 2>/dev/null)"
-if [ -n "$src" ] && [ -f "$src/bin/projects" ]; then
-  busy="$(python3 "$src/bin/projects" --json 2>/dev/null | python3 -c 'import json,sys; r=json.load(sys.stdin); print(sum(1 for x in r if x["auto_run"] or x["tasks"].get("in_progress")))' 2>/dev/null)"
+if [ -f "$kit/.ai/bin/projects" ]; then
+  busy="$(python3 "$kit/.ai/bin/projects" --json 2>/dev/null | python3 -c 'import json,sys; r=json.load(sys.stdin); print(sum(1 for x in r if x["auto_run"] or x["tasks"].get("in_progress")))' 2>/dev/null)"
   if [ "${busy:-0}" -gt 1 ]; then
-    echo "ai-kit: $busy projects on this machine have long runs going (python3 $src/bin/projects). One AI team per project: never read or mix the other projects' code or notes. Priority is yours to decide when PRIORITY=auto: use that table, say your choice in one line, and when quota is short tell the user which project should yield. At most once a day while several run, check official sources (Anthropic and OpenAI docs on usage limits, rate limits, scheduling long agent runs) for anything new and log it in \$KIT/.ai/PRACTICES.md; search with general words only, never project names or details."
+    echo "ai-kit: $busy projects on this machine have long runs going (python3 $kit/.ai/bin/projects). One AI team per project: never read or mix the other projects' code or notes. Priority is yours to decide when PRIORITY=auto: use that table, say your choice in one line, and when quota is short tell the user which project should yield. At most once a day while several run, check official sources (Anthropic and OpenAI docs on usage limits, rate limits, scheduling long agent runs) for anything new and log it in \$KIT/.ai/PRACTICES.md; search with general words only, never project names or details."
   fi
 fi
 pending=0

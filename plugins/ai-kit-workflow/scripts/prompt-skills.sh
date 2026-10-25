@@ -25,8 +25,8 @@ rules = [
     (r"gọn|đơn giản|simplif|refactor|clean ?up|thừa|dư thừa|bloat", "simplify: ponytail-review / ponytail-audit (list only), then /simplify"),
     (r"giao diện|\bui\b|css|layout|console|network|trình duyệt|browser", "browser/UI: chrome-devtools-mcp"),
     (r"merge|push|pull request|\bpr\b|commit", "git: small commits on the current branch per .ai/WORKFLOW.md, PR body with the pr skill; remote follows REMOTE in .ai/mode.conf (guard-git popups)"),
-    (r"hết (quota|limit)|rate limit|usage limit|tài khoản|account|đổi acc|switch acc", "accounts: ~/ai-kit/bin/account (list, add, next; same tool only: Claude to Claude, Codex to Codex); progress stays in .ai/run and handoff.md"),
-    (r"nhiều project|các project|project khác|ưu tiên|priority|projects", "many projects: python3 ~/ai-kit/bin/projects (read-only table); one team per project, never mix their code or notes; PRIORITY in .ai/mode.conf"),
+    (r"hết (quota|limit)|rate limit|usage limit|tài khoản|account|đổi acc|switch acc", "accounts: $KIT/.ai/bin/account (list, add, next; same tool only: Claude to Claude, Codex to Codex); progress stays in .ai/run and handoff.md"),
+    (r"nhiều project|các project|project khác|ưu tiên|priority|projects", "many projects: python3 $KIT/.ai/bin/projects (read-only table); one team per project, never mix their code or notes; PRIORITY in .ai/mode.conf"),
     (r"hook|luật|rule|quy tắc|lặp lại|nhắc lại", "rules: check .ai/HOOKS.md, ask whether this should become a hook"),
     (r"setup|cài đặt|update (the )?kit|cập nhật kit|kiểm tra lại|check (again|the setup)|ai-kit", "setup refresh: follow ~/ai-kit/CLAUDE.md \"When the user says the setup or the kit changed\" (pull, plugins, doctor, kit-update, report)"),
 ]
@@ -85,7 +85,7 @@ if kit and not nogrill:
     if re.search(r"tạo repo|repo mới|new repo|git init|tôi là chủ|của tôi|i own|my repo|join|vào team|repo công ty|repo của team", text):
         grills.append(("PROFILE-OWNERSHIP", "ownership: ask whether the user joined or created this repo (REPO_ROLE joined|owner), which AI files the repo already has (team rules first), and whether the kit should have its own git (KIT_GIT none|local|remote); only project code ever enters the repo"))
     if re.search(r"thêm (ai|acc|account|tài khoản)|account mới|tài khoản mới|agy|gemini|antigravity|provider|nhà cung cấp|model khác|\bai khác", text):
-        grills.append(("PROFILE-PROVIDERS", "AI providers: the user mentions an AI or account: ask whether to add it on this machine (~/ai-kit/bin/account add <tool> <name> <purpose> <plan>) and to this project (PROVIDERS, max 4; Claude + Codex first, free ones only Size: tiny tickets); show bash ~/ai-kit/bin/account plan and ask whether the roles (ROLE_DEV, ROLE_REVIEW, ROLE_TINY) should change"))
+        grills.append(("PROFILE-PROVIDERS", "AI providers: the user mentions an AI or account: ask whether to add it on this machine ($KIT/.ai/bin/account add <tool> <name> <purpose> <plan>) and to this project (PROVIDERS, max 4; Claude + Codex first, free ones only Size: tiny tickets); show bash $KIT/.ai/bin/account plan and ask whether the roles (ROLE_DEV, ROLE_REVIEW, ROLE_TINY) should change"))
     if re.search(r"push|pull request|\bpr\b|remote|github|gitlab|deploy|release", text):
         grills.append(("PROFILE-REMOTE", "remote: ask how careful to be in this project: popup every time / feature-branch push without popup / never (REMOTE ask|feature|never); for one long run only: may the AI push by itself (touch $KIT/.ai/run/allow-push) or commit only and the user pushes later"))
     if re.search(r"xuyên đêm|qua đêm|overnight|chạy dài|long.?run|cả ngày|nhiều agent|song song|parallel|tối đa|\bmax\b|tiết kiệm|quota|limit|tốn|chi phí|cost|bản sao|clone|copy", text):

@@ -1,0 +1,62 @@
+#!/usr/bin/env bash
+# One terminal for the lead ("brain") session, whichever AI is the brain. When a session ends it offers:
+#   c  continue the SAME conversation on the next account of the SAME tool (out of quota)
+#   n  start a NEW session that picks up from $KIT/.ai/handoff.md (context full, new topic); the old one stays resumable
+#   q  quit
+# With no key pressed within AI_SWITCH_WAIT seconds (default 10; 0 = always wait for a key) it does `c` by itself, so a
+# session that ran out of quota goes on alone. Ending a session on purpose: press q (or n) within that time.
+# Never switches tool: Claude work stays on Claude accounts, Codex work on Codex accounts.
+#   bash $KIT/.ai/bin/ai [--brain claude|codex] [account-name|purpose] [extra args for the tool...]
+#   (no account given: the project's ACCOUNT_GROUP from $KIT/.ai/mode.conf)
+#   e.g. bash $KIT/.ai/bin/ai startup               Claude, first usable account for "startup"
+#        bash $KIT/.ai/bin/ai --brain codex work2    Codex as the brain, account work2
+# Old sessions: Claude `claude --resume`, Codex `codex resume`. Several brains in parallel = one `ai` per terminal.
+# The handoff is plain markdown and AGENTS.md is read by Codex too, so a brain change keeps the same memory; the
+# plugin hooks (grill, guards, context-watch) exist only in Claude Code, so with another brain ask it to re-read
+# $KIT/AGENTS.md and $KIT/CLAUDE.local.md and expect fewer automatic checks.
+set -uo pipefail
+acc="$(dirname "$(readlink -f "$0")")/account"
+cfg="${XDG_CONFIG_HOME:-$HOME/.config}/ai-kit/accounts.tsv"
+brain=claude
+[ "${1:-}" = --brain ] && { brain="${2:?claude or codex}"; shift 2; }
+case "$brain" in claude) var=CLAUDE_CONFIG_DIR ;; codex) var=CODEX_HOME ;; *) echo "brain must be claude or codex (agy: tell Claude how it resumes, then add it here)" >&2; exit 1 ;; esac
+pick="${1:-}"; [ $# -gt 0 ] && shift
+root="$(dirname "$(git rev-parse --path-format=absolute --git-common-dir 2>/dev/null)" 2>/dev/null)"
+kit="$(awk -F'\t' -v r="$root" '$1==r {print $2}' "${XDG_CONFIG_HOME:-$HOME/.config}/ai-kit/projects.tsv" 2>/dev/null | tail -1)"
+# No account given: the project's ACCOUNT_GROUP (mode.conf), if set.
+if [ -z "$pick" ] && [ -n "$kit" ] && [ -f "$kit/.ai/mode.conf" ]; then pick="$(sed -n "s/^ACCOUNT_GROUP=['\"]\{0,1\}\([^'\"]*\).*/\1/p" "$kit/.ai/mode.conf")"; fi
+purpose=""
+if [ -n "$pick" ] && { [ "$pick" = default ] || awk -F'\t' -v t="$brain" -v n="$pick" '$1==t && $2==n {f=1} END {exit !f}' "$cfg" 2>/dev/null; }; then
+  name="$pick"
+else
+  purpose="$pick"; name="$(env "$var=" bash "$acc" next "$brain" "$purpose" 2>/dev/null)" || name=default
+fi
+resume_prompt="Continue the work: read ${kit:-the kit}/.ai/handoff.md (and ${kit:-the kit}/AGENTS.md), tell me in one line where the last session stopped, then go on with the next step."
+start() {  # $1 = fresh|continue|handoff, then extra args for a fresh start
+  local how="$1"; shift
+  case "$brain:$how" in
+    claude:fresh)    claude "$@" ;;
+    claude:continue) claude --continue ;;
+    claude:handoff)  claude "$resume_prompt" ;;
+    codex:fresh)     codex "$@" ;;
+    codex:continue)  codex resume --last ;;
+    codex:handoff)   codex "$resume_prompt" ;;
+  esac
+}
+how=fresh
+while :; do
+  eval "$(bash "$acc" env "$brain" "$name")"
+  echo "ai: $brain account '$name' (${!var:-default folder}), $how"
+  if [ "$how" = fresh ]; then start fresh "$@"; else start "$how"; fi
+  wait="${AI_SWITCH_WAIT:-10}"
+  printf '\nai: session ended. c = out of quota: continue this conversation on the next %s account · n = new session from handoff.md · q = quit' "$brain"
+  if [ "$wait" -gt 0 ]; then printf ' [c in %ss] ' "$wait"; read -r -t "$wait" a || a=c; else printf ' [q] '; read -r a; fi
+  case "$a" in
+    c|C) bash "$acc" out "$brain" "$name"
+         name="$(bash "$acc" next "$brain" "$purpose")" || { echo "ai: no $brain account left; progress is in \$KIT/.ai/run and handoff.md, start again when quota resets."; exit 1; }
+         how=continue ;;
+    n|N) [ -n "$kit" ] && [ ! -s "$kit/.ai/handoff.md" ] && echo "ai: note: $kit/.ai/handoff.md is empty; the new session starts without it."
+         how=handoff ;;
+    *) exit 0 ;;
+  esac
+done
