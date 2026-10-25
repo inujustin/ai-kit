@@ -26,6 +26,7 @@ rules = [
     (r"giao diện|\bui\b|css|layout|console|network|trình duyệt|browser", "browser/UI: chrome-devtools-mcp"),
     (r"merge|push|pull request|\bpr\b|commit", "git: small commits on the current branch per .ai/WORKFLOW.md, PR body with the pr skill; remote follows REMOTE in .ai/mode.conf (guard-git popups)"),
     (r"hết (quota|limit)|rate limit|usage limit|tài khoản|account|đổi acc|switch acc", "accounts: ~/ai-kit/bin/account (list, add, next; same tool only: Claude to Claude, Codex to Codex); progress stays in .ai/run and handoff.md"),
+    (r"nhiều project|các project|project khác|ưu tiên|priority|projects", "many projects: python3 ~/ai-kit/bin/projects (read-only table); one team per project, never mix their code or notes; PRIORITY in .ai/mode.conf"),
     (r"hook|luật|rule|quy tắc|lặp lại|nhắc lại", "rules: check .ai/HOOKS.md, ask whether this should become a hook"),
     (r"setup|cài đặt|update (the )?kit|cập nhật kit|kiểm tra lại|check (again|the setup)|ai-kit", "setup refresh: follow ~/ai-kit/CLAUDE.md \"When the user says the setup or the kit changed\" (pull, plugins, doctor, kit-update, report)"),
 ]

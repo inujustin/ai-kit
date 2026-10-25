@@ -45,6 +45,17 @@ if [ -f "$kit/.ai/mode.conf" ]; then
   BUDGET=normal; BRANCHES=ask; REMOTE=ask; . "$kit/.ai/mode.conf"
   echo "ai-kit: work profile BUDGET=$BUDGET BRANCHES=$BRANCHES REMOTE=$REMOTE TEST_POLICY=${TEST_POLICY:-ask}, now on branch $(git -C "$root" branch --show-current 2>/dev/null). It is never fixed: at the first task of this session show it in plain words and ask (AskUserQuestion, with the tests question) whether it still fits; write changes to \$KIT/.ai/mode.conf."
 fi
+if [ -f "$kit/.ai/mode.conf" ]; then
+  ACCOUNT_GROUP=""; . "$kit/.ai/mode.conf"
+  [ -z "$ACCOUNT_GROUP" ] && echo "ai-kit: ACCOUNT_GROUP is empty for this project: with the profile question, ask which account group it uses (facts: bash ~/ai-kit/bin/account list); flexible, re-ask when it looks wrong."
+fi
+src="$(cat "${XDG_CONFIG_HOME:-$HOME/.config}/ai-kit/source" 2>/dev/null)"
+if [ -n "$src" ] && [ -f "$src/bin/projects" ]; then
+  busy="$(python3 "$src/bin/projects" --json 2>/dev/null | python3 -c 'import json,sys; r=json.load(sys.stdin); print(sum(1 for x in r if x["auto_run"] or x["tasks"].get("in_progress")))' 2>/dev/null)"
+  if [ "${busy:-0}" -gt 1 ]; then
+    echo "ai-kit: $busy projects on this machine have long runs going (python3 $src/bin/projects). One AI team per project: never read or mix the other projects' code or notes. Priority is yours to decide when PRIORITY=auto: use that table, say your choice in one line, and when quota is short tell the user which project should yield. At most once a day while several run, check official sources (Anthropic and OpenAI docs on usage limits, rate limits, scheduling long agent runs) for anything new and log it in \$KIT/.ai/PRACTICES.md; search with general words only, never project names or details."
+  fi
+fi
 pending=0
 [ -f "$kit/.ai/HOOKS.md" ] && pending=$(sed -n '/^## Candidates log/,$p' "$kit/.ai/HOOKS.md" | grep -ci '| *not now *|$')
 [ "$pending" -gt 0 ] && echo "ai-kit: $pending hook candidate(s) in \$KIT/.ai/HOOKS.md are 'not now': ask the user again when they come up."

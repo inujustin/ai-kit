@@ -1,0 +1,59 @@
+#!/usr/bin/env python3
+"""Read-only overview of every project kit on this machine (one AI team per project), most urgent first.
+  python3 ~/ai-kit/bin/projects          table: priority, project, branch, run state, profile, last activity
+  python3 ~/ai-kit/bin/projects --json   same data for the AI
+Priority (when PRIORITY=auto) is a simple score, the AI explains and the user can override in mode.conf:
+  running long run (+3), tasks in progress (+2), pending tasks (+1), deadline word in handoff/tasks (+2),
+  BUDGET=max (+1) / lean (-1), only blocked tasks (-2: needs the user, not quota), idle for 3+ days (-1).
+Prints only paths, branch names and counts; never file contents (projects of different owners must not mix).
+"""
+import json, os, re, subprocess, sys, time
+cfg = os.path.join(os.environ.get("XDG_CONFIG_HOME", os.path.expanduser("~/.config")), "ai-kit")
+reg = os.path.join(cfg, "projects.tsv")
+def conf(path):
+    d = {}
+    try:
+        for line in open(path):
+            m = re.match(r"^([A-Z_]+)=(.*)$", line.strip())
+            if m: d[m.group(1)] = m.group(2).strip("'\"")
+    except OSError:
+        pass
+    return d
+rows = []
+for line in (open(reg).read().splitlines() if os.path.exists(reg) else []):
+    if "\t" not in line: continue
+    root, kit = line.split("\t", 1)
+    p = conf(os.path.join(kit, ".ai", "mode.conf"))
+    run = os.path.join(kit, ".ai", "run")
+    try: tasks = json.load(open(os.path.join(run, "tasks.json"))).get("tasks", [])
+    except Exception: tasks = []
+    c = {}
+    for t in tasks: c[t.get("status")] = c.get(t.get("status"), 0) + 1
+    auto = os.path.exists(os.path.join(run, "auto"))
+    stamps = [os.path.getmtime(f) for f in (os.path.join(run, "progress.md"), os.path.join(kit, ".ai", "handoff.md")) if os.path.exists(f)]
+    last = max(stamps) if stamps else 0
+    text = ""
+    for f in (os.path.join(kit, ".ai", "handoff.md"), os.path.join(run, "tasks.json")):
+        try: text += open(f).read(20000).lower()
+        except OSError: pass
+    deadline = bool(re.search(r"deadline|hạn chót|due |demo|release|gấp|urgent", text))
+    br = subprocess.run(["git", "-C", root, "branch", "--show-current"], capture_output=True, text=True).stdout.strip() if os.path.isdir(root) else "(missing)"
+    s = 3 * auto + 2 * bool(c.get("in_progress")) + bool(c.get("pending")) + 2 * deadline
+    s += {"max": 1, "lean": -1}.get(p.get("BUDGET"), 0)
+    if c.get("blocked") and not (c.get("pending") or c.get("in_progress")): s -= 2
+    if last and time.time() - last > 3 * 86400: s -= 1
+    fixed = p.get("PRIORITY", "auto")
+    if fixed in ("high", "normal", "low"): s = {"high": 100, "normal": 0, "low": -100}[fixed] + s
+    rows.append({"project": os.path.basename(root), "root": root, "kit": kit, "branch": br, "auto_run": auto,
+                 "tasks": c, "deadline_hint": deadline, "budget": p.get("BUDGET", "?"), "priority": fixed,
+                 "account_group": p.get("ACCOUNT_GROUP", "") or "(ask)", "score": s,
+                 "last": time.strftime("%Y-%m-%d %H:%M", time.localtime(last)) if last else "-"})
+rows.sort(key=lambda r: -r["score"])
+if "--json" in sys.argv:
+    print(json.dumps(rows, indent=2, ensure_ascii=False)); sys.exit(0)
+if not rows:
+    print("no project kits yet (say 'setup the kit for this project' inside a repo)"); sys.exit(0)
+print(f'{"SCORE":>5}  {"PROJECT":<22} {"BRANCH":<24} {"RUN":<5} {"TASKS":<26} {"BUDGET":<7} {"PRIO":<7} {"ACCOUNTS":<10} LAST')
+for r in rows:
+    t = " ".join(f"{k} {v}" for k, v in sorted(r["tasks"].items())) or "-"
+    print(f'{r["score"]:>5}  {r["project"][:22]:<22} {r["branch"][:24]:<24} {"auto" if r["auto_run"] else "-":<5} {t[:26]:<26} {r["budget"]:<7} {r["priority"]:<7} {r["account_group"][:10]:<10} {r["last"]}')
