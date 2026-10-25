@@ -38,6 +38,7 @@ The SessionStart hook of the ai-kit-workflow plugin reminds you of candidates st
 ## Hooks already in this kit
 | Hook | Event | Enforces |
 |---|---|---|
+| plugin guard-outside.sh | PreToolUse(Read/Edit/Write/Glob/Grep/Bash) | outside the workspace and, on WSL, the Windows side (/mnt, *.exe): always a popup with the full explanation (also in auto mode); bulk deletes/moves there denied |
 | plugin guard-git.sh | PreToolUse(Bash) | commit only on ai/*, no push of ai/*, no force-push, no push to main/master/develop |
 | plugin guard-repo.sh | PreToolUse(Edit/Write/Bash) | no edits in the team's checkout (only ai/* worktrees), no whole-repo fixers there |
 | plugin after-edit.sh | PostToolUse(Edit/Write) | the team's pre-commit hooks on the edited file |

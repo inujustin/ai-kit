@@ -11,9 +11,10 @@ The kit was just copied in. Run the onboarding in `.ai/KIT.md` with me before an
 
 ## Talking to me
 - My language (Vietnamese by default), short, plain words; keep technical terms.
-- I read popups, not long chat. Every permission popup and every question carries its own brief explanation:
+- I read popups, not long chat. Every permission popup and every question (popup or plain chat) explains itself fully:
   - permission (Bash `description`, or one line before Write/Edit): what it does, what it changes, why it is needed,
-    whether it touches anything remote, how to undo, which option to pick ("Chọn Yes").
+    whether it touches anything remote, OUTSIDE the workspace or the Windows side (/mnt, *.exe), the risk, how to undo
+    (or "cannot be undone"), which option to pick ("Chọn Yes").
   - question: one plain sentence, 2–4 options each with what happens if I pick it, recommended first, understandable alone.
   - never chain many steps into one permission; split them.
 - Skills: I talk normally and do not remember names. At the start of each task, check `.ai/SKILLS.md` and the installed
