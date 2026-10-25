@@ -8,21 +8,29 @@
 #                   pass, the rest popup; never -> refused (the AI gives the user one `!` line)
 #   branches (switch, checkout <branch>, checkout -b, branch <new>/-d/-m): BRANCHES=auto passes local branches matching
 #                   AUTO_BRANCH_ERE on a clean tree; everything else popup
-#   always popup:   reset --hard, clean -f, rebase, merge, stash drop/clear, worktree add (a copy of the project)
+#   always popup:   reset --hard, clean -f, rebase, merge, stash drop/clear, worktree add (unless PARALLEL=worktree and
+#                   the worktree goes in $KIT/worktrees/)
+#   push for one run: $KIT/.ai/run/allow-push (created only after the user said "push by yourself" for this run; ends
+#                   with the run or after 24 h) makes REMOTE=feature for that time.
+# Agreed cases get an explicit "allow" (so an overnight run does not stop at a popup); deny rules in settings still win.
 # Repos without a registered kit get the defaults (ask for branches and remote) and no commit rules.
 here="$(dirname "$0")"
 input=$(cat)
 cwd=$(printf '%s' "$input" | python3 -c 'import json,sys; print(json.load(sys.stdin).get("cwd",""))' 2>/dev/null); cwd="${cwd:-$PWD}"
 printf '%s' "$input" | grep -qE '(^|[^[:alnum:]_-])(git|gh)([[:space:]]|\\"|$)' || exit 0
 kit="$(bash "$here/kit-resolve.sh" "$cwd" 2>/dev/null)" || kit=""
-BRANCHES=ask; REMOTE=ask; AUTO_BRANCH_ERE='^(feat|fix|chore|refactor|docs|test)/'
+BRANCHES=ask; REMOTE=ask; PARALLEL=no; AUTO_BRANCH_ERE='^(feat|fix|chore|refactor|docs|test)/'
 PROTECTED_BRANCHES='^(main|master|develop|dev|release.*|production|staging)$'
 SUBJECT_ERE=''; BAD_SUBJECT_ERE=''; COMMIT_STYLE_SOURCE=''
 # shellcheck source=/dev/null
 [ -n "$kit" ] && [ -f "$kit/.ai/mode.conf" ] && . "$kit/.ai/mode.conf"
 # shellcheck source=/dev/null
 [ -n "$kit" ] && [ -f "$kit/.ai/commit-style.conf" ] && . "$kit/.ai/commit-style.conf"
-printf '%s' "$input" | KIT="$kit" CWD="$cwd" BRANCHES="$BRANCHES" REMOTE="$REMOTE" AUTO_ERE="$AUTO_BRANCH_ERE" \
+ap="$kit/.ai/run/allow-push"
+if [ -n "$kit" ] && [ -f "$ap" ] && [ "$REMOTE" != never ]; then
+  if [ $(( $(date +%s) - $(stat -c %Y "$ap") )) -lt 86400 ]; then REMOTE=feature; else rm -f "$ap"; fi
+fi
+printf '%s' "$input" | KIT="$kit" CWD="$cwd" BRANCHES="$BRANCHES" REMOTE="$REMOTE" PARALLEL="$PARALLEL" AUTO_ERE="$AUTO_BRANCH_ERE" \
   PROT="$PROTECTED_BRANCHES" SUBJ="$SUBJECT_ERE" BADSUBJ="$BAD_SUBJECT_ERE" STYLE="$COMMIT_STYLE_SOURCE" python3 -c '
 import json, os, re, shlex, subprocess, sys
 E = os.environ
@@ -37,7 +45,7 @@ def out(decision, reason):
     sys.exit(0)
 def block(why):
     print("Blocked by ai-kit guard-git: " + why, file=sys.stderr); sys.exit(2)
-asks = []
+asks, allows = [], []
 def ask(what, change, risk, undo):
     asks.append("⚠ GIT: " + what + ". Thay đổi: " + change + ". Rủi ro: " + risk + ". Hoàn tác: " + undo + ".")
 
@@ -75,11 +83,13 @@ for seg in re.split(r"&&|\|\||;|\||\n", cmd):
         if any(prot.search(x) for x in dst if x != "HEAD") or (any(r.split(":")[-1] == "HEAD" for r in refs) and prot.search(branch or "")):
             block("never push straight to a protected branch (" + ", ".join(dst) + "); push the feature branch and open a PR (ask the user).")
         if E["REMOTE"] == "never": block("REMOTE=never for this project: give the user one copy-ready `! git push ...` line instead.")
-        if E["REMOTE"] == "feature" and len(dst) == 1: continue
+        if E["REMOTE"] == "feature" and len(dst) == 1:
+            allows.append("push " + dst[0] + " (REMOTE=feature)"); continue
         ask("push " + ", ".join(dst) + " lên remote " + (pos[0] if pos else "mặc định") + " (" + where + ")", "commit local được gửi lên server, đồng nghiệp/CI thấy được", "code rời khỏi máy này; nếu có secret hay dữ liệu khách trong commit thì đã lộ", "xoá nhánh trên remote (git push <remote> --delete <nhánh>) nhưng người khác có thể đã kéo về")
     elif sub in ("pull", "fetch", "remote", "ls-remote", "clone", "submodule"):
         if E["REMOTE"] == "never": block("REMOTE=never for this project: give the user one copy-ready `! git " + sub + " ...` line instead.")
-        if E["REMOTE"] == "feature" and sub == "fetch": continue
+        if E["REMOTE"] == "feature" and sub == "fetch":
+            allows.append("fetch (REMOTE=feature)"); continue
         if sub == "remote" and (not pos or pos[0] in ("-v", "show", "get-url")): continue
         info = {"pull": ("kéo code từ remote và MERGE/REBASE vào nhánh " + (branch or "?"), "có thể gây conflict hoặc đổi file đang làm", "git reset --hard ORIG_HEAD (mất thay đổi chưa commit nếu có)"),
                 "fetch": ("tải ref mới từ remote, không đổi file đang làm", "chỉ dùng mạng, gần như không rủi ro", "không cần"),
@@ -92,7 +102,8 @@ for seg in re.split(r"&&|\|\||;|\||\n", cmd):
         new = any(x in ("-b", "-B", "-c", "-C", "--orphan") for x in rest)
         target = pos[-1] if pos else ""
         if not target or (sub == "checkout" and not new and os.path.exists(os.path.join(d, target)) and not git(d, "rev-parse", "-q", "--verify", "refs/heads/" + target)): continue
-        if E["BRANCHES"] == "auto" and not dirty and re.search(E["AUTO_ERE"], target): continue
+        if E["BRANCHES"] == "auto" and not dirty and re.search(E["AUTO_ERE"], target):
+            allows.append(sub + " " + target + " (BRANCHES=auto)"); continue
         ask(("tạo nhánh mới " if new else "chuyển sang nhánh ") + target + " (" + where + ")", "file trong repo đổi theo nhánh đích" + ("; các file chưa commit sẽ đi theo hoặc làm lệnh lỗi" if dirty else ""), "làm nhầm nhánh thì commit sau đó vào sai chỗ" + ("; file chưa commit có thể bị lẫn" if dirty else ""), "git switch " + (branch or "<nhánh cũ>") + " để quay lại")
     elif sub == "branch":
         if any(x in ("-d", "-D", "--delete") for x in rest):
@@ -100,7 +111,9 @@ for seg in re.split(r"&&|\|\||;|\||\n", cmd):
         elif any(x in ("-m", "-M", "--move") for x in rest):
             ask("đổi tên nhánh " + " -> ".join(pos), "tên nhánh local đổi", "nhánh remote/PR cũ không theo tên mới", "git branch -m <tên mới> <tên cũ>")
         elif pos and not any(x in ("-a", "-r", "--list", "-v", "-vv", "--contains", "--merged", "--no-merged", "--show-current") for x in rest):
-            if not (E["BRANCHES"] == "auto" and re.search(E["AUTO_ERE"], pos[0])):
+            if E["BRANCHES"] == "auto" and re.search(E["AUTO_ERE"], pos[0]):
+                allows.append("branch " + pos[0] + " (BRANCHES=auto)")
+            else:
                 ask("tạo nhánh local " + pos[0] + " (" + where + ")", "thêm một nhánh, không đổi file", "thấp", "git branch -d " + pos[0])
     elif sub == "reset" and "--hard" in rest:
         ask("git reset --hard (" + where + ")", "đưa nhánh và file về commit khác", "MẤT mọi thay đổi chưa commit, KHÔNG hoàn tác được", "commit đã có thì lấy lại qua git reflog; file chưa commit thì không")
@@ -110,6 +123,8 @@ for seg in re.split(r"&&|\|\||;|\||\n", cmd):
         ask("git " + sub + " " + " ".join(pos) + " (" + where + ")", "viết lại lịch sử" if sub == "rebase" else "gộp nhánh khác vào " + (branch or "?"), "có thể conflict; rebase đổi sha của commit đã chia sẻ", "git reset --hard ORIG_HEAD ngay sau đó")
     elif sub == "stash" and pos[:1] and pos[0] in ("drop", "clear"):
         ask("git stash " + pos[0], "xoá thay đổi đã cất trong stash", "khó lấy lại", "chỉ cứu được qua git fsck nếu may")
+    elif sub == "worktree" and pos[:1] == ["add"] and E["PARALLEL"] == "worktree" and kit and len(pos) > 1 and os.path.realpath(os.path.join(d, pos[1])).startswith(os.path.realpath(kit) + "/worktrees/"):
+        allows.append("worktree add in the kit (PARALLEL=worktree)")
     elif sub == "worktree" and pos[:1] == ["add"]:
         ask("git worktree add (tạo thêm một thư mục làm việc của repo)", "thêm thư mục và nhánh", "kit dặn làm thẳng trong repo; thêm bản sao tốn dung lượng và dễ quên dọn", "git worktree remove <thư mục>")
     elif sub in ("commit", "cherry-pick", "revert") and kit:
@@ -123,6 +138,8 @@ for seg in re.split(r"&&|\|\||;|\||\n", cmd):
                 s = m[0].splitlines()[0]
                 if not re.search(E["SUBJ"], s): block("commit subject \"" + s + "\" does not match $KIT/.ai/commit-style.conf (" + E["STYLE"] + "). Say the behaviour a teammate can observe.")
                 if E["BADSUBJ"] and re.search(E["BADSUBJ"], s, re.I): block("commit subject \"" + s + "\" looks like wip/fixup/typo; describe the step.")
+if allows and not asks:
+    out("allow", "ai-kit guard-git: agreed in this project\x27s mode.conf: " + "; ".join(allows))
 if asks:
     out("ask", " | ".join(asks)[:1500] + " Chọn Yes chỉ khi việc này đúng ý bạn; chọn No thì AI phải hỏi lại bằng popup và giải thích vì sao cần.")
 '
