@@ -71,7 +71,21 @@ for i, h in grills:
     print("- grill NOW: " + i + " " + h + ": the prompt shows the user may have forgotten it. Before doing anything else in this turn, check its status in .ai/PRACTICES.md; proposed or not now: ask with AskUserQuestion (apply now / not now / no for this session).")
 if re.search(r"https?://|tip|mẹo|best practice|thực hành tốt|video|tiktok|facebook|github\.com", text):
     print("- lead: a pasted tip or link is a lead: check the real source (SKILLS.md Missing), add it to .ai/PRACTICES.md, ask.")
+# Ask the user about each matched skill the first time it comes up in this session; afterwards just use it.
+skill_seen_f = os.path.join(tempfile.gettempdir(), "ai-kit-skills-" + sid)
+try:
+    skill_seen = set(open(skill_seen_f).read().split("\n"))
+except Exception:
+    skill_seen = set()
+new = [h for h in hits[:4] if h not in skill_seen]
+if new:
+    open(skill_seen_f, "a").write("\n".join(new) + "\n")
 for h in hits[:4]:
-    print("- hint: " + h)
+    if h in new:
+        print("- skill ASK: " + h + " -> first time this session: before starting, ask with AskUserQuestion: use it for this (recommended, say in one line what the skill does and costs) / skip / another skill. After a yes, just use it this session and say so in one line. If its job is mechanical, checkable and repeats, also ask whether it should become a hook instead (.ai/HOOKS.md).")
+    else:
+        print("- hint: " + h + " (already agreed this session: use it, say so in one line)")
+if act and not hits:
+    print("- skill check: no keyword match; look at " + map_ + " yourself and, if a skill fits, propose it with AskUserQuestion before starting.")
 '
 exit 0

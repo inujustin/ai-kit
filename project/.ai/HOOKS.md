@@ -11,6 +11,8 @@ Hooks are code Claude Code runs on every matching event, so they cannot be forgo
 - The user had to repeat it, or you broke it once already.
 - It lives in a skill or guide too long to read every time, or it is stated in more than one file.
 - It can be checked by a command or a grep with few false positives.
+- A skill keeps being used for the same mechanical check (lint, a rule, a format, a guard): a hook does it every time
+  without anyone remembering; ask whether to move it from skill to hook.
 
 ## Proactive scan (the user will not notice candidates; you must)
 Do a scan and show the result as one AskUserQuestion with `multiSelect` ("Which of these should become hooks?",
