@@ -44,6 +44,7 @@ The SessionStart hook of the ai-kit-workflow plugin reminds you of candidates st
 | plugin stop-gate.sh | Stop | `verify.sh --fast` in the kit's worktrees with uncommitted changes |
 | git pre-push | git | ai/* branches never leave the machine (also for the user) |
 | plugin session-start.sh | SessionStart | loads this kit's rules, lists the repo's own rule files, reminds of "not now" hook candidates and open best practices |
+| plugin auto-continue.sh | Stop | approved long run only ($KIT/.ai/run/auto): start the next task; stop when none left, only blocked, or AI_AUTO_MAX_TURNS used |
 | plugin context-watch.sh | UserPromptSubmit | context about 70% full (AI_CONTEXT_RENEW_PCT, AI_CONTEXT_WINDOW): write handoff.md, ask whether to renew; again every +10% |
 | plugin prompt-skills.sh | UserPromptSubmit | reads each prompt, prints skill hints by keyword (VI + EN) so skills are picked even for short high-level prompts; reminds to check PRACTICES.md and to log pasted tips as leads |
 
