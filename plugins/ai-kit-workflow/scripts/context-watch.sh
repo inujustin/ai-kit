@@ -3,8 +3,10 @@
 # estimate how full the context is (last assistant turn's input + cache + output tokens / window size) and, from
 # AI_CONTEXT_RENEW_PCT (default 70) on, tell Claude to write the handoff and ask the user whether to renew.
 # After /clear (or a new `claude`), session-start.sh loads $KIT/.ai/handoff.md, so the old context comes along.
-# Asks again every 10% more. Window: AI_CONTEXT_WINDOW (default 200000; set 1000000 for 1M-context models).
-python3 -c '
+# Asks again every 10% more. Window: AI_CONTEXT_WINDOW (default 200000); more tokens than that in use means a
+# 1M-context model, so the window becomes 1000000. During an approved long run ($KIT/.ai/run/auto) it never asks
+# (nobody is there): it only has the handoff refreshed and lets Claude Code auto-compact.
+KIT="$(bash "$(dirname "$0")/kit-resolve.sh" "$PWD" 2>/dev/null)" python3 -c '
 import json, os, sys, tempfile
 try:
     d = json.load(sys.stdin)
@@ -25,6 +27,8 @@ with open(path, "rb") as f:
         if u:
             used = sum(u.get(k, 0) or 0 for k in ("input_tokens", "cache_read_input_tokens", "cache_creation_input_tokens", "output_tokens"))
 window = int(os.environ.get("AI_CONTEXT_WINDOW", "200000"))
+if used > window:
+    window = 1000000
 limit = int(os.environ.get("AI_CONTEXT_RENEW_PCT", "70"))
 pct = used * 100 // window
 if pct < limit:
@@ -37,6 +41,10 @@ except Exception:
 if pct < last + 10:
     sys.exit(0)
 open(state, "w").write(str(pct))
+kit = os.environ.get("KIT", "")
+if kit and os.path.exists(os.path.join(kit, ".ai", "run", "auto")):
+    print("- context: about %d%% full during an unattended long run. Update $KIT/.ai/handoff.md and `run note` now, then go on; do NOT ask the user (nobody is there). Claude Code auto-compacts when full; tasks.json and handoff.md carry the run." % pct)
+    sys.exit(0)
 print("- context: about %d%% full (%d of %d tokens). Before answering: write $KIT/.ai/handoff.md (goal, done, next step, open decisions, files, branch), "
       "then ask the user with AskUserQuestion whether to renew: \"renew now\" (they type /clear, or /exit then n in $KIT/.ai/bin/ai; the next session loads handoff.md by itself and this chat stays in /resume) "
       "or \"keep going\". Ask in one plain line; no other command for them to remember." % (pct, used, window))
