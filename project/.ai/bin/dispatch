@@ -46,8 +46,24 @@ $(cat "$KIT/.ai/roles/$role.md")
 Ticket $id:
 $(cat "$ticket")"
 
-codex exec --sandbox workspace-write -m "$model" -c model_reasoning_effort="$effort" \
-  -C "$ROOT" -o "$log/$name.md" "$prompt" >"$log/$name.log" 2>&1 || true
+run_codex() {
+  codex exec --sandbox workspace-write -m "$model" -c model_reasoning_effort="$effort" \
+    -C "$ROOT" -o "$log/$name.md" "$prompt" >"$log/$name.log" 2>&1 || true
+}
+run_codex
+# Out of quota: only another CODEX account (~/ai-kit/bin/account), never another tool. ROTATE in
+# ~/.config/ai-kit/accounts.conf: auto = switch and retry once by itself; anything else = stop and let Claude ask the user.
+if grep -qiE 'usage limit|rate limit|quota|too many requests' "$log/$name.log"; then
+  acc="$(cat "${XDG_CONFIG_HOME:-$HOME/.config}/ai-kit/source" 2>/dev/null)/bin/account"
+  ROTATE=ask; [ -f "${XDG_CONFIG_HOME:-$HOME/.config}/ai-kit/accounts.conf" ] && . "${XDG_CONFIG_HOME:-$HOME/.config}/ai-kit/accounts.conf"
+  curname="$(awk -F'\t' -v d="${CODEX_HOME:-}" '$1=="codex" && $4==d {print $2}' "${XDG_CONFIG_HOME:-$HOME/.config}/ai-kit/accounts.tsv" 2>/dev/null | tail -1)"
+  if [ "$ROTATE" = auto ] && [ -f "$acc" ] && bash "$acc" out codex "${curname:-default}" >/dev/null && next="$(bash "$acc" next codex)"; then
+    eval "$(bash "$acc" env codex "$next")"; echo "codex account ${curname:-default} out of quota; retrying on $next" >>"$log/$name.log"
+    git checkout -q -- . && git clean -qfd; run_codex
+  else
+    echo "QUOTA $id ($role): Codex account ${curname:-default} is out of quota. Ask the user: wait, or switch to another Codex account (bash ~/ai-kit/bin/account list) and dispatch again. Changes left as they are."; exit 3
+  fi
+fi
 
 if bash "$KIT/.ai/verify.sh" --fast >"$log/$name.verify.log" 2>&1; then status=PASS; else status=FAIL; fi
 

@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+# One terminal for the lead session. Starts Claude with an account; when the session ends (for example out of quota),
+# asks whether to mark that account out and go on with the NEXT CLAUDE account in the same conversation (--continue).
+# Never switches to another tool: Claude work stays on Claude accounts.
+#   bash ~/ai-kit/bin/ai [account-name|purpose] [claude args...]
+#   e.g. bash ~/ai-kit/bin/ai startup        first usable Claude account for "startup"
+#        bash ~/ai-kit/bin/ai work1          that exact account
+# Several accounts in parallel = one `ai <name>` per terminal (one lead per project keeps sessions few).
+set -uo pipefail
+acc="$(dirname "$(readlink -f "$0")")/account"
+cfg="${XDG_CONFIG_HOME:-$HOME/.config}/ai-kit/accounts.tsv"
+pick="${1:-}"; [ $# -gt 0 ] && shift
+name=""; purpose=""
+if [ -n "$pick" ] && { [ "$pick" = default ] || awk -F'\t' -v n="$pick" '$1=="claude" && $2==n {f=1} END {exit !f}' "$cfg" 2>/dev/null; }; then
+  name="$pick"
+else
+  purpose="$pick"; name="$(CLAUDE_CONFIG_DIR= bash "$acc" next claude "$purpose" 2>/dev/null)" || name=default
+fi
+cont=()
+while :; do
+  eval "$(bash "$acc" env claude "$name")"
+  echo "ai: Claude account '$name' (${CLAUDE_CONFIG_DIR:-~/.claude})"
+  claude "${cont[@]}" "$@"
+  printf '\nai: session ended. Out of quota? Mark "%s" out and continue the same conversation on the next Claude account? [y/N] ' "$name"
+  read -r a; [ "$a" = y ] || [ "$a" = Y ] || exit 0
+  bash "$acc" out claude "$name"
+  name="$(bash "$acc" next claude "$purpose")" || { echo "ai: no Claude account left; progress is in \$KIT/.ai/run and handoff.md, start again when quota resets."; exit 1; }
+  cont=(--continue)
+done

@@ -1,0 +1,73 @@
+#!/usr/bin/env bash
+# AI accounts on this machine. Each account is its own config folder, so several can be logged in at once and used in
+# parallel or in turn. A tool only ever switches to another account of the SAME tool (Claude -> Claude, Codex -> Codex,
+# agy -> agy); work never moves to a different tool because of quota.
+#   bash ~/ai-kit/bin/account list
+#   bash ~/ai-kit/bin/account add <claude|codex|agy> <name> <purpose>   purpose: company, startup, any ... (the user's words)
+#   bash ~/ai-kit/bin/account sync                    re-share new settings/plugins/skills with every account folder
+#   bash ~/ai-kit/bin/account env <tool> <name>       print the export line for that account
+#   bash ~/ai-kit/bin/account next <tool> [purpose]   next usable account of that tool (skips ones marked out)
+#   bash ~/ai-kit/bin/account out <tool> <name> [hours]   mark an account out of quota (default 5 hours)
+# Claude: CLAUDE_CONFIG_DIR. Codex: CODEX_HOME. Everything of the default folder (~/.claude, ~/.codex) is shared by
+# symlink EXCEPT the login (Claude: .credentials.json, .claude.json; Codex: auth.json), so rules, plugins, skills and
+# session history are the same for every account and `claude --continue` resumes the same conversation.
+# agy: the kit does not know how agy separates accounts yet; it only records the name (ask the user how they log in).
+# Files (outside every repo, contain logins): ~/.config/ai-kit/accounts.tsv, accounts.out, accounts/<tool>-<name>/.
+# Using several accounts of one provider to get more quota may break that provider's terms; the user decided to accept that.
+set -euo pipefail
+cfg="${XDG_CONFIG_HOME:-$HOME/.config}/ai-kit"
+reg="$cfg/accounts.tsv"; outf="$cfg/accounts.out"
+mkdir -p "$cfg"; touch "$reg" "$outf"
+
+home_of() { case "$1" in claude) echo "$HOME/.claude" ;; codex) echo "${CODEX_HOME_DEFAULT:-$HOME/.codex}" ;; *) echo "" ;; esac; }
+var_of()  { case "$1" in claude) echo CLAUDE_CONFIG_DIR ;; codex) echo CODEX_HOME ;; *) echo "" ;; esac; }
+private() { case "$1" in claude) echo '^(\.credentials\.json|\.claude\.json.*)$' ;; codex) echo '^auth\.json$' ;; *) echo '.' ;; esac; }
+dir_of()  { awk -F'\t' -v t="$1" -v n="$2" '$1==t && $2==n {print $4}' "$reg" | tail -1; }
+is_out()  { now=$(date +%s); awk -F'\t' -v t="$1" -v n="$2" -v now="$now" '$1==t && $2==n && $3>now {f=1} END {exit !f}' "$outf"; }
+
+share() {  # link every shared entry of the default folder into an account folder
+  local tool="$1" dir="$2" src; src="$(home_of "$tool")"
+  [ -n "$src" ] && [ -d "$src" ] || return 0
+  for e in "$src"/* "$src"/.[!.]*; do
+    [ -e "$e" ] || continue
+    b="$(basename "$e")"
+    printf '%s' "$b" | grep -qE "$(private "$tool")" && continue
+    [ -e "$dir/$b" ] || ln -s "$e" "$dir/$b"
+  done
+}
+
+case "${1:-list}" in
+  list)
+    printf '%-7s %-14s %-10s %-6s %s\n' TOOL NAME PURPOSE STATE FOLDER
+    for t in claude codex; do printf '%-7s %-14s %-10s %-6s %s\n' "$t" default any "$(is_out "$t" default && echo OUT || echo ok)" "$(home_of "$t")"; done
+    while IFS=$'\t' read -r t n p d; do [ -n "$t" ] && printf '%-7s %-14s %-10s %-6s %s\n' "$t" "$n" "$p" "$(is_out "$t" "$n" && echo OUT || echo ok)" "$d"; done < "$reg" ;;
+  add)
+    tool="${2:?tool}"; name="${3:?name}"; purpose="${4:?purpose}"
+    case "$tool" in claude|codex|agy) ;; *) echo "tool must be claude, codex or agy" >&2; exit 1 ;; esac
+    [ -n "$(dir_of "$tool" "$name")" ] && { echo "$tool/$name already exists"; exit 1; }
+    dir="$cfg/accounts/$tool-$name"; mkdir -p "$dir"; chmod 700 "$cfg/accounts" "$dir"
+    printf '%s\t%s\t%s\t%s\n' "$tool" "$name" "$purpose" "$dir" >> "$reg"
+    share "$tool" "$dir"
+    case "$tool" in
+      claude) echo "Log in once (you type it): ! CLAUDE_CONFIG_DIR=$dir claude   then /login with the account '$name', then /exit" ;;
+      codex)  echo "Log in once (you type it): ! CODEX_HOME=$dir codex login" ;;
+      agy)    echo "Recorded agy/$name. Tell Claude how you log in to agy accounts so the kit can switch them." ;;
+    esac ;;
+  sync)
+    while IFS=$'\t' read -r t n p d; do [ -n "$t" ] && [ -d "$d" ] && share "$t" "$d" && echo "synced $t/$n"; done < "$reg" ;;
+  env)
+    tool="${2:?tool}"; name="${3:?name}"; v="$(var_of "$tool")"
+    [ "$name" = default ] && { echo "unset $v"; exit 0; }
+    d="$(dir_of "$tool" "$name")"; [ -n "$d" ] || { echo "no account $tool/$name" >&2; exit 1; }
+    echo "export $v=$d" ;;
+  next)
+    tool="${2:?tool}"; purpose="${3:-}"; v="$(var_of "$tool")"; cur="${!v:-}"
+    names=(default); while IFS=$'\t' read -r t n p d; do [ "$t" = "$tool" ] && { [ -z "$purpose" ] || [ "$p" = "$purpose" ] || [ "$p" = any ]; } && names+=("$n"); done < "$reg"
+    i=0; for k in "${!names[@]}"; do [ "$(dir_of "$tool" "${names[$k]}")" = "$cur" ] && [ -n "$cur" ] && i=$k; done
+    for s in $(seq 1 "${#names[@]}"); do n="${names[$(( (i + s) % ${#names[@]} ))]}"; is_out "$tool" "$n" || { echo "$n"; exit 0; }; done
+    echo "every $tool account is out of quota" >&2; exit 1 ;;
+  out)
+    tool="${2:?tool}"; name="${3:?name}"; h="${4:-5}"
+    printf '%s\t%s\t%s\n' "$tool" "$name" "$(( $(date +%s) + h * 3600 ))" >> "$outf"; echo "$tool/$name marked out for ${h}h" ;;
+  *) sed -n '2,12p' "$0"; exit 1 ;;
+esac
