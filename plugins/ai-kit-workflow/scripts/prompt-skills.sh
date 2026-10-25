@@ -79,9 +79,9 @@ if kit and not nogrill:
     if act:
         grills.append(("PROFILE", "work profile (" + cur + ", from " + kit + "/.ai/mode.conf): at the first task of this session show these values in plain words and ask whether they still fit this work"))
     if re.search(r"nhánh|branch|checkout|song song|parallel|nhiều project|multi", text):
-        grills.append(("PROFILE-BRANCH", "branches: ask how to work this time: one branch / several in turn / several in parallel; which branch names the AI may create or switch by itself (BRANCHES ask|auto, AUTO_BRANCH_ERE); never clone or copy the repo"))
+        grills.append(("PROFILE-BRANCH", "branches: ask how to work this time: one branch / several in turn / several in parallel; which branch names the AI may create or switch by itself (BRANCHES ask|auto, AUTO_BRANCH_ERE); truly at once needs PARALLEL=worktree (worktrees in the kit); never clone or copy the repo"))
     if re.search(r"push|pull request|\bpr\b|remote|github|gitlab|deploy|release", text):
-        grills.append(("PROFILE-REMOTE", "remote: ask how careful to be in this project: popup every time / feature-branch push without popup / never (REMOTE ask|feature|never)"))
+        grills.append(("PROFILE-REMOTE", "remote: ask how careful to be in this project: popup every time / feature-branch push without popup / never (REMOTE ask|feature|never); for one long run only: may the AI push by itself (touch $KIT/.ai/run/allow-push) or commit only and the user pushes later"))
     if re.search(r"xuyên đêm|qua đêm|overnight|chạy dài|long.?run|cả ngày|nhiều agent|song song|parallel|tối đa|\bmax\b|tiết kiệm|quota|limit|tốn|chi phí|cost|bản sao|clone|copy", text):
         grills.append(("PROFILE-BUDGET", "resources: ask how much to spend on this (BUDGET lean|normal|max): model, effort, number of agents, how long; say the expected cost in one line; never copy the project to be safe"))
 grills = [(i, h) for i, h in grills if i not in seen][:4]

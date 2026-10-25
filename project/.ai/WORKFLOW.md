@@ -55,7 +55,13 @@ and drifts from the real code. Say in one line what you chose and what it costs.
 Sometimes the user works on one branch, sometimes several in turn, sometimes several at once. Ask at the start of a
 task that touches branches (the prompt hook reminds you): which branch(es), may the AI create and switch local
 branches by itself and with which names (BRANCHES=auto + AUTO_BRANCH_ERE, e.g. for an overnight run agreed in a grill).
-- Work directly in the repo. No clones, no copies, no worktrees unless the user asks for one (guard-git asks too).
+Typical styles, all set per project and per stage (ask; never assume one):
+  - company work: mostly local, one branch at a time, no new or parallel branches without asking (BRANCHES=ask).
+  - a long run agreed in a grill: the AI creates and switches the agreed branch names itself (BRANCHES=auto).
+  - projects that want it: several branches truly at once, each in `$KIT/worktrees/<branch>` (PARALLEL=worktree,
+    `dispatch <ticket> <role> <branch>`), every branch kept as a clean story of small commits.
+- Work directly in the repo. No clones or copies; worktrees only with PARALLEL=worktree (guard-git asks otherwise).
+  Remove a branch's worktree when it is done (`git worktree remove`, ask if it has uncommitted work).
 - Before switching: commit the finished step (or ask what to do with the unfinished one); never switch with a dirty
   tree in silence. Say in one line "now on <branch>". guard-git shows a popup unless BRANCHES=auto allows it.
 - Several branches in one run: one task list (`.ai/run/tasks.json`), each task names its branch; switch, work,
@@ -79,8 +85,15 @@ ticket's code reaches the repo, as commits on the branch. guard-git blocks stage
 ## Remote: REMOTE in mode.conf, always careful
 Local work can be freer; anything that reaches a server is asked carefully. REMOTE=ask: every push/pull/fetch/remote/gh
 shows a popup. REMOTE=feature: pushing the feature branch passes, the rest asks. REMOTE=never: give the user one `!` line.
-Detect when the situation changes (first push of a branch, a new remote, a PR, a release) and ask whether the level
-still fits.
+Per stage: when the user says "push by yourself" for a run, `touch $KIT/.ai/run/allow-push` (REMOTE=feature until
+the run ends or 24 h pass; auto-continue removes it). Said nothing: commit only and list what is waiting to be pushed
+in the end-of-run report; the user pushes later. Detect when the situation changes (first push of a branch, a new
+remote, a PR, a release) and ask whether the level still fits.
+
+## Careful, never sloppy
+Automatic never means unchecked. Every automatic value or run starts from a popup that explained it and got a yes;
+note the date in mode.conf. During the work: verify each step, small commits, stop and ask on anything unexpected.
+At the end: the report (branches, commits, checks, pushed or local, decisions left), then AskUserQuestion for those.
 - Push and PR, step by step, each with the user's OK: show `git status` + `git log <base>..HEAD` → `bash $KIT/.ai/bin/gate <base>`
   PASS → `git push -u origin <branch>` → show PR title and body → `gh pr create`.
   Never force-push, never push straight to a protected branch (guard-git refuses both).

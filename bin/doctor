@@ -70,6 +70,9 @@ done
 echo "== global rules"
 if grep -q 'ai-kit global rules' "$HOME/.claude/CLAUDE.md" 2>/dev/null; then row "~/.claude/CLAUDE.md" OK "ai-kit rules merged"; else row "~/.claude/CLAUDE.md" MISSING "merge machine/CLAUDE.global.md"; fi
 
+if grep -qE '"Bash\(git push' "$HOME/.claude/settings.json" 2>/dev/null; then
+  printf '%-26s %-8s %s\n' "git push rule" INFO "settings.json has a git push rule: projects with REMOTE=feature or allow-push cannot push (deny wins); ask the user"
+fi
 echo "== project kits (~/.config/ai-kit/projects.tsv)"
 reg="${XDG_CONFIG_HOME:-$HOME/.config}/ai-kit/projects.tsv"
 if [ -s "$reg" ]; then while IFS=$'\t' read -r r k; do if [ -f "$k/.ai/lib.sh" ]; then printf '%-26s %-8s %s\n' "$(basename "$r")" INFO "kit $k (source $(cat "$k/.ai/.kit-source" 2>/dev/null))"; else printf '%-26s %-8s %s\n' "$(basename "$r")" BROKEN "kit folder missing: $k"; fi; done < "$reg"; else echo "  (none yet: say 'setup the kit for this project' inside a repo)"; fi

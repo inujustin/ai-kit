@@ -14,7 +14,9 @@ at a time, verify before marking done, and a clean hand-over at the end of every
    prove it works (a command and its expected output, a bench console step, a screen to click). No check, no task.
 2. Ask the user (AskUserQuestion, batch into one popup): run unattended until done or stop after each task; how much
    to spend (BUDGET, model, agents, how long); which branches and whether the AI may create/switch them by itself
-   (BRANCHES=auto); may it push at the end (REMOTE). Write the answers to mode.conf. Unattended means
+   (BRANCHES=auto), several at once (PARALLEL=worktree); may it push by itself during this run (yes =
+   `touch $KIT/.ai/run/allow-push`, ends with the run; no = commit only, the user pushes later). Write the answers to
+   mode.conf with the date. The run ends with a report (auto-continue asks for it). Unattended means
    `touch $KIT/.ai/run/auto`; the Stop hook then starts the next task by itself, within the limits below.
 
 ## Each task
