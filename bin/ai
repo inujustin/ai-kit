@@ -1,29 +1,55 @@
 #!/usr/bin/env bash
-# One terminal for the lead session. Starts Claude with an account; when the session ends (for example out of quota),
-# asks whether to mark that account out and go on with the NEXT CLAUDE account in the same conversation (--continue).
-# Never switches to another tool: Claude work stays on Claude accounts.
-#   bash ~/ai-kit/bin/ai [account-name|purpose] [claude args...]
-#   e.g. bash ~/ai-kit/bin/ai startup        first usable Claude account for "startup"
-#        bash ~/ai-kit/bin/ai work1          that exact account
-# Several accounts in parallel = one `ai <name>` per terminal (one lead per project keeps sessions few).
+# One terminal for the lead ("brain") session, whichever AI is the brain. When a session ends it offers:
+#   c  continue the SAME conversation on the next account of the SAME tool (out of quota)
+#   n  start a NEW session that picks up from $KIT/.ai/handoff.md (context full, new topic); the old one stays resumable
+#   q  quit
+# Never switches tool: Claude work stays on Claude accounts, Codex work on Codex accounts.
+#   bash ~/ai-kit/bin/ai [--brain claude|codex] [account-name|purpose] [extra args for the tool...]
+#   e.g. bash ~/ai-kit/bin/ai startup               Claude, first usable account for "startup"
+#        bash ~/ai-kit/bin/ai --brain codex work2    Codex as the brain, account work2
+# Old sessions: Claude `claude --resume`, Codex `codex resume`. Several brains in parallel = one `ai` per terminal.
+# The handoff is plain markdown and AGENTS.md is read by Codex too, so a brain change keeps the same memory; the
+# plugin hooks (grill, guards, context-watch) exist only in Claude Code, so with another brain ask it to re-read
+# $KIT/AGENTS.md and $KIT/CLAUDE.local.md and expect fewer automatic checks.
 set -uo pipefail
 acc="$(dirname "$(readlink -f "$0")")/account"
 cfg="${XDG_CONFIG_HOME:-$HOME/.config}/ai-kit/accounts.tsv"
+brain=claude
+[ "${1:-}" = --brain ] && { brain="${2:?claude or codex}"; shift 2; }
+case "$brain" in claude) var=CLAUDE_CONFIG_DIR ;; codex) var=CODEX_HOME ;; *) echo "brain must be claude or codex (agy: tell Claude how it resumes, then add it here)" >&2; exit 1 ;; esac
 pick="${1:-}"; [ $# -gt 0 ] && shift
-name=""; purpose=""
-if [ -n "$pick" ] && { [ "$pick" = default ] || awk -F'\t' -v n="$pick" '$1=="claude" && $2==n {f=1} END {exit !f}' "$cfg" 2>/dev/null; }; then
+purpose=""
+if [ -n "$pick" ] && { [ "$pick" = default ] || awk -F'\t' -v t="$brain" -v n="$pick" '$1==t && $2==n {f=1} END {exit !f}' "$cfg" 2>/dev/null; }; then
   name="$pick"
 else
-  purpose="$pick"; name="$(CLAUDE_CONFIG_DIR= bash "$acc" next claude "$purpose" 2>/dev/null)" || name=default
+  purpose="$pick"; name="$(env "$var=" bash "$acc" next "$brain" "$purpose" 2>/dev/null)" || name=default
 fi
-cont=()
+kit="$(bash "$(dirname "$acc")/../plugins/ai-kit-workflow/scripts/kit-resolve.sh" "$PWD" 2>/dev/null)" || kit=""
+resume_prompt="Continue the work: read ${kit:-the kit}/.ai/handoff.md (and ${kit:-the kit}/AGENTS.md), tell me in one line where the last session stopped, then go on with the next step."
+start() {  # $1 = fresh|continue|handoff, then extra args for a fresh start
+  local how="$1"; shift
+  case "$brain:$how" in
+    claude:fresh)    claude "$@" ;;
+    claude:continue) claude --continue ;;
+    claude:handoff)  claude "$resume_prompt" ;;
+    codex:fresh)     codex "$@" ;;
+    codex:continue)  codex resume --last ;;
+    codex:handoff)   codex "$resume_prompt" ;;
+  esac
+}
+how=fresh
 while :; do
-  eval "$(bash "$acc" env claude "$name")"
-  echo "ai: Claude account '$name' (${CLAUDE_CONFIG_DIR:-~/.claude})"
-  claude "${cont[@]}" "$@"
-  printf '\nai: session ended. Out of quota? Mark "%s" out and continue the same conversation on the next Claude account? [y/N] ' "$name"
-  read -r a; [ "$a" = y ] || [ "$a" = Y ] || exit 0
-  bash "$acc" out claude "$name"
-  name="$(bash "$acc" next claude "$purpose")" || { echo "ai: no Claude account left; progress is in \$KIT/.ai/run and handoff.md, start again when quota resets."; exit 1; }
-  cont=(--continue)
+  eval "$(bash "$acc" env "$brain" "$name")"
+  echo "ai: $brain account '$name' (${!var:-default folder}), $how"
+  if [ "$how" = fresh ]; then start fresh "$@"; else start "$how"; fi
+  printf '\nai: session ended. c = out of quota: continue this conversation on the next %s account · n = new session from handoff.md · q = quit [q] ' "$brain"
+  read -r a
+  case "$a" in
+    c|C) bash "$acc" out "$brain" "$name"
+         name="$(bash "$acc" next "$brain" "$purpose")" || { echo "ai: no $brain account left; progress is in \$KIT/.ai/run and handoff.md, start again when quota resets."; exit 1; }
+         how=continue ;;
+    n|N) [ -n "$kit" ] && [ ! -s "$kit/.ai/handoff.md" ] && echo "ai: note: $kit/.ai/handoff.md is empty; the new session starts without it."
+         how=handoff ;;
+    *) exit 0 ;;
+  esac
 done

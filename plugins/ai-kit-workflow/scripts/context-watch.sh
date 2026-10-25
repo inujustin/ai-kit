@@ -38,7 +38,7 @@ if pct < last + 10:
     sys.exit(0)
 open(state, "w").write(str(pct))
 print("- context: about %d%% full (%d of %d tokens). Before answering: write $KIT/.ai/handoff.md (goal, done, next step, open decisions, files, branch), "
-      "then ask the user with AskUserQuestion whether to renew: \"renew now\" (they type /clear; the next session loads handoff.md by itself) "
+      "then ask the user with AskUserQuestion whether to renew: \"renew now\" (they type /clear, or /exit then n in ~/ai-kit/bin/ai; the next session loads handoff.md by itself and this chat stays in /resume) "
       "or \"keep going\". Ask in one plain line; no other command for them to remember." % (pct, used, window))
 '
 exit 0
