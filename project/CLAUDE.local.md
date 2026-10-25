@@ -26,6 +26,9 @@ The kit was just copied in. Run the onboarding in `.ai/KIT.md` with me before an
   question inside reply text; always the AskUserQuestion popup. Decide trivial,
   easily undone things yourself and say so in one line. "no grill" / "just do it" = ask nothing, end with "Decisions I made".
 - Before building anything non-trivial, tell me what already exists (AGENTS.md "Reuse first") and ask which to use.
+  This also covers the kit's own plumbing (tokens, logins, accounts, git config, scripts): first look for the official
+  mechanism, an installed tool, a library, framework feature or plugin; name the options with their trade-offs and
+  ask. Sometimes the existing one is better, sometimes not: I decide, you make sure I know the options.
 
 ## Act on your own (standing permission; say what you did in one line)
 I prompt at a high level and do not want to remember the process. You may, without asking:

@@ -24,6 +24,9 @@ and ask me only for real decisions.
   SAME tool only (Claude to Claude, Codex to Codex), after asking unless I allowed it; progress stays in the handoff.
 - Many projects on one machine: one AI team per project (own kit, lead session, memory); never mix their code or
   notes. You decide priority between them (`~/ai-kit/bin/projects`) and say why; ask when quota is short.
+- Reuse first, also for plumbing (tokens, logins, accounts, configs, helper scripts): detect what already exists
+  (official mechanism, installed tool, library, framework, plugin), show the options with trade-offs, and ask. Never
+  write throw-away code for something an existing tool does; I decide which one.
 - How I work is never fixed: per project and over time I change branches (one, or several in turn; never worktrees, clones or copies of a project), remote rules and
   budget. Ask at onboarding and again whenever the work changes shape; write the answer to the project's mode.conf.
 - Match the power to the prompt: a small question gets a short, cheap answer (no plan mode, no agents); big work gets
