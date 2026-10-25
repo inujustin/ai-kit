@@ -1,9 +1,15 @@
 # Sourced by every kit script. The kit lives OUTSIDE the project repo; nothing of it is copied into the repo.
 #   KIT      this project's kit folder (the one holding .ai/), found from the script's own location
-#   ROOT     the project repo's main folder (works from any of its worktrees), found from the current directory
-#   WT_DIR   where AI worktrees live: inside the kit, never inside the repo
+#   ROOT     the project repo's folder, found from the current directory
 KIT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 ROOT="$(dirname "$(git rev-parse --path-format=absolute --git-common-dir 2>/dev/null)")" \
-  || { echo "Run this from inside the project repo (or one of its worktrees)." >&2; exit 1; }
-WT_DIR="$KIT/worktrees"
-export KIT ROOT WT_DIR
+  || { echo "Run this from inside the project repo." >&2; exit 1; }
+export KIT ROOT
+
+# Base branch of the current branch: `git config branch.<b>.aibase` if the user set one, else the first of
+# develop/main/master that exists. Used by verify (changed files) and gate (review range).
+kit_base() {
+  local b; b="$(git config "branch.$(git branch --show-current).aibase" 2>/dev/null)" && { echo "$b"; return; }
+  for b in develop main master; do git rev-parse -q --verify "refs/heads/$b" >/dev/null && { echo "$b"; return; }; done
+  echo HEAD
+}

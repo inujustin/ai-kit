@@ -1,30 +1,19 @@
 #!/usr/bin/env bash
 # The gate. Claude, Codex and the hooks all run this same script.
-#   bash $KIT/.ai/verify.sh          full gate (before merge / PR / gate); run from the repo or a worktree
+#   bash $KIT/.ai/verify.sh          full gate (before merge / PR / gate); run from the repo
 #   bash $KIT/.ai/verify.sh --fast   checks that finish in seconds
 set -uo pipefail
 # shellcheck source=/dev/null
 . "$(dirname "$0")/lib.sh"
 #   bash $KIT/.ai/verify.sh --all    check every tracked file, not only the changed ones (onboarding audit)
-# Never changes the team's checkout: run from the repo's main folder, it re-runs itself in a throw-away worktree of HEAD
-# inside the kit, so fixers inside the checks (pre-commit hooks, formatters) can only touch that copy.
+# Runs in place (no copy of the project). If a check rewrites files (a pre-commit hook, a formatter), it says which,
+# so the AI can tell the user instead of committing changes nobody asked for.
 top="$(git rev-parse --show-toplevel)"
-AI_MODE=worktree; [ -f "$KIT/.ai/mode.conf" ] && . "$KIT/.ai/mode.conf"
-all=no; for arg in "$@"; do [ "$arg" = "--all" ] && all=yes; done
-if [ "$top" = "$ROOT" ] && [ -z "${AI_VERIFY_NESTED:-}" ] && { [ "$AI_MODE" != direct ] || [ "$all" = yes ]; }; then
-  tmp="$WT_DIR/.verify-$$"; mkdir -p "$WT_DIR"
-  git -C "$ROOT" worktree add -q --detach "$tmp" HEAD
-  echo "(verify runs on a throw-away copy of HEAD in $tmp; your checkout is never modified; uncommitted changes are not included)"
-  (cd "$tmp" && AI_VERIFY_NESTED=1 bash "$KIT/.ai/verify.sh" "$@"); rc=$?
-  git -C "$ROOT" worktree remove --force "$tmp"; exit $rc
-fi
 cd "$top"
+before="$(git status --porcelain)"
 
-# Files changed on this branch since its base (set by newsession), plus uncommitted and untracked ones.
-branch="$(git branch --show-current)"
-base="$(git config "branch.$branch.aibase" || true)"
-from="HEAD"
-[ -n "$base" ] && from="$(git merge-base HEAD "$base")"
+# Files changed on this branch since its base (lib.sh kit_base), plus uncommitted and untracked ones.
+from="$(git merge-base HEAD "$(kit_base)" 2>/dev/null || echo HEAD)"
 CHANGED="$( { git diff --name-only --diff-filter=ACMR "$from"; git ls-files --others --exclude-standard; } | sort -u)"
 [ "${1:-}" = "--all" ] || [ "${2:-}" = "--all" ] && CHANGED="$(git ls-files)"
 export CHANGED
@@ -45,5 +34,7 @@ if [ "$mode" = full ]; then
   for c in "${FULL[@]}"; do run "$c"; done
 fi
 
+after="$(git status --porcelain)"
+[ "$before" = "$after" ] || { echo; echo "NOTE: the checks changed files in the working tree (tell the user; do not commit them silently):"; diff <(echo "$before") <(echo "$after") | sed -n 's/^> /  /p'; }
 if [ $fail -eq 0 ]; then echo "verify ($mode): PASS"; else echo "verify ($mode): FAIL"; fi
 exit $fail
