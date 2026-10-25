@@ -18,6 +18,11 @@ if printf '%s' "$cmd" | grep -qE 'git([[:space:]]+-C[[:space:]]+[^[:space:]]+)?[
   printf '%s' "$cmd" | grep -qE '[[:space:]:](main|master|develop)([[:space:]]|$)' && block "never push straight to main/master/develop; push your branch and open a PR."
 fi
 
+# Never change the user's branch on your own: block git switch / git checkout <branch> (file restores with " -- " are fine).
+if printf '%s' "$cmd" | grep -qE 'git([[:space:]]+-C[[:space:]]+[^[:space:]]+)?[[:space:]]+(switch|checkout)([[:space:]]|$)' && ! printf '%s' "$cmd" | grep -qE '[[:space:]]--([[:space:]]|$)'; then
+  block "do not switch branches on your own; stay on the user's current branch. Ask the user first (AskUserQuestion), they decide."
+fi
+
 # Kit files never go into a project repo: block a commit whose staged files look like kit files.
 if printf '%s' "$cmd" | grep -qE 'git([[:space:]]+-C[[:space:]]+[^[:space:]]+)?[[:space:]]+commit([[:space:]]|$)'; then
   kdir=$(printf '%s' "$cmd" | sed -nE 's/.*git[[:space:]]+-C[[:space:]]+("?)([^"[:space:]]+)\1.*/\2/p'); kdir="${kdir:-$cwd}"

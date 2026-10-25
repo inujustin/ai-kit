@@ -47,6 +47,11 @@ Plans live only on this machine (`~/.claude/plans/`); tickets, specs, glossary a
 (`$KIT/.ai/tickets/`, `$KIT/.ai/docs/`). No plan or ticket file is ever committed or pushed. Only the code of each ticket
 enters the repo: ai/* branch → story commits → my review. Commit messages and PR bodies describe the change, not the plan file.
 
+## Commits and branches
+- Break work into small commits, one logical step each, in an order a reviewer can follow; never one big commit.
+- Stay on the branch I am on. Never `git switch` / `git checkout <branch>` on your own (the guard-git hook blocks it);
+  changing branch is my decision, ask with AskUserQuestion.
+
 ## This kit is self-contained
 Everything you add for this project (rules, hooks, packs, commit style, notes) goes into THIS kit (`$KIT`), never into the
 shared ai-kit source (~/ai-kit, blocked by the guard-repo hook) and never into the repo. If something would help every
