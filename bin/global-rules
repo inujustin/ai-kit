@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+# Install or refresh the kit's machine-wide rules (machine/CLAUDE.global.md) inside ~/.claude/CLAUDE.md as ONE marked
+# block. First setup on a new machine adds the block; later setups (a second project, a kit update) replace only that
+# block, so every project on the machine shares the same global rules and nothing is duplicated. The user's own lines
+# outside the block are never changed. Project-specific rules never go here: they live in each project's kit.
+#   bash ~/ai-kit/bin/global-rules --diff     show what would change (read-only)
+#   bash ~/ai-kit/bin/global-rules --apply    write it (backup: ~/.claude/CLAUDE.md.bak-ai-kit-<date>)
+set -euo pipefail
+src="$(cd "$(dirname "$0")/.." && pwd)/machine/CLAUDE.global.md"
+dst="${CLAUDE_CONFIG_DIR:-$HOME/.claude}/CLAUDE.md"
+begin='<!-- ai-kit global rules BEGIN (managed by ~/ai-kit/bin/global-rules; edit machine/CLAUDE.global.md instead) -->'
+end='<!-- ai-kit global rules END -->'
+new="$(mktemp)"; trap 'rm -f "$new"' EXIT
+touch "$dst"
+python3 - "$dst" "$src" "$begin" "$end" > "$new" <<'PY'
+import sys
+dst, src, b, e = sys.argv[1:]
+cur, block = open(dst).read(), b + "\n" + open(src).read().rstrip() + "\n" + e + "\n"
+if b in cur and e in cur:
+    i, j = cur.index(b), cur.index(e) + len(e)
+    out = cur[:i] + block.rstrip("\n") + cur[j:]
+else:
+    out = cur.rstrip("\n") + ("\n\n" if cur.strip() else "") + block
+sys.stdout.write(out if out.endswith("\n") else out + "\n")
+PY
+case "${1:---diff}" in
+  --diff)  diff -u "$dst" "$new" && echo "global rules already up to date" || true ;;
+  --apply) if cmp -s "$dst" "$new"; then echo "global rules already up to date"; exit 0; fi
+           cp "$dst" "$dst.bak-ai-kit-$(date +%Y%m%d-%H%M%S)"; cp "$new" "$dst"; echo "updated $dst (backup next to it)" ;;
+  *) sed -n '2,8p' "$0"; exit 1 ;;
+esac
