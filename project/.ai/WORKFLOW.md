@@ -65,6 +65,10 @@ Typical styles, all set per project and per stage (ask; never assume one):
   from the base (`git switch -c feat/<name> <base>`, base = develop/main or `branch.<b>.aibase`, never from the
   unfinished feature), say "now on feat/<name> (from <base>)" in one line and go on. One feature per branch, so
   every branch reads as its own clean story. BRANCHES=ask: the same, after a popup.
+- Like a dev team: go back to an older branch to fix or finish it (commit first, switch, say so), and tidy up merged
+  branches with `git branch -d` (git refuses unmerged ones). BRANCHES=auto does both by itself for branch names
+  matching AUTO_BRANCH_ERE; `-D` (unmerged) and anything outside the pattern always asks. List what you deleted in
+  the end-of-run report.
 - Before switching: commit the finished step (or ask what to do with the unfinished one); never switch with a dirty
   tree in silence. Say in one line "now on <branch>". guard-git shows a popup unless BRANCHES=auto allows it.
 - Several branches in one run: one task list (`.ai/run/tasks.json`), each task names its branch; switch, work,
@@ -86,6 +90,9 @@ ticket's code reaches the repo, as commits on the branch. guard-git blocks stage
   which wins, then update the conf.
 
 ## Remote: REMOTE in mode.conf, always careful
+Push is the most careful step of all. Before every push, even an allowed one: `git log --oneline <upstream>..<branch>`
+and `git diff --stat` of what leaves, verify passes, no secret or client data (guard-git refuses pushes whose commits
+hold .env, keys, dumps or backups), the right remote and branch. In the popup say exactly what goes where.
 Local work can be freer; anything that reaches a server is asked carefully. REMOTE=ask: every push/pull/fetch/remote/gh
 shows a popup. REMOTE=feature: pushing the feature branch passes, the rest asks. REMOTE=never: give the user one `!` line.
 Per stage: when the user says "push by yourself" for a run, `touch $KIT/.ai/run/allow-push` (REMOTE=feature until
