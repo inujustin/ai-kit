@@ -16,6 +16,10 @@ ticket="$(readlink -f "${1:?usage: dispatch <ticket.md> [coder|tester] [branch]}
 want="${3:-}"
 role="${2:-coder}"
 case "$role" in coder|tester|tiny) ;; *) echo "role must be coder, tester or tiny" >&2; exit 1 ;; esac
+ROLE_DEV=codex; [ -f "$(dirname "$0")/../mode.conf" ] && ROLE_DEV="$(. "$(dirname "$0")/../mode.conf"; echo "${ROLE_DEV:-codex}")"
+if [ "$role" != tiny ] && [ "$ROLE_DEV" != codex ]; then
+  echo "This project's ROLE_DEV=$ROLE_DEV (mode.conf): develop this ticket with a $ROLE_DEV context instead (Claude: a subagent with the roles/$role.md prompt), not Codex. Ask the user if resources changed." >&2; exit 1
+fi
 if [ "$role" = tiny ] && ! grep -qiE "Size:[[:space:]]*tiny" "$ticket"; then
   echo "Only tickets marked 'Size: tiny' go to a free model. This one stays with Codex (or Claude)." >&2; exit 1
 fi

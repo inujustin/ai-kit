@@ -6,6 +6,9 @@ Nothing here is one fixed way of working: each project has a work profile (`.ai/
 TEST_POLICY) that the user picks at onboarding, and the AI asks again whenever the work changes shape.
 
 ## Roles: separate contexts, three by default (the user's rule)
+Who plays each role is per project (ROLE_LEAD / ROLE_DEV / ROLE_REVIEW / ROLE_TINY in mode.conf), chosen at onboarding
+from the resources this machine has (`~/ai-kit/bin/account plan`) and re-asked whenever they change. The text below
+uses the default split (Claude lead, Codex developer and reviewer); swap the names when the project says otherwise.
 Nobody checks its own work. Default team = planner, developer, reviewer; add a tester only when the work is risky and
 `TEST_POLICY=tests` (mode.conf).
 - Claude = lead and planner: grill, spec, tickets, dispatch, integrate, explain. Do not write production code or tests
@@ -45,6 +48,9 @@ and drifts from the real code. Say in one line what you chose and what it costs.
   2. Review those tests with the user. If they are wrong, fix the ticket, not the tests.
   3. coder: `bash $KIT/.ai/bin/dispatch <ticket>` runs on top of the tester's commit and may not touch those tests (checked).
   4. reviewer: `bash $KIT/.ai/bin/gate` plus your own review of the diff.
+- Review fix rounds are capped: developer and reviewer go back and forth at most 2 rounds. If the gate still says
+  BLOCK after round 2, stop and ask with AskUserQuestion: a short summary of the reviewer's findings and the options
+  (fix the ticket, change the approach, raise effort, park it for now). Never loop.
 - Small work (UI text, layout, rename, config) still goes developer → reviewer in separate contexts; only the tester
   step may be "no test needed". Unsure whether it is risky? Ask.
 - Your own code is reviewed by `/codex:review` or `gate`, never only by you. Wide searches: an Explore subagent.

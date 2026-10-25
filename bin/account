@@ -125,6 +125,7 @@ case "${1:-list}" in
     tiny=""; [ "$u_agy" -gt 0 ] && tiny="agy"; [ "$u_gemini" -gt 0 ] && tiny="${tiny:+$tiny, }gemini"
     echo "  tiny tasks (rename, text, comment, one-file format): ${tiny:-claude/codex as usual}; only if the project's PROVIDERS lists them"
     echo "Order when quota runs out: next account of the same tool -> the fallback above (ask first) -> wait for reset."
+    echo "This is a suggestion from what is usable now; each project decides its roles (ROLE_* in \$KIT/.ai/mode.conf) and re-asks when resources change."
     ;;
   *) sed -n '2,13p' "$0"; exit 1 ;;
 esac

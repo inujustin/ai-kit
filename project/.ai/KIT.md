@@ -56,7 +56,8 @@ formatters or fixers on it (the guard-repo hook blocks this); everything you wri
 6b. Work profile (mode.conf), one AskUserQuestion with up to 4 questions, each value explained in plain words:
    BUDGET (lean / normal / max: is this a small company task or something the user invests in?), BRANCHES (ask /
    auto + which names), REMOTE (ask / feature / never; per run: allow-push), PROTECTED_BRANCHES of this repo, ACCOUNT_GROUP (which accounts,
-   `~/ai-kit/bin/account list`), PROVIDERS (which AIs: Claude + Codex, plus agy/Gemini for tiny tasks? max 4), PRIORITY (auto / high / normal / low against the other projects, `~/ai-kit/bin/projects`). Say these are re-asked whenever the work changes shape.
+   `~/ai-kit/bin/account list`), ROLE_LEAD/DEV/REVIEW/TINY (who does what, proposed from `~/ai-kit/bin/account plan`:
+   which tools, accounts and plans this machine has; e.g. Claude subagents develop when Codex is small), PROVIDERS (which AIs: Claude + Codex, plus agy/Gemini for tiny tasks? max 4), PRIORITY (auto / high / normal / low against the other projects, `~/ai-kit/bin/projects`). Say these are re-asked whenever the work changes shape.
 7. Commit style: read the team's last ~50 commit subjects by other people (`git log --format=%s --author=...`), commitlint,
    .gitmessage, CONTRIBUTING, and the commit rules of installed skills. Propose `.ai/commit-style.conf` from what the team
    really does; if sources disagree with each other or with the kit default, ask which wins (show examples of each).
@@ -74,4 +75,9 @@ Look only at official sources, then propose changes to the user with AskUserQues
 - Pinned plugins in the ai-kit marketplace: newer commits at least 14 days old; read their hook diff before proposing.
 - Run `/doctor` in Claude Code: it reports oversized skills and CLAUDE.md files (Anthropic: keep CLAUDE.md light,
   move detail into files read on demand). Propose trims and rule → hook moves from what it finds.
+- Run `/doctor prompt-audit` (Claude Code 2.1.283+; alias `/checkup prompt-audit`), read-only, at the weekly look-back
+  and "review the kit": it reports stale rules, stale paths and commands, and instructions that contradict each other
+  across CLAUDE.md, AGENTS.md, skills, agents and commands. Each finding becomes one proposed fix, asked one by one with
+  AskUserQuestion; back up the file before changing it. Scanning many skills costs tokens: ask before running it on
+  everything (default: this project's CLAUDE.md, the kit's AGENTS.md and CLAUDE.local.md only).
 For each finding: what changed, link, does it affect us, what we would change, effort and risk. Skip anything that does not affect us.
