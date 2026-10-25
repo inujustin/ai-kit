@@ -1,8 +1,0 @@
-#!/usr/bin/env bash
-# Git pre-push hook (copy to .git/hooks/pre-push): ai/* branches never leave this machine. Applies to you and to AI.
-while read -r local_ref _ remote_ref _; do
-  case "$local_ref $remote_ref" in
-    *refs/heads/ai/*) echo "pre-push: refusing to push $local_ref -> $remote_ref (ai/* branches are local only)." >&2; exit 1 ;;
-  esac
-done
-exit 0

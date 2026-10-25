@@ -2,9 +2,9 @@
 # Create a project's kit OUTSIDE its repo and register it, so plain `claude` in the repo loads it (plugin ai-kit-workflow).
 # Usage: bash ~/ai-kit/bin/kit-new <repo-folder> <kit-folder>      (the user picks <kit-folder>; it must not exist yet)
 # Changes: creates <kit-folder> (no .git), adds one line to ~/.config/ai-kit/projects.tsv, adds <kit-folder> to
-#   permissions.additionalDirectories in ~/.claude/settings.json (backup kept), installs .git/hooks/pre-push if none,
+#   permissions.additionalDirectories in ~/.claude/settings.json (backup kept),
 #   adds graphify output names to .git/info/exclude. Nothing is written into the repo's tracked files.
-# Undo: delete <kit-folder>, its line in projects.tsv and in settings.json, and .git/hooks/pre-push if it was added.
+# Undo: delete <kit-folder>, its line in projects.tsv and in settings.json.
 set -euo pipefail
 SRC="$(cd "$(dirname "$0")/.." && pwd)"
 repo="$(cd "${1:?usage: kit-new <repo-folder> <kit-folder>}" && pwd)"
@@ -15,7 +15,7 @@ case "$(realpath -m "$kit")/" in "$root"/*) echo "The kit must live outside the 
 
 mkdir -p "$kit"; kit="$(cd "$kit" && pwd)"
 cp -r "$SRC/project/." "$kit/"
-mkdir -p "$kit/worktrees" "$kit/.ai/logs" "$kit/.ai/tickets" "$kit/.ai/docs"
+mkdir -p "$kit/.ai/logs" "$kit/.ai/tickets" "$kit/.ai/docs"
 (cd "$SRC/project" && find . -type f -print0 | sort -z | xargs -0 sha256sum) > "$kit/.ai/.kit-baseline"
 git -C "$SRC" rev-parse --short HEAD > "$kit/.ai/.kit-source" 2>/dev/null || echo unknown > "$kit/.ai/.kit-source"
 
@@ -36,9 +36,6 @@ if kit not in dirs: dirs.append(kit)
 json.dump(d, open(p, "w"), indent=2); open(p, "a").write("\n")
 PY
 
-hooks="$(git -C "$root" rev-parse --path-format=absolute --git-path hooks)"
-if [ -e "$hooks/pre-push" ]; then echo "NOTE: $hooks/pre-push already exists; merge $kit/.ai/git-hooks/pre-push into it by hand (ask the user)."
-else mkdir -p "$hooks"; cp "$kit/.ai/git-hooks/pre-push" "$hooks/pre-push"; chmod +x "$hooks/pre-push"; fi
 excl="$(git -C "$root" rev-parse --path-format=absolute --git-path info/exclude)"
 mkdir -p "$(dirname "$excl")"; touch "$excl"
 while read -r line; do [ -z "$line" ] || grep -qxF -- "$line" "$excl" || echo "$line" >> "$excl"; done < "$SRC/project-exclude.txt"

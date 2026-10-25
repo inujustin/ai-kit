@@ -1,18 +1,16 @@
 #!/usr/bin/env bash
 # PreToolUse(Edit|Write|MultiEdit|NotebookEdit|Bash): the team's repo is not ours to change during AI work.
-# In a repo with a registered kit, Claude edits files only inside its ai/* worktrees (in the kit), never in the team's
-# main checkout, and never runs whole-repo fixers (pre-commit --all-files, formatters with --write/--fix) there.
-# The user can lift this for a while by creating $KIT/.ai/allow-root-edits (and delete it afterwards).
+# In a repo with a registered kit, Claude edits files in the repo itself (the user's branch), but never runs whole-repo
+# fixers (pre-commit --all-files, formatters with --write/--fix) there, and a project session never edits the shared
+# ai-kit source. The user can allow fixers for a while by creating $KIT/.ai/allow-root-edits (and delete it afterwards).
 input=$(cat)
 read_json() { printf '%s' "$input" | python3 -c "import json,sys; d=json.load(sys.stdin); print($1)" 2>/dev/null; }
 tool=$(read_json 'd.get("tool_name","")')
 cwd=$(read_json 'd.get("cwd","")'); cwd="${cwd:-$PWD}"
 kit="$(bash "$(dirname "$0")/kit-resolve.sh" "$cwd")" || exit 0
 allow_root=no; [ -e "$kit/.ai/allow-root-edits" ] && allow_root=yes
-AI_MODE=worktree; [ -f "$kit/.ai/mode.conf" ] && . "$kit/.ai/mode.conf"
-edits_ok=$allow_root; [ "$AI_MODE" = direct ] && edits_ok=yes
 root="$(dirname "$(git -C "$cwd" rev-parse --path-format=absolute --git-common-dir)")"
-block() { echo "Blocked by ai-kit guard-repo: $1 Work in an ai/* worktree (bash $kit/.ai/bin/newsession claude <name>), or ask the user to allow edits by creating $kit/.ai/allow-root-edits." >&2; exit 2; }
+block() { echo "Blocked by ai-kit guard-repo: $1 Run the fixer only on the files you changed, or ask the user (AskUserQuestion) to allow it by creating $kit/.ai/allow-root-edits." >&2; exit 2; }
 in_root() { case "$(realpath -m "$1")/" in "$root"/*) return 0 ;; *) return 1 ;; esac; }
 
 case "$tool" in
@@ -24,7 +22,6 @@ case "$tool" in
     src="$(cat "${XDG_CONFIG_HOME:-$HOME/.config}/ai-kit/source" 2>/dev/null)"
     if [ -n "$src" ]; then case "$(realpath -m "$f")/" in "$src"/*)
       echo "Blocked by ai-kit guard-repo: $f is in the shared ai-kit source ($src). A project's changes stay in its own kit ($kit): project hooks go in $kit/.ai/hooks/<Event>/. To change the kit for every project, the user opens claude inside $src and asks there." >&2; exit 2 ;; esac; fi
-    [ "$edits_ok" = no ] && in_root "$f" && block "$f is in the team's checkout ($root)."
     ;;
   Bash)
     cmd=$(read_json 'd.get("tool_input",{}).get("command","")')
