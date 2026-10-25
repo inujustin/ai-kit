@@ -75,4 +75,5 @@ In a team or company repo I only contribute: setup never changes it, AI work hap
   command, never run it.
 - Sandbox stays on. Never read or print secrets (.env, keys, tokens). Never touch production.
 - Client/company data never leaves the machine and never goes into ~/ai-kit (it is a public repo).
-- Only Claude (plus Codex) models; no free model routers.
+- Claude + Codex first, always. Other official CLIs (agy, Gemini CLI) only when the project allows them (PROVIDERS, max
+  4), and only for tiny tasks, always reviewed. Never free model routers or switchers.

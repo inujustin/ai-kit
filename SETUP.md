@@ -11,7 +11,7 @@ Talk to the user in their language. Ask with AskUserQuestion at each decision. O
 1. `bash bin/doctor` → show the user a short table: OK / missing / wrong version.
 2. Ask: is this machine personal, company, or a client VM? Which git identity for which folders? Which project folder
    gets the project kit? Anything they do NOT want installed here?
-3. Company or client machine: confirm with the user that the company allows Claude and Codex (and which accounts).
+3. Company or client machine: confirm with the user which AI tools the company allows (Claude, Codex, others) and which accounts.
 
 ## Phase 1: system packages (sudo) — MANIFEST C1
 Install only what doctor reports missing. Afterwards `sudo apt-mark manual bubblewrap socat` so autoremove never drops the sandbox.
@@ -35,8 +35,10 @@ Nothing stack-specific here: language servers, framework skills and packs are in
 - Identity per folder: copy `machine/gitconfig-identity.template` to `~/.gitconfig-<name>` with the values the user gives,
   and add the `includeIf` block from `machine/gitconfig-snippet.txt` to `~/.gitconfig` (show the diff first).
 - Merge (never overwrite) the settings listed in MANIFEST C4 into `~/.claude/settings.json`; show the diff, ask.
-- Accounts (set up everything from the start): ask how many accounts this machine has per tool (Claude, Codex, agy)
-  and the purpose of each (company, startup, ...). For each extra one: `bash bin/account add <tool> <name> <purpose>`,
+- AI tools and accounts (set up everything from the start, wherever the kit goes): detect the CLIs on this machine
+  (`bash bin/doctor`: claude, codex, agy, gemini), then ask in one popup which ones the user uses here, how many
+  accounts each, their plan (pro, max5, max20, plus, team, free) and purpose (company, startup, ...). Record the normal
+  login with `bash bin/account add <tool> default <purpose> <plan>`. For each extra one: `bash bin/account add <tool> <name> <purpose> <plan>`,
   then give the user its one login line. Ask whether Codex may switch accounts by itself on quota (ROTATE=auto in
   ~/.config/ai-kit/accounts.conf; default ask). Say once: several accounts of one provider to get more quota may break
   its terms; the user decides. Later "I added an account" = the same steps for that one.

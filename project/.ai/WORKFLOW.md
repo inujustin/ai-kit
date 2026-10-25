@@ -18,8 +18,8 @@ Nobody checks its own work. Default team = planner, developer, reviewer; add a t
   (`Tests: write | skip`). Tester (only for `Tests: write`) = a separate context writing tests from the ticket
   (`dispatch <ticket> tester`; dispatch refuses otherwise). `Tests: skip`: the user runs the Manual checks, the reviewer confirms.
 - Reviewer = a clean context that did not write the code: `gate` (Codex) plus your own read of the diff.
-- Executors are whatever this machine has (`bin/doctor` lists claude, codex, agy) on the accounts in
-  `~/ai-kit/bin/account list`. See "Accounts and sessions" below.
+- Executors are whatever this machine has (`bin/doctor` lists claude, codex, agy, gemini) on the accounts in
+  `~/ai-kit/bin/account list`, limited by the project's PROVIDERS. See "Providers" and "Accounts and sessions" below.
 
 ## Sizing the team: BUDGET decides, and you ask
 Saving is not always the goal: a startup project may get far more money, disk and quota than a small company task.
@@ -107,6 +107,17 @@ At the end: the report (branches, commits, checks, pushed or local, decisions le
 - Push and PR, step by step, each with the user's OK: show `git status` + `git log <base>..HEAD` → `bash $KIT/.ai/bin/gate <base>`
   PASS → `git push -u origin <branch>` → show PR title and body → `gh pr create`.
   Never force-push, never push straight to a protected branch (guard-git refuses both).
+
+## Providers: Claude + Codex first, free models only for tiny tasks
+- PROVIDERS in mode.conf lists who may work on this project (at most 4). Asked at onboarding; when the user mentions a
+  new AI or account ("tôi thêm account", "dùng thêm gemini"), ask whether to add it to this project and record it.
+- Roles: Claude = lead, planner, reviewer. Codex = developer and second reviewer. agy / Gemini CLI (free, fast to run
+  out, weaker code) = only tickets marked `Size: tiny` (rename, text, comment, one-file format, a few config lines):
+  `dispatch <ticket> tiny`. Their result is never committed unreviewed: read the diff, fix or drop extras, commit.
+- Who works now and the rotation order: `bash ~/ai-kit/bin/account plan [purpose]` (counts usable accounts and plans).
+- Out of quota, in this order: next account of the SAME tool → fallback (ask first): no Codex left = a Claude
+  subagent develops in its own context until Codex resets, reviewer stays separate; no Claude left = handoff, wait for
+  reset (or Codex as the brain via `bin/ai --brain codex`, ask) → wait for reset. Tiny tasks fall back to Codex.
 
 ## Many projects on one machine: one team per project
 - Each project = its own kit, its own lead session, its own memory (tickets, run, handoff). Never read, copy or mix

@@ -39,7 +39,7 @@ Scope: user = only this Linux user. sudo = system package (see SETUP.md "sudo").
 | ponytail | **`inujustin/ai-kit`** (this repo's marketplace, pinned sha 9cc65d03…, v5.1.0, MIT) | `claude plugin marketplace add inujustin/ai-kit` then `claude plugin install ponytail@ai-kit`. Hooks reviewed: local only, no network. Projects set `PONYTAIL_DEFAULT_MODE=lite` |
 
 Not installed on purpose: superpowers, ECC, gstack (clash with mattpocock); find-skills (unvetted registry);
-claude-code-router, omniroute, cc-switch (free model routers/switchers: Claude and Codex only); firecrawl, repomix,
+claude-code-router, omniroute, cc-switch (free model routers/switchers; the kit uses official CLIs only); firecrawl, repomix,
 claude-mem (send code or context to other services); playwright MCP (overlaps chrome-devtools);
 arena-skill (≈600 sub-agent calls per run, 1 commit, malware lookalike account `arena-skiIl`);
 BuildPartner plugin (uploads session data, paid), hccs (non-Claude backends), super-board (overlaps dispatch/gate),

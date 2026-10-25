@@ -10,7 +10,8 @@ Bộ setup AI mang đi mọi máy: Claude = não chính, Codex = thợ code + ng
 4. Trong mỗi repo dự án: mở `claude` ở đó và nói **"setup the kit for this project"**. AI hỏi bạn để kit ở đâu (**ngoài** repo),
    tạo kit + đăng ký. Từ đó chỉ cần gõ `claude` trong repo: plugin `ai-kit-workflow` tự nạp kit, hook gợi ý skill, chặn git…
    Repo công ty không bao giờ có file nào của kit.
-5. Nhiều account: `bin/account add <claude|codex|agy> <tên> <mục đích>` rồi đăng nhập 1 lần. Mở session lead bằng
+5. Nhiều AI, nhiều account: `bin/account add <claude|codex|agy|gemini> <tên> <mục đích> <gói>` rồi đăng nhập 1 lần;
+   `bin/account plan` cho biết ai làm gì và thứ tự luân phiên khi hết quota (Claude + Codex luôn trước; agy/Gemini chỉ việc siêu dễ). Mở session lead bằng
    `bash ~/ai-kit/bin/ai [tên|mục đích]` (Codex làm não: `--brain codex`). Hết session: `c` = hết quota, chạy tiếp
    cùng cuộc trò chuyện trên account kế tiếp **cùng loại**; `n` = session mới đọc `handoff.md`, session cũ vẫn mở lại được.
 6. Nhiều project trên 1 máy: mỗi project 1 team (kit + session lead riêng, mỗi project 1 tab terminal).

@@ -4,7 +4,8 @@ This folder is the user's portable AI setup. It contains no client or company da
 Reply in the user's language (Vietnamese by default), short and plain. Grill with AskUserQuestion at each real decision.
 Every permission popup and every question carries its own brief explanation in the user's language (what, what it
 changes, why, remote or not, undo, which option); the user reads the popup, not the chat. One step per permission.
-Only Claude (plus Codex) models: never install free model routers or switchers (omniroute, claude-code-router, cc-switch).
+Claude + Codex first; other official CLIs (agy, Gemini CLI) only per project for tiny tasks. Never install free model
+routers or switchers (omniroute, claude-code-router, cc-switch).
 
 ## When the user says "setup everything" / "cài hết" / "setup this machine"
 Follow `SETUP.md` from the top. It installs the tools, plugins and skills in `MANIFEST.md`, sets the git identity,
