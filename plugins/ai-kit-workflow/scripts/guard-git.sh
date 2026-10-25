@@ -44,14 +44,18 @@ printf '%s' "$input" | KIT="$kit" CWD="$cwd" BRANCHES="$BRANCHES" REMOTE="$REMOT
   PROT="$PROTECTED_BRANCHES" SUBJ="$SUBJECT_ERE" BADSUBJ="$BAD_SUBJECT_ERE" STYLE="$COMMIT_STYLE_SOURCE" python3 -c '
 import json, os, re, shlex, subprocess, sys
 E = os.environ
-cmd = json.load(sys.stdin).get("tool_input", {}).get("command", "")
+ti = json.load(sys.stdin).get("tool_input", {}) or {}
+cmd = ti.get("command", "")
+newcmd = None   # set when the command is rewritten (gh account for this folder)
 kit, cwd = E["KIT"], E["CWD"]
 prot = re.compile(E["PROT"])
 def git(d, *a):
     try: return subprocess.run(["git", "-C", d, *a], capture_output=True, text=True).stdout.strip()
     except Exception: return ""
 def out(decision, reason):
-    print(json.dumps({"hookSpecificOutput": {"hookEventName": "PreToolUse", "permissionDecision": decision, "permissionDecisionReason": reason}}))
+    o = {"hookEventName": "PreToolUse", "permissionDecision": decision, "permissionDecisionReason": reason}
+    if newcmd: o["updatedInput"] = dict(ti, command=newcmd)
+    print(json.dumps({"hookSpecificOutput": o}))
     sys.exit(0)
 def block(why):
     print("Blocked by ai-kit guard-git: " + why, file=sys.stderr); sys.exit(2)
@@ -72,7 +76,12 @@ for seg in re.split(r"&&|\|\||;|\||\n", cmd):
     d = here
     if t[0] == "gh":
         if E["REMOTE"] == "never": block("REMOTE=never for this project: give the user one copy-ready `! gh ...` line with what it does, do not run it.")
-        ask("lệnh GitHub `" + " ".join(t)[:150] + "`", "đọc hoặc ghi lên GitHub (PR, issue, release, repo...), người khác có thể thấy", "ghi lên GitHub là công khai với team/người xem repo, có thể bị lưu lại dù xoá sau", "PR/issue/comment phải tự đóng hoặc xoá trên GitHub; đọc thì không đổi gì")
+        # The folder may name its GitHub account (git config github.user, e.g. in ~/.gitconfig-<name> via includeIf):
+        # gh then runs as that account through its own GH_TOKEN variable, whatever account is active in gh.
+        ghu = git(d, "config", "--get", "github.user")
+        if ghu and re.match(r"^[A-Za-z0-9-]+$", ghu) and "GH_TOKEN=" not in cmd:
+            newcmd = "export GH_TOKEN=\"$(gh auth token -u " + ghu + ")\"; " + cmd
+        ask("lệnh GitHub `" + " ".join(t)[:150] + "` chạy bằng account " + (ghu or "đang active trong gh"), "đọc hoặc ghi lên GitHub (PR, issue, release, repo...), người khác có thể thấy", "ghi lên GitHub là công khai với team/người xem repo, có thể bị lưu lại dù xoá sau", "PR/issue/comment phải tự đóng hoặc xoá trên GitHub; đọc thì không đổi gì")
         continue
     a = t[1:]
     while a and a[0] in ("-C", "-c"):
