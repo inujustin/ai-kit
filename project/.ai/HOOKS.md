@@ -41,7 +41,7 @@ The SessionStart hook of the ai-kit-workflow plugin reminds you of candidates st
 | Hook | Event | Enforces |
 |---|---|---|
 | plugin guard-outside.sh | PreToolUse(Read/Edit/Write/Glob/Grep/Bash) | outside the workspace and, on WSL, the Windows side (/mnt, *.exe): always a popup with the full explanation (also in auto mode); bulk deletes/moves there denied |
-| plugin guard-git.sh | PreToolUse(Bash) | per mode.conf: branch switch/create/delete, every remote command, reset --hard, clean, rebase, merge, clone, worktree add → popup with the full explanation (BRANCHES=auto / REMOTE=feature let some pass); refused: force-push, push --all/--mirror, push to protected branches, commits on protected branches, kit files in a commit, subjects off commit-style.conf |
+| plugin guard-git.sh | PreToolUse(Bash) | per mode.conf: branch switch/create/delete, every remote command, reset --hard, clean, rebase, merge → popup with the full explanation (BRANCHES=auto / REMOTE=feature / run allow-push let some pass); refused: git worktree add, git clone inside a kit repo, force-push, push --all/--mirror, push to protected branches, commits on protected branches, kit files in a commit, subjects off commit-style.conf |
 | plugin guard-repo.sh | PreToolUse(Edit/Write/Bash) | no whole-repo fixers in the repo; a project session never edits the ai-kit source |
 | plugin after-edit.sh | PostToolUse(Edit/Write) | the team's pre-commit hooks on the edited file |
 | plugin stop-gate.sh | Stop | `verify.sh --fast` when the repo has uncommitted changes |

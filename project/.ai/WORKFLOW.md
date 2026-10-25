@@ -58,10 +58,13 @@ branches by itself and with which names (BRANCHES=auto + AUTO_BRANCH_ERE, e.g. f
 Typical styles, all set per project and per stage (ask; never assume one):
   - company work: mostly local, one branch at a time, no new or parallel branches without asking (BRANCHES=ask).
   - a long run agreed in a grill: the AI creates and switches the agreed branch names itself (BRANCHES=auto).
-  - projects that want it: several branches truly at once, each in `$KIT/worktrees/<branch>` (PARALLEL=worktree,
-    `dispatch <ticket> <role> <branch>`), every branch kept as a clean story of small commits.
-- Work directly in the repo. No clones or copies; worktrees only with PARALLEL=worktree (guard-git asks otherwise).
-  Remove a branch's worktree when it is done (`git worktree remove`, ask if it has uncommitted work).
+  - projects that want many branches: the AI plans them in a grill, then works them one after another in the same
+    checkout, every branch kept as a clean story of small commits.
+- Work directly in the one checkout. Never a worktree, clone or copy of the project (guard-git refuses them).
+- New feature in a request while BRANCHES=auto: finish the current step and commit it, then create the new branch
+  from the base (`git switch -c feat/<name> <base>`, base = develop/main or `branch.<b>.aibase`, never from the
+  unfinished feature), say "now on feat/<name> (from <base>)" in one line and go on. One feature per branch, so
+  every branch reads as its own clean story. BRANCHES=ask: the same, after a popup.
 - Before switching: commit the finished step (or ask what to do with the unfinished one); never switch with a dirty
   tree in silence. Say in one line "now on <branch>". guard-git shows a popup unless BRANCHES=auto allows it.
 - Several branches in one run: one task list (`.ai/run/tasks.json`), each task names its branch; switch, work,

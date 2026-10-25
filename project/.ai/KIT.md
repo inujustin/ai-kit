@@ -55,7 +55,7 @@ formatters or fixers on it (the guard-repo hook blocks this); everything you wri
    write it to mode.conf. Whatever they pick, the AI re-asks at session start and per ticket.
 6b. Work profile (mode.conf), one AskUserQuestion with up to 4 questions, each value explained in plain words:
    BUDGET (lean / normal / max: is this a small company task or something the user invests in?), BRANCHES (ask /
-   auto + which names), PARALLEL (no / worktree), REMOTE (ask / feature / never; per run: allow-push), PROTECTED_BRANCHES of this repo, ACCOUNT_GROUP (which accounts,
+   auto + which names), REMOTE (ask / feature / never; per run: allow-push), PROTECTED_BRANCHES of this repo, ACCOUNT_GROUP (which accounts,
    `~/ai-kit/bin/account list`), PRIORITY (auto / high / normal / low against the other projects, `~/ai-kit/bin/projects`). Say these are re-asked whenever the work changes shape.
 7. Commit style: read the team's last ~50 commit subjects by other people (`git log --format=%s --author=...`), commitlint,
    .gitmessage, CONTRIBUTING, and the commit rules of installed skills. Propose `.ai/commit-style.conf` from what the team
