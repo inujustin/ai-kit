@@ -8,7 +8,7 @@
 #   remote (push, pull, fetch, remote, clone, gh ...): REMOTE=ask -> popup; feature -> feature-branch push and fetch
 #                   pass, the rest popup; never -> refused (the AI gives the user one `!` line)
 #   branches (switch, checkout <branch>, checkout -b, branch <new>/-d/-m): BRANCHES=auto passes local branches matching
-#                   AUTO_BRANCH_ERE on a clean tree, and `branch -d` of merged ones; -D and everything else popup
+#                   AUTO_BRANCH_ERE on a clean tree; deleting a branch always asks (merged branches are kept for tracking)
 #   always popup:   reset --hard, clean -f, rebase, merge, stash drop/clear
 #   never:          git worktree add, and git clone from inside a kit repo (the user's rule: no extra checkout or copy
 #                   of a project, ever; branches are worked in turn in the one checkout)
@@ -28,11 +28,19 @@ SUBJECT_ERE=''; BAD_SUBJECT_ERE=''; COMMIT_STYLE_SOURCE=''
 [ -n "$kit" ] && [ -f "$kit/.ai/mode.conf" ] && . "$kit/.ai/mode.conf"
 # shellcheck source=/dev/null
 [ -n "$kit" ] && [ -f "$kit/.ai/commit-style.conf" ] && . "$kit/.ai/commit-style.conf"
+# The ai-kit source repo itself: the user allows the AI to push it (main included), only after leak-check passes.
+top="$(git -C "$cwd" rev-parse --show-toplevel 2>/dev/null)"
+src="$(cat "${XDG_CONFIG_HOME:-$HOME/.config}/ai-kit/source" 2>/dev/null)"
+[ -z "$src" ] && [ -f "$top/bin/kit-new" ] && [ -d "$top/plugins/ai-kit-workflow" ] && src="$top"   # no kit registered yet
+AIKIT=no
+if [ -n "$src" ] && [ -n "$top" ] && [ "$top" = "$(realpath -m "$src")" ] && printf '%s' "$input" | grep -qE 'git([[:space:]]+-C[[:space:]]+[^[:space:]]+)?[[:space:]]+push'; then
+  if bash "$src/bin/doctor" --leak-check >/dev/null 2>&1; then AIKIT=yes; else echo "Blocked by ai-kit guard-git: leak-check failed in the ai-kit source (bash $src/bin/doctor --leak-check); fix it before any push." >&2; exit 2; fi
+fi
 ap="$kit/.ai/run/allow-push"
 if [ -n "$kit" ] && [ -f "$ap" ] && [ "$REMOTE" != never ]; then
   if [ $(( $(date +%s) - $(stat -c %Y "$ap") )) -lt 86400 ]; then REMOTE=feature; else rm -f "$ap"; fi
 fi
-printf '%s' "$input" | KIT="$kit" CWD="$cwd" BRANCHES="$BRANCHES" REMOTE="$REMOTE" AUTO_ERE="$AUTO_BRANCH_ERE" \
+printf '%s' "$input" | KIT="$kit" CWD="$cwd" BRANCHES="$BRANCHES" REMOTE="$REMOTE" AIKIT="$AIKIT" AUTO_ERE="$AUTO_BRANCH_ERE" \
   PROT="$PROTECTED_BRANCHES" SUBJ="$SUBJECT_ERE" BADSUBJ="$BAD_SUBJECT_ERE" STYLE="$COMMIT_STYLE_SOURCE" python3 -c '
 import json, os, re, shlex, subprocess, sys
 E = os.environ
@@ -82,6 +90,8 @@ for seg in re.split(r"&&|\|\||;|\||\n", cmd):
         if any(x in ("--all", "--mirror", "--tags") for x in rest): block("push one named branch only.")
         refs = pos[1:] if len(pos) > 1 else [branch]
         dst = [r.split(":")[-1].replace("refs/heads/", "") for r in refs if r]
+        if E["AIKIT"] == "yes":
+            prot = re.compile(r"^$")  # ai-kit source: pushing main is the normal flow
         if any(prot.search(x) for x in dst if x != "HEAD") or (any(r.split(":")[-1] == "HEAD" for r in refs) and prot.search(branch or "")):
             block("never push straight to a protected branch (" + ", ".join(dst) + "); push the feature branch and open a PR (ask the user).")
         if E["REMOTE"] == "never": block("REMOTE=never for this project: give the user one copy-ready `! git push ...` line instead.")
@@ -92,6 +102,8 @@ for seg in re.split(r"&&|\|\||;|\||\n", cmd):
         files = git(d, "log", "--name-only", "--format=", *rng.split()).splitlines()
         bad = sorted({f for f in files if re.search(r"(^|/)(\.env(\..*)?|.*\.(pem|key|p12|pfx|sql|dump|bak|backup)|id_(rsa|ed25519).*|credentials.*|secrets?\..*)$", f, re.I)})[:5]
         if bad: block("these files are in the commits to push and look like secrets or data dumps: " + ", ".join(bad) + ". Never push them; show the user and ask how to remove them from the commits.")
+        if E["AIKIT"] == "yes" and len(dst) == 1:
+            allows.append("push " + dst[0] + " of the ai-kit source (user allowed; leak-check PASS)"); continue
         if E["REMOTE"] == "feature" and len(dst) == 1:
             allows.append("push " + dst[0] + " (REMOTE=feature)"); continue
         ask("push " + ", ".join(dst) + " lên remote " + (pos[0] if pos else "mặc định") + " (" + where + ")", "commit local được gửi lên server, đồng nghiệp/CI thấy được", "code rời khỏi máy này; nếu có secret hay dữ liệu khách trong commit thì đã lộ", "xoá nhánh trên remote (git push <remote> --delete <nhánh>) nhưng người khác có thể đã kéo về")
@@ -119,9 +131,7 @@ for seg in re.split(r"&&|\|\||;|\||\n", cmd):
             allows.append(sub + " " + target + " (BRANCHES=auto)"); continue
         ask(("tạo nhánh mới " if new else "chuyển sang nhánh ") + target + " (" + where + ")", "file trong repo đổi theo nhánh đích" + ("; các file chưa commit sẽ đi theo hoặc làm lệnh lỗi" if dirty else ""), "làm nhầm nhánh thì commit sau đó vào sai chỗ" + ("; file chưa commit có thể bị lẫn" if dirty else ""), "git switch " + (branch or "<nhánh cũ>") + " để quay lại")
     elif sub == "branch":
-        if "-d" in rest and "-D" not in rest and "--force" not in rest and E["BRANCHES"] == "auto" and pos and all(re.search(E["AUTO_ERE"], x) and x != branch for x in pos):
-            allows.append("branch -d " + " ".join(pos) + " (BRANCHES=auto; git refuses unmerged branches)")
-        elif any(x in ("-d", "-D", "--delete") for x in rest):
+        if any(x in ("-d", "-D", "--delete") for x in rest):
             ask("XOÁ nhánh local " + ", ".join(pos), "nhánh biến mất khỏi máy", "-D xoá cả khi chưa merge: commit chỉ còn trong reflog ~90 ngày", "git branch <tên> <sha> (lấy sha từ git reflog)")
         elif any(x in ("-m", "-M", "--move") for x in rest):
             ask("đổi tên nhánh " + " -> ".join(pos), "tên nhánh local đổi", "nhánh remote/PR cũ không theo tên mới", "git branch -m <tên mới> <tên cũ>")
