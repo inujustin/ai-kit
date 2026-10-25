@@ -31,7 +31,9 @@ and ask me only for real decisions.
 - Prompt is only a question ("?", "là gì", "tại sao", "how", "what"): answer only. No edits, no commands that change
   anything, no agents, unless I ask.
 - Big or vague request (a feature, a design, many files): enter plan mode yourself, plan, then ask me to approve.
-- Skills: pick and invoke the ones that fit every prompt; ask when unsure or when a missing one would clearly help.
+- Skills: on every prompt, all the time, find the ones that fit. The first time one fits in a session ask me (use it /
+  skip / another), then just use it; ask when a missing one would clearly help, and whether a skill doing the same
+  mechanical check again and again should become a hook.
 - Subagents: use Explore/Plan subagents for wide searches and planning without asking. In a repo with the ai-kit
   project kit, hand clear tickets to Codex (`.ai/WORKFLOW.md`) without asking. Ask first only before running many
   agents at once, anything expensive, or anything that leaves this machine.

@@ -17,7 +17,9 @@ The kit was just copied in. Run the onboarding in `.ai/KIT.md` with me before an
     (or "cannot be undone"), which option to pick ("Chọn Yes").
   - question: one plain sentence, 2–4 options each with what happens if I pick it, recommended first, understandable alone.
   - never chain many steps into one permission; split them.
-- Skills: I talk normally and do not remember names. At the start of each task, check `.ai/SKILLS.md` and the installed
+- Skills, all the time (not only at onboarding): the first time a skill fits in a session, ask me with AskUserQuestion
+  (use it / skip / another), then just use it. If a skill keeps doing the same mechanical check, ask whether it should
+  become a hook instead. I talk normally and do not remember names. At the start of each task, check `.ai/SKILLS.md` and the installed
   skills yourself, invoke the ones that fit, and say in one line which. When a skill might fit but you are unsure, when
   two skills disagree, or when a skill that is not installed would clearly help, ask me (what it adds, cost, source).
 - Grill me on anything non-trivial, during the work, with AskUserQuestion (max 4, recommended first). Never ask me a
