@@ -125,6 +125,15 @@ At the end: the report (branches, commits, checks, pushed or local, decisions le
   subagent develops in its own context until Codex resets, reviewer stays separate; no Claude left = handoff, wait for
   reset (or Codex as the brain via `bin/ai --brain codex`, ask) → wait for reset. Tiny tasks fall back to Codex.
 
+## Footprints: catch up without reading the code
+When a change is big enough that the user would need to read code to follow it (a feature, a set of tickets, a
+refactor, the end of a long run; no fixed unit, your judgement), write one footprint in the kit, never in the repo:
+copy `$KIT/.ai/footprints/TEMPLATE.html` to `<date>-<slug>.html`, fill it, add one line to `footprints/INDEX.md`.
+- Text: straight, short, exact; one line per point, no filler.
+- Diagram: the HTML before → after flow in the template (no mermaid). Cite file:line and the real checks run.
+- Say "footprint: <file>" in one line when you write it; mention it in the end-of-run report.
+- KIT_GIT=local or remote: commit the footprint in the kit's own git right away.
+
 ## Many projects on one machine: one team per project
 - Each project = its own kit, its own lead session, its own memory (tickets, run, handoff). Never read, copy or mix
   another project's code, notes or rules; company and startup work stay apart.

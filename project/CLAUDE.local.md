@@ -52,7 +52,12 @@ Local work can be freer; remote is always careful. Never copy or clone the proje
 The UserPromptSubmit hook adds hints (skills, "question → answer only", "big → plan first") to each prompt.
 
 ## The team's repo is hands-off
-I am a contributor, not the owner. Setup and onboarding only READ the repo. Code changes happen directly on the branch
+Who I am here is REPO_ROLE in `.ai/mode.conf` (grill it at onboarding and whenever it looks wrong): `joined` = a team
+repo I joined; `owner` = I created it. In both: the repo gets only project code; the team's own rules and AI files in
+the repo (CLAUDE.md, AGENTS.md, .cursor, copilot ...) come first, then this kit; nothing personal (tickets, plans,
+footprints, my rules) ever enters the repo. `owner` may add team-wide rules to the repo only when I ask, each time. The kit
+may have its own git (KIT_GIT: none / local / remote private repo next to the code repo); ask at onboarding.
+I am a contributor, not the owner (unless REPO_ROLE=owner). Setup and onboarding only READ the repo. Code changes happen directly on the branch
 we agreed, one local commit per finished step (never on protected branches). Never run whole-repo fixers
 (pre-commit --all-files, formatters with --write/--fix) on it; if `.ai/verify.sh` reports files a check rewrote, tell me.
 Team rules, CI, infra and config files change only when I ask for that exact change, as a normal contribution through

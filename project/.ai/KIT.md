@@ -29,6 +29,7 @@ CLAUDE.local.md               Claude-only, kept short: how to talk, ask on confl
 ~/ai-kit/bin/projects         (machine) read-only table of every project kit, most urgent first
 ~/ai-kit/bin/account, bin/ai  (machine) accounts per tool + purpose; one-terminal lead launcher (quota -> next account of
                               the same tool, context full -> new session from handoff.md), Claude or Codex as the brain
+.ai/footprints/               HTML catch-up pages per big change (TEMPLATE.html, INDEX.md); never in the repo
 .ai/handoff.md                session snapshot for the next session (context-watch asks for it near ~70%)
 .ai/bin/gate                  full verify + Codex adversarial review -> VERDICT PASS/BLOCK
 .ai/tickets/, .ai/docs/       tickets, spec, glossary, ADRs (private, not the team's docs/)
@@ -53,6 +54,10 @@ formatters or fixers on it (the guard-repo hook blocks this); everything you wri
    base branch (`git config branch.<b>.aibase` if it is not develop/main/master). Ask for anything unclear.
 6c. Tests: run `bash $KIT/.ai/bin/test-scan`, show the result, and ask the user TEST_POLICY (ask / tests / manual);
    write it to mode.conf. Whatever they pick, the AI re-asks at session start and per ticket.
+6a. Ownership, grilled hard (it decides what may be committed): did the user join this repo or create it (REPO_ROLE)?
+   Which AI files does the repo already have (team rules win)? Kit under version control (KIT_GIT none / local /
+   remote private repo next to the code repo; `git init` in the kit for local)? Ask again if signs change (the user
+   says they own it, a new empty repo, no other committers).
 6b. Work profile (mode.conf), one AskUserQuestion with up to 4 questions, each value explained in plain words:
    BUDGET (lean / normal / max: is this a small company task or something the user invests in?), BRANCHES (ask /
    auto + which names), REMOTE (ask / feature / never; per run: allow-push), PROTECTED_BRANCHES of this repo, ACCOUNT_GROUP (which accounts,

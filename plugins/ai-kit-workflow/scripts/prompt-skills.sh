@@ -76,11 +76,13 @@ if kit and not nogrill:
             if m: prof[m.group(1)] = m.group(2).strip("\x27\"")
     except Exception:
         pass
-    cur = ", ".join(k + "=" + prof.get(k, "?") for k in ("BUDGET", "BRANCHES", "REMOTE", "PROVIDERS", "ROLE_DEV", "ROLE_REVIEW", "TEST_POLICY"))
+    cur = ", ".join(k + "=" + prof.get(k, "?") for k in ("REPO_ROLE", "KIT_GIT", "BUDGET", "BRANCHES", "REMOTE", "PROVIDERS", "ROLE_DEV", "ROLE_REVIEW", "TEST_POLICY"))
     if act:
         grills.append(("PROFILE", "work profile (" + cur + ", from " + kit + "/.ai/mode.conf): at the first task of this session show these values in plain words and ask whether they still fit this work"))
     if re.search(r"nhánh|branch|checkout|song song|parallel|nhiều project|multi", text):
         grills.append(("PROFILE-BRANCH", "branches: ask how to work this time: one branch / several in turn; which branch names the AI may create or switch by itself (BRANCHES ask|auto, AUTO_BRANCH_ERE); branches are done in turn in the one checkout, never a worktree, clone or copy; a new feature = commit, then a new branch from the base (WORKFLOW.md Branches)"))
+    if re.search(r"tạo repo|repo mới|new repo|git init|tôi là chủ|của tôi|i own|my repo|join|vào team|repo công ty|repo của team", text):
+        grills.append(("PROFILE-OWNERSHIP", "ownership: ask whether the user joined or created this repo (REPO_ROLE joined|owner), which AI files the repo already has (team rules first), and whether the kit should have its own git (KIT_GIT none|local|remote); only project code ever enters the repo"))
     if re.search(r"thêm (ai|acc|account|tài khoản)|account mới|tài khoản mới|agy|gemini|antigravity|provider|nhà cung cấp|model khác|\bai khác", text):
         grills.append(("PROFILE-PROVIDERS", "AI providers: the user mentions an AI or account: ask whether to add it on this machine (~/ai-kit/bin/account add <tool> <name> <purpose> <plan>) and to this project (PROVIDERS, max 4; Claude + Codex first, free ones only Size: tiny tickets); show bash ~/ai-kit/bin/account plan and ask whether the roles (ROLE_DEV, ROLE_REVIEW, ROLE_TINY) should change"))
     if re.search(r"push|pull request|\bpr\b|remote|github|gitlab|deploy|release", text):
