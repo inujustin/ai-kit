@@ -4,16 +4,21 @@
 # [branch] = the branch the ticket belongs to; dispatch refuses when the checkout is on another one.
 # Codex edits files and runs tests but cannot commit (its sandbox cannot write .git); this script commits on PASS.
 # On FAIL the changes stay uncommitted for Claude to fix or show the user.
-# Usage: bash $KIT/.ai/bin/dispatch $KIT/.ai/tickets/T012-foo.md [coder|tester] [branch]
+# Usage: bash $KIT/.ai/bin/dispatch $KIT/.ai/tickets/T012-foo.md [coder|tester|tiny] [branch]
 #   tester: writes failing tests only, from the ticket (only when the ticket says "Tests: write").
 #   coder:  writes the code (default); if a tester commit for this ticket exists, it may not touch those test files.
+#   tiny:   a free/weak model (agy, or gemini) for a ticket marked "Size: tiny" (rename, text, comment, one-file format),
+#           only if the project's PROVIDERS lists it. Never committed by this script: Claude reviews the diff, then commits.
 # Model: AI_CODEX_MODEL (default gpt-6.1-sol), effort: AI_CODEX_EFFORT (default medium; high for tricky tickets).
 # Pick both from the project's BUDGET in mode.conf; ask the user before raising them.
 set -euo pipefail
 ticket="$(readlink -f "${1:?usage: dispatch <ticket.md> [coder|tester] [branch]}")"
 want="${3:-}"
 role="${2:-coder}"
-case "$role" in coder|tester) ;; *) echo "role must be coder or tester" >&2; exit 1 ;; esac
+case "$role" in coder|tester|tiny) ;; *) echo "role must be coder, tester or tiny" >&2; exit 1 ;; esac
+if [ "$role" = tiny ] && ! grep -qiE "Size:[[:space:]]*tiny" "$ticket"; then
+  echo "Only tickets marked 'Size: tiny' go to a free model. This one stays with Codex (or Claude)." >&2; exit 1
+fi
 if [ "$role" = tester ] && ! grep -qiE "Tests:[[:space:]]*write" "$ticket"; then
   echo "This ticket does not say 'Tests: write'. Ask the user whether to write tests for it (bin/test-scan shows what the repo has), record the answer in the ticket, then dispatch the tester." >&2; exit 1
 fi
@@ -21,7 +26,14 @@ fi
 . "$(dirname "$0")/../lib.sh"
 PROTECTED_BRANCHES='^(main|master|develop|dev|release.*|production|staging)$'
 # shellcheck source=/dev/null
+PROVIDERS="claude codex"
 [ -f "$KIT/.ai/mode.conf" ] && . "$KIT/.ai/mode.conf"
+acc="$(cat "${XDG_CONFIG_HOME:-$HOME/.config}/ai-kit/source" 2>/dev/null)/bin/account"
+tiny_tool=""
+if [ "$role" = tiny ]; then
+  for t in agy gemini; do case " $PROVIDERS " in *" $t "*) command -v "$t" >/dev/null && { tiny_tool="$t"; break; } ;; esac; done
+  [ -n "$tiny_tool" ] || { echo "No free model allowed and installed for this project (PROVIDERS=\"$PROVIDERS\"). Ask the user whether to add agy/gemini, or give the ticket to Codex." >&2; exit 1; }
+fi
 id="$(basename "$ticket" .md)"
 model="${AI_CODEX_MODEL:-gpt-6.1-sol}"
 effort="${AI_CODEX_EFFORT:-medium}"
@@ -56,6 +68,25 @@ run_codex() {
   codex exec --sandbox workspace-write -m "$model" -c model_reasoning_effort="$effort" \
     -C "$work" -o "$log/$name.md" "$prompt" >"$log/$name.log" 2>&1 || true
 }
+run_tiny() {
+  local who; who="$(bash "$acc" next "$tiny_tool" 2>/dev/null || echo default)"
+  case "$tiny_tool" in
+    agy)    bash "$acc" run agy "$who" -- agy -p "$prompt" --sandbox --mode accept-edits --effort low >"$log/$name.log" 2>&1 || true ;;
+    gemini) gemini -p "$prompt" >"$log/$name.log" 2>&1 || true ;;
+  esac
+  cp "$log/$name.log" "$log/$name.md"
+}
+if [ "$role" = tiny ]; then
+  run_tiny
+  if grep -qiE 'usage limit|rate limit|quota|too many requests|resource.?exhausted' "$log/$name.log"; then
+    bash "$acc" out "$tiny_tool" "$(bash "$acc" next "$tiny_tool" 2>/dev/null || echo default)" >/dev/null 2>&1 || true
+    echo "QUOTA $id (tiny, $tiny_tool): out of quota. Give the ticket to Codex instead (it is tiny, cheap there too). Changes left as they are."; exit 3
+  fi
+  if bash "$KIT/.ai/verify.sh" --fast >"$log/$name.verify.log" 2>&1; then status=PASS; else status=FAIL; fi
+  [ -n "$(git status --porcelain)" ] || { echo "FAIL $id (tiny, $tiny_tool): nothing changed. See $log/$name.md"; exit 1; }
+  echo "REVIEW $id (tiny, $tiny_tool) branch=$branch checks=$status: changes left UNCOMMITTED. Claude reviews the diff (git diff) against the ticket; fix or drop anything beyond it, then commit with the ticket title (body: Executor: $tiny_tool, reviewed by Claude). log=$log/$name.log"
+  exit 0
+fi
 run_codex
 # Out of quota: only another CODEX account (~/ai-kit/bin/account), never another tool. ROTATE in
 # ~/.config/ai-kit/accounts.conf: auto = switch and retry once by itself; anything else = stop and let Claude ask the user.
@@ -67,7 +98,7 @@ if grep -qiE 'usage limit|rate limit|quota|too many requests' "$log/$name.log"; 
     eval "$(bash "$acc" env codex "$next")"; echo "codex account ${curname:-default} out of quota; retrying on $next" >>"$log/$name.log"
     git checkout -q -- . && git clean -qfd; run_codex
   else
-    echo "QUOTA $id ($role): Codex account ${curname:-default} is out of quota. Ask the user: wait, or switch to another Codex account (bash ~/ai-kit/bin/account list) and dispatch again. Changes left as they are."; exit 3
+    echo "QUOTA $id ($role): Codex account ${curname:-default} is out of quota. See \`bash $acc plan\`. Ask the user (AskUserQuestion): next Codex account (if any) / a Claude subagent develops this ticket in its own context until Codex resets (reviewer stays separate) / wait for reset. Changes left as they are."; exit 3
   fi
 fi
 

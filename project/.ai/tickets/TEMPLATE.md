@@ -1,7 +1,7 @@
 # T000: short title in GLOSSARY words
 
-Spec: .ai/docs/spec/<file>.md#section · ADR: none · Size: S (one agent-hour at most) · Depends on: none
-Executor: codex | claude · Split: yes (risky: tester then coder) | no · Tests: write | skip (asked the user on <date>)
+Spec: .ai/docs/spec/<file>.md#section · ADR: none · Size: tiny | S (one agent-hour at most) · Depends on: none
+Executor: codex | claude | tiny (agy/gemini, Size: tiny only) · Split: yes (risky: tester then coder) | no · Tests: write | skip (asked the user on <date>)
 
 ## Goal
 One or two sentences. What the user can do afterwards.
