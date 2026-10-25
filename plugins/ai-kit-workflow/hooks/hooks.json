@@ -36,6 +36,15 @@
         "hooks": [
           {
             "type": "command",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/scripts/context-watch.sh\"",
+            "timeout": 10
+          }
+        ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
             "command": "bash \"${CLAUDE_PLUGIN_ROOT}/scripts/project-hooks.sh\" UserPromptSubmit",
             "timeout": 60
           }

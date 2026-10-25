@@ -38,6 +38,11 @@ whether official examples exist for our use case, and a version at least 2 weeks
   the options with the facts above in your final message.
 - Never touch production or a client site.
 
+## Questions for the user (every AI)
+- Never ask the user a question inside reply text. Claude asks with the AskUserQuestion popup.
+- Codex and other executors cannot ask the user: stop and list the question under "Open questions" in the final
+  message; Claude turns it into an AskUserQuestion popup.
+
 ## Evidence
 - Never rely on a file, function, field or API you did not open in this session. Cite `path:line`.
 - Cannot find an API in real code or official docs: say `BLOCKED (cannot verify <name>)`, do not guess.

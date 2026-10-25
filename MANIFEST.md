@@ -41,7 +41,9 @@ Scope: user = only this Linux user. sudo = system package (see SETUP.md "sudo").
 Not installed on purpose: superpowers, ECC, gstack (clash with mattpocock); find-skills (unvetted registry);
 claude-code-router, omniroute, cc-switch (free model routers/switchers: Claude and Codex only); firecrawl, repomix,
 claude-mem (send code or context to other services); playwright MCP (overlaps chrome-devtools);
-arena-skill (≈600 sub-agent calls per run, 1 commit, malware lookalike account `arena-skiIl`).
+arena-skill (≈600 sub-agent calls per run, 1 commit, malware lookalike account `arena-skiIl`);
+BuildPartner plugin (uploads session data, paid), hccs (non-Claude backends), super-board (overlaps dispatch/gate),
+Understand-Anything (overlaps graphify). Details: `project/.ai/PRACTICES.md` "Leads checked".
 
 ## C4. Settings (ask first, merge, never overwrite)
 - `~/.claude/settings.json`: env `DO_NOT_TRACK=1`, deny reads of ~/.ssh, ~/.aws, ~/.codex/auth.json, .env, *.pem, *.key; sandbox enabled.

@@ -35,9 +35,29 @@ kit = os.environ.get("KIT", "")
 map_ = (kit + "/.ai/SKILLS.md") if kit else "the installed skills"
 print("ai-kit skill check: pick the skills that fit this prompt from " + map_ + ", invoke them, say in one line which; ask the user if unsure or if a missing skill would help. Repo rules beat kit rules; on any conflict ask.")
 if question and not act:
-    print("- mode: this looks like a question only: answer it; no edits, no state-changing commands, no agents.")
+    print("- mode: this looks like a question only: answer it cheaply and briefly; no edits, no state-changing commands, no plan mode, no agents.")
 elif big and act:
     print("- mode: big or vague request: enter plan mode, plan (subagents allowed), then ask the user to approve before editing.")
+if kit and act and os.path.isfile(kit + "/.ai/PRACTICES.md"):
+    print("- practices: check " + kit + "/.ai/PRACTICES.md; a practice that fits this task and is not applied/no: grill the user with AskUserQuestion (apply now / not now).")
+# Forget signals: keep in sync with $KIT/.ai/PRACTICES.md "Catalog".
+nogrill = re.search(r"no grill|just do it|khỏi hỏi|đừng hỏi|làm luôn đi", text)
+bps = [
+    ("BP-1", r"lại sai|đã nói rồi|nhắc lại|lần trước|như mọi khi|\bagain\b|i told you|as before", "look back at session history; repeated work becomes a skill or hook"),
+    ("BP-2", r"xong chưa|xong rồi|\bmerge\b|\bship\b|\bdone\b|\bpush\b", "self-review before saying done"),
+    ("BP-3", r"vẫn lỗi|khó quá|\bbí\b|thử lại|still fail|stuck|tried twice", "effort follows risk; ask before raising effort"),
+    ("BP-4", r"thêm cả|thêm luôn|nhân tiện|à mà|also add|while you.re at it", "new idea mid-task becomes a backlog ticket"),
+    ("BP-5", r"mỗi ngày|hằng ngày|mỗi sáng|hàng tuần|định kỳ|every (day|week|morning)", "scheduled job instead of doing it by hand"),
+    ("BP-7", r"chuyển qua|việc khác|task khác|giờ làm|new task|switch to|unrelated", "topic changed: delegate it to a subagent or Codex ticket to keep this session clean; never ask the user for /clear"),
+    ("BP-8", r"mai làm tiếp|để sau|tạm dừng|hết limit|continue tomorrow|pick up later", "write the session handoff before stopping"),
+]
+grills = [] if nogrill else [(i, h) for i, pat, h in bps if re.search(pat, text)]
+if not nogrill and not grills and act and len(text.split()) < 12 and not re.search(r"[\w-]+\.\w{1,4}\b|/", text):
+    grills.append(("BP-6", "short action prompt without details: ask for goal, acceptance, example first"))
+for i, h in grills[:3]:
+    print("- grill: " + i + " " + h + ": the prompt shows the user may have forgotten it. Check its status in .ai/PRACTICES.md; proposed or not now: ask with AskUserQuestion (apply now / not now / no for this session).")
+if re.search(r"https?://|tip|mẹo|best practice|thực hành tốt|video|tiktok|facebook|github\.com", text):
+    print("- lead: a pasted tip or link is a lead: check the real source (SKILLS.md Missing), add it to .ai/PRACTICES.md, ask.")
 for h in hits[:4]:
     print("- hint: " + h)
 '

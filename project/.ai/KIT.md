@@ -9,6 +9,7 @@ AGENTS.md                     shared rules for Claude and Codex (core + project 
 CLAUDE.local.md               Claude-only, kept short: how to talk, ask on conflicts, rule → hook, stay current
 .ai/WORKFLOW.md               roles, Codex dispatch, separate contexts, git, push/PR (read when needed)
 .ai/HOOKS.md                  rule → hook: signals, proactive scan, existing hooks, candidates log
+.ai/PRACTICES.md              best practices the AI must notice and grill the user about; leads already checked
 .ai/lib.sh                    sets KIT (this folder) and ROOT (the repo) for every script
 worktrees/                    AI worktrees (inside the kit, never in the repo)
 .ai/hooks/<Event>/*.sh        this project's own hooks (run by the plugin for this project only)
@@ -54,6 +55,7 @@ formatters or fixers on it (the guard-repo hook blocks this); everything you wri
    .gitmessage, CONTRIBUTING, and the commit rules of installed skills. Propose `.ai/commit-style.conf` from what the team
    really does; if sources disagree with each other or with the kit default, ask which wins (show examples of each).
 8. Rule → hook scan (`.ai/HOOKS.md` "Proactive scan"): one multiSelect question with every candidate you found.
+8b. Best practices (`.ai/PRACTICES.md`): one multiSelect question with the proposed ones that fit this project.
 9. Show the user a short summary of what changed in the kit files, then delete step list "First session" from CLAUDE.local.md.
 
 ## Freshness check (onboarding, "review the kit", weekly look-back)

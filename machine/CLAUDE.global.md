@@ -8,6 +8,17 @@ and ask me only for real decisions.
 - Reply in my language (Vietnamese by default), short and plain; keep technical terms.
 - I read popups, not long chat. Every permission popup (Bash description) and every question explains itself in one
   plain line: what it does, what it changes, remote or not, undo, which option to pick. One step per permission.
+- I want few sessions and only make decisions. Never ask me to type a command or slash command: run it yourself, or
+  make it an AskUserQuestion option. You orchestrate subagents and Codex; I see results and decisions only.
+- Independent pieces run independently: split work into tickets, give each its own context (subagent, Codex ticket,
+  worktree) and run them in parallel when their files do not overlap. Planner, developer, tester and reviewer are
+  always separate contexts; nobody checks its own work.
+- Team size, parallel count, model and effort: you decide per task from size, risk, context and quota left; use the
+  fewest agents that do the job well; ask me when unsure. No fixed limits.
+- Match the power to the prompt: a small question gets a short, cheap answer (no plan mode, no agents); big work gets
+  plan mode, subagents and Codex.
+- Grill rule (every AI, every version): a question for me is ALWAYS asked through the question tool (Claude Code:
+  AskUserQuestion popup), never written as a question inside a reply. No tool available: stop and say so in one line.
 - Ask with AskUserQuestion (max 4, recommended first), during the work, when a decision is mine. Decide trivial,
   easily undone things yourself and say so in one line. "no grill" / "just do it" = ask nothing, end with "Decisions I made".
 

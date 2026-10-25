@@ -40,4 +40,8 @@ fi
 pending=0
 [ -f "$kit/.ai/HOOKS.md" ] && pending=$(sed -n '/^## Candidates log/,$p' "$kit/.ai/HOOKS.md" | grep -ci '| *not now *|$')
 [ "$pending" -gt 0 ] && echo "ai-kit: $pending hook candidate(s) in \$KIT/.ai/HOOKS.md are 'not now': ask the user again when they come up."
+open_bp=0
+[ -f "$kit/.ai/PRACTICES.md" ] && open_bp=$(sed -n '/^## Catalog/,/^## Leads/p' "$kit/.ai/PRACTICES.md" | grep -ciE '\| *(proposed|not now) *\|$')
+[ -s "$kit/.ai/handoff.md" ] && echo "ai-kit: a session handoff exists: read \$KIT/.ai/handoff.md first and tell the user in one line where the last session stopped."
+[ "$open_bp" -gt 0 ] && echo "ai-kit: $open_bp best practice(s) in \$KIT/.ai/PRACTICES.md are proposed or 'not now': when one fits the work, grill the user about it."
 exit 0

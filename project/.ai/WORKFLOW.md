@@ -3,9 +3,24 @@
 Read this when you dispatch work, review, commit, merge, push or open a PR. Hard limits are enforced by hooks
 (plugin ai-kit-workflow guard-git, `.git/hooks/pre-push`); this file explains the flow around them.
 
-## Roles
-- Claude = lead: grill, spec, tickets, dispatch, integrate, review, explain. Do small fixes yourself.
-- Codex = executor for clear tickets bigger than ~30 lines, or several independent ones:
+## Roles: four independent contexts (the user's rule)
+Planner, developer, tester and reviewer are always separate contexts; none of them checks its own work.
+- Claude = lead and planner: grill, spec, tickets, dispatch, integrate, explain. Never write production code or tests
+  yourself, not even small fixes: every change goes to a developer context.
+- Developer = Codex (`dispatch <ticket>`) or, for a tiny change, a Claude subagent in an ai/* worktree.
+- Tester = a separate context (`dispatch <ticket> tester`) that writes tests from the ticket only. A change with no
+  behaviour (text, config, docs) may have "no test needed", written in the ticket; the reviewer confirms it.
+- Reviewer = a clean context that did not write the code: `gate` (Codex) for Claude-written code; for Codex-written
+  code, `gate` plus your own read of the diff.
+
+## Sizing the team: you decide, no fixed numbers
+For each task choose how many tickets, how many run in parallel, which model and effort, from: the size and risk of
+the task, whether the tickets' "Owns" overlap (overlap = run in order), the context left in this session, and the
+quota left (claude-hud, `/usage`). Use the fewest agents that do the job well; spend more only on risky work. Not
+sure? Ask the user with AskUserQuestion (options with cost/time, recommended first). Say in one line what you chose.
+
+## Dispatch
+- Codex = executor for tickets; several independent ones in parallel:
   `bash $KIT/.ai/bin/dispatch $KIT/.ai/tickets/<id>.md` as a background Bash command; run in parallel only if their "Owns" files
   do not overlap. When one finishes, read `.ai/logs/<id>.md` and its diff and tell the user in a few lines whether it
   meets the acceptance items.
@@ -18,8 +33,11 @@ Read this when you dispatch work, review, commit, merge, push or open a PR. Hard
   2. Review those tests with the user. If they are wrong, fix the ticket, not the tests.
   3. coder: `bash $KIT/.ai/bin/dispatch <ticket>` starts from the tests branch and may not touch tests (the script checks).
   4. reviewer: `bash $KIT/.ai/bin/gate` plus your own review of the diff.
-- Small work (UI text, layout, rename, config): one context is fine. Unsure whether it is risky? Ask.
+- Small work (UI text, layout, rename, config) still goes developer → reviewer in separate contexts; only the tester
+  step may be "no test needed". Unsure whether it is risky? Ask.
 - Your own code is reviewed by `/codex:review` or `gate`, never only by you. Wide searches: an Explore subagent.
+- You orchestrate without being asked: independent tickets (no overlap in "Owns") go to separate contexts in parallel;
+  dependent ones run in order. The user sees results and decisions, not the dispatching.
 
 ## Mode: direct or worktree (`.ai/mode.conf`)
 - direct (default): work on the user's current feature branch in the team checkout. Each finished ticket = one local
