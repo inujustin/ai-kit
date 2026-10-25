@@ -13,7 +13,8 @@ k="$(bash "$here/kit-resolve.sh" "$cwd" 2>/dev/null)" && roots+=("$k")
 [ -n "${CLAUDE_PROJECT_DIR:-}" ] && roots+=("$CLAUDE_PROJECT_DIR")
 roots+=("$cwd" "${TMPDIR:-/tmp/claude-$(id -u)}" "/tmp/claude-$(id -u)")
 wsl=no; { grep -qi microsoft /proc/version 2>/dev/null || [ -n "${WSL_DISTRO_NAME:-}" ]; } && wsl=yes
-printf '%s' "$input" | WSL="$wsl" ROOTS="$(printf '%s\n' "${roots[@]}")" HOME_DIR="$HOME" python3 -c '
+src="$(cat "${XDG_CONFIG_HOME:-$HOME/.config}/ai-kit/source" 2>/dev/null)"
+printf '%s' "$input" | SRC="$src" WSL="$wsl" ROOTS="$(printf '%s\n' "${roots[@]}")" HOME_DIR="$HOME" python3 -c '
 import json, os, re, sys
 d = json.load(sys.stdin)
 tool, ti = d.get("tool_name", ""), d.get("tool_input", {}) or {}
@@ -36,9 +37,21 @@ def explain(where, what, risk):
     return ("⚠ NGOÀI WORKSPACE (" + where + "). AI muốn: " + what + ". Rủi ro: " + risk +
             ". Chọn Yes chỉ khi chính bạn yêu cầu việc này; chọn No thì AI phải hỏi lại bạn bằng popup và giải thích vì sao cần."
             " Hoàn tác: việc đọc thì không đổi gì; việc ghi/sửa ở ngoài workspace có thể KHÔNG hoàn tác được.")
+# The ai-kit source is read only by setup ("setup", "kiểm tra setup lại"): reading it and the known setup steps pass
+# without a popup; anything else there still asks (and guard-repo blocks editing it from a project session).
+src = os.path.realpath(os.environ["SRC"]) if os.environ.get("SRC") else ""
+def in_src(p):
+    p = os.path.realpath(os.path.expanduser(p))
+    return bool(src) and (p == src or p.startswith(src + "/"))
+SETUP = re.compile(r"^\s*(git\s+-C\s+\S+\s+(pull|log|status|diff|show|fetch|rev-parse)\b[^;&|]*"
+                   r"|bash\s+\S+/bin/(doctor|kit-update|projects|global-rules\s+--diff|account\s+(list|plan))\b[^;&|]*)\s*$")
+def allow(why):
+    out("allow", "ai-kit guard-outside: " + why)
 BULK = re.compile(r"\brm\s+-[a-z]*[rf]|\brmdir\b|\bfind\b.*-delete|\bmv\b|\bshred\b|\btruncate\b|\brsync\b.*--delete|\bchmod\s+-R|\bchown\s+-R", re.I)
 if tool == "Bash":
     cmd = ti.get("command", "")
+    if src and SETUP.match(cmd) and all(in_src(p) or inside(p) for p in re.findall(r"(?:(?<=\s)|^)((?:~|/)[^\s;|&]*)", cmd)) and any(in_src(p) for p in re.findall(r"(?:(?<=\s)|^)((?:~|/)[^\s;|&]*)", cmd)):
+        allow("setup step on the ai-kit source")
     paths = re.findall(r"(?:(?<=[\s\"\x27=:(])|^)((?:~|/)[^\s\"\x27;|&)<>]*)", cmd)
     win = [p for p in paths if is_win(p)] + re.findall(r"\\\\wsl[^\s]*", cmd)
     outside = [p for p in paths if p not in win and not inside(p)]
@@ -53,6 +66,8 @@ if tool == "Bash":
         out("ask", explain(", ".join(outside[:3]), "chạy lệnh: " + cmd[:180], "đường dẫn nằm ngoài repo đang làm và kit của nó (cấu hình, dữ liệu cá nhân hoặc dự án khác)"))
     sys.exit(0)
 p = ti.get("file_path") or ti.get("notebook_path") or ti.get("path") or ""
+if p and tool in ("Read", "Glob", "Grep") and in_src(p):
+    allow("reading the ai-kit source (setup)")
 if p and (is_win(p) or not inside(p)):
     verb = "đọc/tìm trong" if tool in ("Read", "Glob", "Grep") else "SỬA/GHI"
     risk = "dữ liệu Windows ngoài lớp WSL" if is_win(p) else "file nằm ngoài repo đang làm và kit của nó (có thể là cấu hình, secret, dữ liệu cá nhân hoặc dự án khác)"
