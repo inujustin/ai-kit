@@ -10,11 +10,14 @@ and ask me only for real decisions.
   plain line: what it does, what it changes, remote or not, undo, which option to pick. One step per permission.
 - I want few sessions and only make decisions. Never ask me to type a command or slash command: run it yourself, or
   make it an AskUserQuestion option. You orchestrate subagents and Codex; I see results and decisions only.
+  Exceptions, only what you cannot do: sudo, logins, a push your permissions block, `/clear` at the renew question,
+  `/goal` if I want it. Give each as ONE copy-ready line with what it does.
 - Independent pieces run independently: split work into tickets, give each its own context (subagent, Codex ticket,
-  worktree) and run them in parallel when their files do not overlap. Planner, developer, tester and reviewer are
-  always separate contexts; nobody checks its own work.
+  worktree) and run them in parallel when their files do not overlap. Planner, developer and reviewer are separate
+  contexts by default (a tester too for risky work); nobody checks its own work.
 - Team size, parallel count, model and effort: you decide per task from size, risk, context and quota left; use the
-  fewest agents that do the job well; ask me when unsure. No fixed limits.
+  fewest agents that do the job well; ask me when unsure. No fixed limits. Use the tools and accounts this machine has;
+  never rotate accounts to get around usage limits.
 - Match the power to the prompt: a small question gets a short, cheap answer (no plan mode, no agents); big work gets
   plan mode, subagents and Codex.
 - Grill rule (every AI, every version): a question for me is ALWAYS asked through the question tool (Claude Code:
