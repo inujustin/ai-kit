@@ -24,7 +24,8 @@ rules = [
     (r"ở đâu|where is|kiến trúc|architecture|luồng|flow|gọi tới|who calls|codebase", "find your way in the code: graphify, or an Explore subagent"),
     (r"gọn|đơn giản|simplif|refactor|clean ?up|thừa|dư thừa|bloat", "simplify: ponytail-review / ponytail-audit (list only), then /simplify"),
     (r"giao diện|\bui\b|css|layout|console|network|trình duyệt|browser", "browser/UI: chrome-devtools-mcp"),
-    (r"merge|push|pull request|\bpr\b|commit", "git: story commits per .ai/WORKFLOW.md (bash .ai/bin/story), PR body with the pr skill; ask before merge/push"),
+    (r"merge|push|pull request|\bpr\b|commit", "git: small commits on the current branch per .ai/WORKFLOW.md, PR body with the pr skill; remote follows REMOTE in .ai/mode.conf (guard-git popups)"),
+    (r"hết (quota|limit)|rate limit|usage limit|tài khoản|account|đổi acc|switch acc", "accounts: ~/ai-kit/bin/account (list, add, next; same tool only: Claude to Claude, Codex to Codex); progress stays in .ai/run and handoff.md"),
     (r"hook|luật|rule|quy tắc|lặp lại|nhắc lại", "rules: check .ai/HOOKS.md, ask whether this should become a hook"),
     (r"setup|cài đặt|update (the )?kit|cập nhật kit|kiểm tra lại|check (again|the setup)|ai-kit", "setup refresh: follow ~/ai-kit/CLAUDE.md \"When the user says the setup or the kit changed\" (pull, plugins, doctor, kit-update, report)"),
 ]
@@ -64,11 +65,32 @@ except Exception:
     seen = set()
 if kit and act and re.search(r"sửa|thêm|làm|viết|tạo|fix|add|build|implement|code|feature|tính năng|chức năng", text):
     grills.append(("TESTS", "tests for this work: ask write tests / skip with manual checks (facts: bash " + kit + "/.ai/bin/test-scan); record Tests: in the ticket"))
-grills = [(i, h) for i, h in grills if i not in seen][:3]
+# Work profile ($KIT/.ai/mode.conf): never fixed for life; ask again when the work changes shape.
+if kit and not nogrill:
+    prof = {}
+    try:
+        for line in open(kit + "/.ai/mode.conf"):
+            m = re.match(r"^([A-Z_]+)=(.*)$", line.strip())
+            if m: prof[m.group(1)] = m.group(2).strip("\x27\"")
+    except Exception:
+        pass
+    cur = ", ".join(k + "=" + prof.get(k, "?") for k in ("BUDGET", "BRANCHES", "REMOTE", "TEST_POLICY"))
+    if act:
+        grills.append(("PROFILE", "work profile (" + cur + ", from " + kit + "/.ai/mode.conf): at the first task of this session show these values in plain words and ask whether they still fit this work"))
+    if re.search(r"nhánh|branch|checkout|song song|parallel|nhiều project|multi", text):
+        grills.append(("PROFILE-BRANCH", "branches: ask how to work this time: one branch / several in turn / several in parallel; which branch names the AI may create or switch by itself (BRANCHES ask|auto, AUTO_BRANCH_ERE); never clone or copy the repo"))
+    if re.search(r"push|pull request|\bpr\b|remote|github|gitlab|deploy|release", text):
+        grills.append(("PROFILE-REMOTE", "remote: ask how careful to be in this project: popup every time / feature-branch push without popup / never (REMOTE ask|feature|never)"))
+    if re.search(r"xuyên đêm|qua đêm|overnight|chạy dài|long.?run|cả ngày|nhiều agent|song song|parallel|tối đa|\bmax\b|tiết kiệm|quota|limit|tốn|chi phí|cost|bản sao|clone|copy", text):
+        grills.append(("PROFILE-BUDGET", "resources: ask how much to spend on this (BUDGET lean|normal|max): model, effort, number of agents, how long; say the expected cost in one line; never copy the project to be safe"))
+grills = [(i, h) for i, h in grills if i not in seen][:4]
 if grills:
     open(seen_f, "a").write(" ".join(i for i, _ in grills) + " ")
 for i, h in grills:
-    print("- grill NOW: " + i + " " + h + ": the prompt shows the user may have forgotten it. Before doing anything else in this turn, check its status in .ai/PRACTICES.md; proposed or not now: ask with AskUserQuestion (apply now / not now / no for this session).")
+    if i.startswith(("PROFILE", "TESTS")):
+        print("- grill NOW: " + i + " " + h + ". Before doing anything else in this turn, ask with AskUserQuestion (batch with the other grills, max 4); write a changed value to mode.conf and say so in one line.")
+    else:
+        print("- grill NOW: " + i + " " + h + ": the prompt shows the user may have forgotten it. Before doing anything else in this turn, check its status in .ai/PRACTICES.md; proposed or not now: ask with AskUserQuestion (apply now / not now / no for this session).")
 if re.search(r"https?://|tip|mẹo|best practice|thực hành tốt|video|tiktok|facebook|github\.com", text):
     print("- lead: a pasted tip or link is a lead: check the real source (SKILLS.md Missing), add it to .ai/PRACTICES.md, ask.")
 # Ask the user about each matched skill the first time it comes up in this session; afterwards just use it.
