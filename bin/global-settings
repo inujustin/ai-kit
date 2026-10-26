@@ -23,7 +23,7 @@ p = d.setdefault("permissions", {})
 p["defaultMode"] = "auto"
 p.pop("blockReadsOutsideWorkingDirectories", None)
 allow = p.setdefault("allow", [])
-for r in ("Bash", "Read", "Edit", "Write", "Glob", "Grep", "WebSearch", "WebFetch", "NotebookEdit", "TodoWrite", "Task"):
+for r in ("Bash", "Read", "Edit", "Write", "Glob", "Grep", "WebSearch", "WebFetch", "NotebookEdit", "TodoWrite", "Task", "Agent", "Skill"):
     if r not in allow: allow.append(r)
 dirs = p.setdefault("additionalDirectories", [])
 want = [src, home + "/.config/ai-kit", home + "/.local/state/ai-kit", home + "/.claude/projects", home + "/.claude/plans"]
@@ -35,6 +35,13 @@ for x in want:
 s = d.setdefault("sandbox", {})
 s["enabled"] = True
 s["autoAllowBashIfSandboxed"] = True
+# Tools that need the user's credentials or the network (push, gh, agents) run outside the sandbox without a popup.
+ex = s.setdefault("excludedCommands", [])
+for c in ("git *", "gh *", "claude *", "codex *"):
+    if c not in ex: ex.append(c)
+net = s.setdefault("network", {}).setdefault("allowedDomains", [])
+for h in ("github.com", "api.github.com", "*.githubusercontent.com", "registry.npmjs.org", "pypi.org", "files.pythonhosted.org"):
+    if h not in net: net.append(h)
 if mode == "--check":
     tight = [k for k, bad in (("defaultMode not auto", cur.get("permissions", {}).get("defaultMode") != "auto"),
                               ("blockReadsOutsideWorkingDirectories on", bool(cur.get("permissions", {}).get("blockReadsOutsideWorkingDirectories"))),
