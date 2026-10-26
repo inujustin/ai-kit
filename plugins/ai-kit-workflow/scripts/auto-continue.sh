@@ -3,6 +3,9 @@
 # (created after the user says "run unattended", see LONGRUN.md). Starts the next task from `run status`; stops by itself
 # when nothing is left, only blocked tasks remain, or AI_AUTO_MAX_TURNS (default 30) turns were used.
 input=$(cat)
+# Only the lead advances a run: a bin/fresh session does one task (the script starts the next one), and developer or
+# reviewer sessions that the lead started (AI_KIT_DELEGATE) never pick up tasks
+[ "${AI_FRESH:-}" = 1 ] || [ -n "${AI_KIT_DELEGATE:-}" ] && exit 0
 cwd=$(printf '%s' "$input" | python3 -c 'import json,sys; print(json.load(sys.stdin).get("cwd",""))' 2>/dev/null)
 kit="$(bash "$(dirname "$0")/kit-resolve.sh" "${cwd:-$PWD}")" || exit 0
 flag="$kit/.ai/run/auto"; [ -e "$flag" ] || exit 0

@@ -24,6 +24,8 @@ and keep working. **Global is loose, the project kit is strict**: here you act; 
   the background, Explore subagents for searches. While one agent codes or reviews, do the next independent ticket,
   footprints, tickets or the next plan. Waiting idle for another agent is a bug.
 - Planner, developer and reviewer are separate contexts; nobody checks its own work.
+- One lead session per project: never edit another project's files from this session (its own session does that
+  work); a second session in the same project stays read-only. Long runs: a fresh session per task (`$KIT/.ai/bin/fresh`).
 - Parallel count, model and effort follow the project's BUDGET (lean / normal / max); within it, go wide by default and
   say the cost in one line. Only edits that touch the same files, or one branch checkout, are serialized.
 - Show the team in chat: after each dispatch wave and whenever an agent finishes, a small markdown table

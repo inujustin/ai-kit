@@ -16,8 +16,9 @@ at a time, verify before marking done, and a clean hand-over at the end of every
    to spend (BUDGET, model, agents, how long); which branches and whether the AI may create/switch them by itself
    (BRANCHES=auto; several branches are done in turn, never at once); may it push by itself during this run (yes =
    `touch $KIT/.ai/run/allow-push`, ends with the run; no = commit only, the user pushes later). Write the answers to
-   mode.conf with the date. The run ends with a report (auto-continue asks for it). Unattended means
-   `touch $KIT/.ai/run/auto`; the Stop hook then starts the next task by itself, within the limits below.
+   mode.conf with the date. The run ends with a report (auto-continue asks for it). Unattended means one
+   of two controllers, never both: long run or overnight = `bin/fresh` (below; never create run/auto for it); a short
+   run inside this session = `touch $KIT/.ai/run/auto`, and the Stop hook starts the next task, within the limits below.
 
 ## Each task
 1. Get up to speed: `run status`, the end of progress.md, `git log -5`. Check the app still starts (the kit's dev
@@ -38,12 +39,21 @@ at a time, verify before marking done, and a clean hand-over at the end of every
   (`$KIT/.ai/bin/ai`, pick `c`); Codex tickets switch Codex accounts by themselves only with ROTATE=auto.
 - Every session ends with `run note` + an updated handoff.md, so the next session starts from facts, not memory.
 
-## Known weakness: no automatic fresh session
-The AI cannot start a new session by itself (no self `/clear`). A long run keeps going through Claude Code's
-auto-compact; tasks.json, progress.md and handoff.md carry what matters, but a compacted context loses detail. So:
-keep handoff.md current after every task (context-watch reminds you, silently during unattended runs), one task at a
-time, and prefer small tasks. Planned fix (not built): `bin/ai` runs each task as its own fresh `claude -p` session,
-which first needs a safe permission set for unattended runs. Say this plainly when the user starts an overnight run.
+## Fresh session per task (`bin/fresh`): the default for long and overnight runs
+One session that runs for hours lives on auto-compact, and a compacted context loses detail. `bash $KIT/.ai/bin/fresh
+[max-tasks]` instead gives every task of tasks.json its own new `claude -p` lead session in the repo: the kit, guards and
+hooks load as usual, the session reads handoff.md, LESSONS.md and progress.md, does that one task (dispatch, gate,
+checks, `run pass|block`, commit), updates handoff.md and ends. Then the script starts the next one.
+- Unattended by design: auto mode with `--permission-prompts none`, so anything that would need a popup (push, outside
+  the workspace, a risky git step) is refused and the session blocks the task with the one thing the user must do.
+  Nothing waits for a person, and nothing risky happens silently.
+- Stops by itself: nothing left, only blocked tasks, two sessions in a row leave a task untouched, Claude out of quota,
+  or max-tasks sessions (AI_FRESH_MAX, default 10). Model AI_FRESH_MODEL (opus), effort AI_FRESH_EFFORT (medium:
+  the lead orchestrates, developers code). Cost of every session: `bin/status` (from run/costs.tsv).
+- From the lead session: plan, `run add` the tasks, ask the run questions above, then start `bin/fresh` as a background
+  Bash command and do read-only work (or end the session). Overnight without a lead: the user runs it in a terminal tab.
+- The Stop-hook auto run (`run/auto`) stays for short runs inside one session; `bin/fresh` replaces it when the run is
+  long or the context is already half full.
 
 ## `/goal` (built into Claude Code)
 `/goal <condition>` keeps a session working until a checkable condition holds. Only the user can type it. Offer it as a

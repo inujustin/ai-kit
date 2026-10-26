@@ -25,5 +25,10 @@ Starts with lessons learned in other kits (general words only); add this project
    script a background task is executing; queue the change.
 9. Whole-tree lint/format blocked by guard-repo. → Lint only changed files (pre-commit on commit).
 10. Kit edits with KIT_GIT=none look like "no commits". → Say which changes are repo commits (SHA) and which are kit files.
+11. A session opened in another folder edited a project's files while that project's own lead session was working on
+   the same ticket. → One lead per project (guard-lead asks): work for another project goes to that project's session.
+12. A developer made a failing permission test pass by giving the test user extra rights, which hid a real bug.
+   → Test users get only the rights a real user of that role has; the reviewer checks fixtures as hard as code.
+13. A long overnight run lived on auto-compact and lost detail. → Long runs use `bin/fresh` (fresh session per task).
 
 ## This project

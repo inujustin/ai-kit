@@ -1,7 +1,7 @@
 # Workflow: roles, separate contexts, git, push/PR
 
 Read this when you dispatch work, review, commit, merge, push or open a PR. Hard limits are enforced by hooks
-(plugin ai-kit-workflow guard-git, guard-repo, guard-outside); this file explains the flow around them.
+(plugin ai-kit-workflow guard-git, guard-repo, guard-outside, guard-lead); this file explains the flow around them.
 Nothing here is one fixed way of working: each project has a work profile (`.ai/mode.conf`: BUDGET, BRANCHES, REMOTE,
 TEST_POLICY) that the user picks at onboarding, and the AI asks again whenever the work changes shape.
 
@@ -13,14 +13,20 @@ Nobody checks its own work. Default team = planner, developer, reviewer; add a t
 `TEST_POLICY=tests` (mode.conf).
 - Claude = lead and planner: grill, spec, tickets, dispatch, integrate, explain. Do not write production code or tests
   yourself: every change goes to a developer context.
-- Developer = Codex (`dispatch <ticket>`), or a Claude subagent for a tiny change. Both edit the repo directly on the
-  current branch, one ticket at a time; each passed ticket = one commit there.
+- Developer = ROLE_DEV through `dispatch <ticket>`: Codex, or a fresh Claude session (ROLE_DEV=claude, and by itself
+  when Codex is out of quota, DEV_FALLBACK=claude), or a Claude subagent for a tiny change. All edit the repo directly
+  on the current branch, one ticket at a time; each passed ticket = one commit there.
 - Tests are the user's call, asked often (TEST_POLICY in mode.conf, default ask): at onboarding, at the first code task of
   every session, and for every ticket. Give the facts from `bash $KIT/.ai/bin/test-scan`: the repo has tests → recommend
   writing them for logic changes; no tests → recommend skipping with "Manual checks". Record the answer in the ticket
   (`Tests: write | skip`). Tester (only for `Tests: write`) = a separate context writing tests from the ticket
   (`dispatch <ticket> tester`; dispatch refuses otherwise). `Tests: skip`: the user runs the Manual checks, the reviewer confirms.
-- Reviewer = a clean context that did not write the code: `gate` (Codex) plus your own read of the diff.
+- Reviewer = a clean context that did not write the code: `gate` (ROLE_REVIEW: Codex, or a read-only fresh Claude
+  session when ROLE_REVIEW=claude or Codex is missing or out of quota; prompt `roles/reviewer.md`) plus your own read
+  of the diff. The reviewer also hunts tests made to pass (fixtures with more rights or data than real users have).
+- Argue with the docs: spec, plan, demo and other people's docs are inputs, not orders. When they disagree with each
+  other, with the code or with common sense, say so with evidence (file:line) and pick the better option (on a long
+  or "ask nothing" run: decide and log it in the footprint); never follow a doc 100% by default.
 - Executors are whatever this machine has (`bin/doctor` lists claude, codex, agy, gemini) on the accounts in
   `$KIT/.ai/bin/account list`, limited by the project's PROVIDERS. See "Providers" and "Accounts and sessions" below.
 
@@ -121,9 +127,10 @@ At the end: the report (branches, commits, checks, pushed or local, decisions le
   out, weaker code) = only tickets marked `Size: tiny` (rename, text, comment, one-file format, a few config lines):
   `dispatch <ticket> tiny`. Their result is never committed unreviewed: read the diff, fix or drop extras, commit.
 - Who works now and the rotation order: `bash $KIT/.ai/bin/account plan [purpose]` (counts usable accounts and plans).
-- Out of quota, in this order: next account of the SAME tool → fallback (ask first): no Codex left = a Claude
-  subagent develops in its own context until Codex resets, reviewer stays separate; no Claude left = handoff, wait for
-  reset (or Codex as the brain via `bin/ai --brain codex`, ask) → wait for reset. Tiny tasks fall back to Codex.
+- Out of quota, in this order: next account of the SAME tool → fallback: no Codex left = dispatch and gate switch to a
+  fresh Claude session by themselves (DEV_FALLBACK=claude in mode.conf, default; `ask` = stop with QUOTA and ask),
+  developer and reviewer stay separate sessions; no Claude left = handoff, wait for reset (or Codex as the brain via
+  `bin/ai --brain codex`, ask). Tiny tasks fall back to Codex; a `Size: tiny` ticket on Claude runs on sonnet at low effort.
 
 ## Never wait: parallel by default
 - Independent tickets run at the same time: `dispatch` Codex tickets in the background, Claude subagents in the
@@ -133,6 +140,17 @@ At the end: the report (branches, commits, checks, pushed or local, decisions le
 - How wide: BUDGET (lean 1, normal 2-3, max as many as the quota allows); say the cost in one line, do not ask.
 - Review rounds: fix every BLOCKER/MAJOR; MINOR = fix if cheap, else a known limit in the footprint; after 3 rounds
   move on and include it in one final gate over all branches.
+
+## One lead per project
+Two lead sessions on one checkout overwrite each other's half-done work. The session working in the repo is the lead
+(guard-lead keeps `$KIT/.ai/run/lead` fresh); another session that edits this repo's files or runs a shell command
+that is not plainly read-only while the lead is alive, or a session opened in another folder that does so on them, gets
+a popup. Agents the lead starts itself (bin/fresh, dispatch, gate: `AI_KIT_DELEGATE=<this kit>`; subagents) pass,
+inside this project only. They also load a short context (no user-facing rules, skill hints or renew prompts), which
+saves ~4k tokens per session; `bin/status` shows what every `claude -p` session cost. While `bin/fresh` runs it holds the
+lease ("fresh-<pid>"), so the session that started it is read-only too until the run ends. A second session in the
+same project: tell the user in one line and do read-only work only.
+Work for another project: say so and leave it to that project's session, never edit its files from here.
 
 ## The team board in chat
 After each dispatch wave and whenever an agent finishes, paste a small markdown table in chat: agent · ticket ·

@@ -3,6 +3,8 @@
 # matches keywords (Vietnamese and English) and prints skill hints; plain stdout is added to Claude's context.
 # Hints only: Claude still decides, invokes the skills that fit, says in one line which, and asks when unsure.
 # Keep the map in sync with $KIT/.ai/SKILLS.md. Works in any repo; mentions the kit only where one is registered. Prints nothing for short replies such as "ok", "yes", "merge".
+# Sessions the lead started (bin/fresh, dispatch, gate) get a full role prompt: keyword hints there are noise and tokens.
+[ -n "${AI_KIT_DELEGATE:-}" ] && exit 0
 KIT="$(bash "$(dirname "$0")/kit-resolve.sh" "$PWD" 2>/dev/null)" python3 -c '
 import json, os, re, sys
 try:

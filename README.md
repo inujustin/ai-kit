@@ -37,10 +37,15 @@ ai-kit/
 - **Chưa phải tự động 24/7 kiểu solopreneur.** Kit chạy khi có session trên máy bạn (kể cả chạy dài qua đêm). Chưa có:
   agent cloud tự nhận issue và mở PR khi máy tắt, CI làm cổng + tự merge PR xanh, deploy bản xem trước mỗi PR, job
   theo lịch, lỗi production tự thành ticket. Với project bạn làm chủ, AI sẽ đề xuất từng mục (PRACTICES.md BP-11).
-- **Chưa tự đổi sang session mới (renew) khi context đầy.** AI không tự gõ `/clear` được. Job chạy dài dựa vào tự nén
-  (auto-compact) của Claude Code + `handoff.md` + `tasks.json`; tự nén làm mất bớt chi tiết. Hướng sửa: `bin/ai` chạy mỗi
-  task bằng một session mới (`claude -p`), cần thiết kế quyền cho chạy không người trông trước (LONGRUN.md "Known weakness").
-- Chưa chạy thử với ticket thật nào; account agy đang thử nghiệm.
+- Account agy đang thử nghiệm.
+
+## Đội AI làm việc thế nào
+- **Lead** (Claude, session trong repo): lên plan, viết ticket, giao việc, ghép lại, giải thích. Mỗi project chỉ 1 lead:
+  session khác (hoặc session mở ở thư mục khác) muốn sửa file của project đó sẽ gặp popup (hook `guard-lead`).
+- **Dev / reviewer / tester**: mỗi người 1 context mới, không ai tự chấm bài mình. `bin/dispatch` (Codex, hoặc Claude
+  khi `ROLE_DEV=claude`), `bin/gate` (review chỉ-đọc). Codex hết quota thì tự chuyển sang một session Claude mới.
+- **Chạy dài / qua đêm**: `bin/fresh` cho mỗi task 1 session Claude mới (không phụ thuộc auto-compact). Không ai
+  trông: việc gì cần popup (push, ngoài workspace…) bị từ chối, task bị `block` kèm đúng 1 việc bạn cần làm sáng mai.
 
 ## Luật an toàn
 - Repo này **public**. Không bao giờ chứa tên, email, code, tài liệu của công ty/khách.

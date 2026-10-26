@@ -3,7 +3,9 @@
 # load its rules here, so the user just types `claude` in the repo. Also list the repo's own rule files: team rules win,
 # and any conflict between them and the kit is a question for the user, never a silent choice.
 here="$(dirname "$0")"
-cwd="$(python3 -c 'import json,sys; print(json.load(sys.stdin).get("cwd",""))' 2>/dev/null)"
+input="$(cat)"
+cwd="$(printf '%s' "$input" | python3 -c 'import json,sys; print(json.load(sys.stdin).get("cwd",""))' 2>/dev/null)"
+sid="$(printf '%s' "$input" | python3 -c 'import json,sys; print(json.load(sys.stdin).get("session_id",""))' 2>/dev/null)"
 cwd="${cwd:-$PWD}"
 root="$(dirname "$(git -C "$cwd" rev-parse --path-format=absolute --git-common-dir 2>/dev/null)" 2>/dev/null)"
 
@@ -15,6 +17,12 @@ if ! kit="$(bash "$here/kit-resolve.sh" "$cwd")"; then
 fi
 
 echo "ai-kit: this repo's kit is KIT=$kit (outside the repo; nothing of it is in the repo)."
+# A developer or reviewer the lead started: its prompt carries the role and the rules to read; skip the lead's ~4k
+# tokens of user-facing rules, profile questions and reminders (they do not apply and they cost every session)
+if [ -n "${AI_KIT_DELEGATE:-}" ] && [ "${AI_FRESH:-}" != 1 ]; then
+  echo "You were started by this project's lead for one role; follow your prompt. Project rules: $kit/AGENTS.md and the repo's CLAUDE.md. Ask nothing: list open questions in your final message."
+  exit 0
+fi
 echo "In the rules below, every path starting with .ai/ or AGENTS.md means \$KIT/... ; run kit scripts as bash $kit/.ai/bin/<name> from the repo."
 echo
 echo "Rule files this repo already has (team rules: they win over the kit; on any conflict ask the user, do not decide):"
@@ -43,6 +51,11 @@ if o="$(bash "$here/open-state.sh" "$kit")"; then
   quiet=yes; echo "ai-kit: this kit is OPEN until $(date -d "@${o%% *}" '+%Y-%m-%d %H:%M') (${o#* }): guards act like the loose global defaults; back to mode.conf by itself after that."
 fi
 [ -e "$kit/.ai/run/auto" ] && quiet=yes
+[ "${AI_FRESH:-}" = 1 ] && quiet=yes   # one task of a bin/fresh run: the user is away
+if l="$(cat "$kit/.ai/run/lead" 2>/dev/null)" && [ "${l%% *}" != "$sid" ] && [ -z "${AI_KIT_DELEGATE:-}" ] \
+   && [ $(( $(date +%s) - ${l##* } )) -lt $(( ${AI_LEAD_TTL_MIN:-30} * 60 )) ]; then
+  echo "ai-kit: another session (${l:0:8}) was the lead of this project in the last ${AI_LEAD_TTL_MIN:-30} min. One lead per project: if it is still working, tell the user in one line and do read-only work only; guard-lead asks before any edit here."
+fi
 [ -f "$kit/.ai/LESSONS.md" ] && echo "ai-kit: read \$KIT/.ai/LESSONS.md first (past mistakes in this project and the rule for each)."
 [ "$quiet" = yes ] && echo "ai-kit: ask nothing at session start (open or unattended): keep the profile, decide yourself, log decisions in the footprint." && exit 0
 if [ -x "$kit/.ai/bin/test-scan" ]; then
@@ -55,7 +68,7 @@ if [ -f "$kit/.ai/mode.conf" ]; then
 fi
 if [ -f "$kit/.ai/mode.conf" ]; then
   ACCOUNT_GROUP=""; . "$kit/.ai/mode.conf"
-  [ -z "$ACCOUNT_GROUP" ] && echo "ai-kit: ACCOUNT_GROUP is empty for this project: with the profile question, ask which account group it uses (facts: bash $KIT/.ai/bin/account list); flexible, re-ask when it looks wrong."
+  [ -z "$ACCOUNT_GROUP" ] && echo "ai-kit: ACCOUNT_GROUP is empty for this project: with the profile question, ask which account group it uses (facts: bash $kit/.ai/bin/account list); flexible, re-ask when it looks wrong."
 fi
 if [ -f "$kit/.ai/bin/projects" ]; then
   busy="$(python3 "$kit/.ai/bin/projects" --json 2>/dev/null | python3 -c 'import json,sys; r=json.load(sys.stdin); print(sum(1 for x in r if x["auto_run"] or x["tasks"].get("in_progress")))' 2>/dev/null)"

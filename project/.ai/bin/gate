@@ -1,7 +1,10 @@
 #!/usr/bin/env bash
-# Before merging into your branch or opening a PR: full verify, then a Codex adversarial review of the branch.
+# Before merging into your branch or opening a PR: full verify, then an adversarial review of the branch in a fresh,
+# read-only context (prompt: roles/reviewer.md). Reviewer = ROLE_REVIEW in mode.conf (codex | claude). Codex missing or
+# out of quota -> a fresh Claude session reviews instead (plan mode: read-only) when DEV_FALLBACK=claude (default);
+# DEV_FALLBACK=ask stops with QUOTA (exit 3). The report says who reviewed.
 # Usage (on the branch to check): bash $KIT/.ai/bin/gate [base-branch] [effort]
-# Exit 0 only when verify.sh passes AND the review ends with "VERDICT: PASS".
+# Exit 0 only when verify.sh passes AND the review's last line is exactly "VERDICT: PASS".
 set -euo pipefail
 # shellcheck source=/dev/null
 . "$(dirname "$0")/../lib.sh"
@@ -10,25 +13,52 @@ branch="$(git branch --show-current)"
 base="${1:-$(kit_base)}"
 effort="${2:-high}"            # xhigh for release candidates or security-sensitive diffs
 model="${AI_CODEX_REVIEW_MODEL:-gpt-6-astra}"
+ROLE_REVIEW=codex; DEV_FALLBACK=claude
+# shellcheck source=/dev/null
+[ -f "$KIT/.ai/mode.conf" ] && . "$KIT/.ai/mode.conf"
 
 bash "$KIT/.ai/verify.sh" || { echo "verify.sh failed: fix it before spending review tokens"; exit 1; }
 
 mkdir -p "$KIT/.ai/logs"
 out="$KIT/.ai/logs/review-$(echo "$branch" | tr '/' '-')-$(git rev-parse --short HEAD).md"
+rm -f "$out" "$out.claude" "$out.claude.json" "$out.claude.err" "$out.log"   # an old PASS for this HEAD never counts
+prompt="Kit files (outside the repo): $KIT/AGENTS.md and $KIT/.ai/docs/ (spec, ADRs, GLOSSARY.md).
+Review the changes of branch $branch against $base: run \`git log --oneline $base..HEAD\` and \`git diff $base...HEAD\`.
 
-{ echo "Kit files (outside the repo): $KIT/AGENTS.md and $KIT/.ai/docs/ (spec, ADRs, GLOSSARY.md)."
-  echo "Review the changes of branch $branch against $base: run \`git log --oneline $base..HEAD\` and \`git diff $base...HEAD\`."
-  cat <<'PROMPT'
-Adversarial pre-merge review. Read CLAUDE.md (team rules) and the kit files named above first.
-Look for: behaviour that differs from the ticket or spec, permission and security holes, data loss,
-race conditions, missing tests for risky logic, violations of CLAUDE.md or AGENTS.md rules.
-Skip style issues that linters already enforce.
-For each finding give file:line, severity (BLOCKER / MAJOR / MINOR), why it is wrong, and a concrete fix.
-End with exactly one line, either:
-VERDICT: PASS
-VERDICT: BLOCK
-PROMPT
-# codex review cannot take --base and custom instructions together (CLI 2026-10), so run a read-only exec review
-} | codex exec -s read-only -c model="$model" -c model_reasoning_effort="$effort" - | tee "$out"
+$(cat "$KIT/.ai/roles/reviewer.md")"
 
-grep -q '^VERDICT: PASS' "$out" && echo "PASS  report: $out" || { echo "BLOCK report: $out"; exit 1; }
+review_claude() {
+  local rc=0
+  printf '%s' "$prompt" | claude_session "$out.claude" --permission-mode plan \
+    --model "${AI_CLAUDE_REVIEW_MODEL:-opus}" --effort "$effort" --no-session-persistence || rc=$?
+  { echo "Reviewer: Claude (fresh session, read-only) because $1"; echo; cat "$out.claude"; } >"$out"
+  cat "$out"
+  [ "$rc" -ne 3 ] || { echo "QUOTA: Claude is out of quota too; review not done. Write the handoff and continue after the reset."; exit 3; }
+  [ "$rc" -eq 0 ] || { echo "BLOCK: the Claude review failed (exit $rc, $out.claude.err); no verdict."; exit 1; }
+}
+codex_unusable() {
+  echo "$1"
+  [ "$DEV_FALLBACK" = claude ] || { echo "QUOTA: DEV_FALLBACK=$DEV_FALLBACK: ask the user (next Codex account / Claude reviews / wait for the reset)."; exit 3; }
+  review_claude "$1"
+}
+if [ "$ROLE_REVIEW" = claude ]; then
+  review_claude "ROLE_REVIEW=claude (mode.conf)"
+elif ! command -v codex >/dev/null; then
+  codex_unusable "codex is not installed"
+else
+  # codex review cannot take --base and custom instructions together (CLI 2026-10), so run a read-only exec review.
+  # Only the final answer goes to the report (-o); the transcript (which repeats the prompt) goes to the log.
+  rc=0
+  printf '%s' "$prompt" | codex exec -s read-only -c model="$model" -c model_reasoning_effort="$effort" -o "$out" - \
+    >"$out.log" 2>&1 || rc=$?
+  if [ "$rc" -ne 0 ] && tail -n 30 "$out.log" | grep -qiE 'usage limit|rate limit|quota|too many requests'; then
+    codex_unusable "Codex is out of quota (log: $out.log)."
+  elif [ "$rc" -ne 0 ]; then
+    echo "BLOCK: the Codex review failed (exit $rc, $out.log); no verdict."; rm -f "$out"; exit 1
+  else
+    cat "$out" 2>/dev/null || echo "Codex wrote no review; see $out.log"
+  fi
+fi
+
+last="$(grep -v '^[[:space:]]*$' "$out" 2>/dev/null | tail -n 1 | tr -d '\r')"
+[ "$last" = "VERDICT: PASS" ] && echo "PASS  report: $out" || { echo "BLOCK report: $out"; exit 1; }

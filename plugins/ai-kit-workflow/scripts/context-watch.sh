@@ -6,6 +6,8 @@
 # Asks again every 10% more. Window: AI_CONTEXT_WINDOW (default 200000); more tokens than that in use means a
 # 1M-context model, so the window becomes 1000000. During an approved long run ($KIT/.ai/run/auto) it never asks
 # (nobody is there): it only has the handoff refreshed and lets Claude Code auto-compact.
+# Sessions the lead started (bin/fresh, dispatch, gate) do one task and end: nothing to renew.
+[ -n "${AI_KIT_DELEGATE:-}" ] && exit 0
 KIT="$(bash "$(dirname "$0")/kit-resolve.sh" "$PWD" 2>/dev/null)" python3 -c '
 import json, os, sys, tempfile
 try:

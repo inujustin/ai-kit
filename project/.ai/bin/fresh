@@ -1,0 +1,86 @@
+#!/usr/bin/env bash
+# Long run with a FRESH lead session per task (LONGRUN.md "Fresh session per task"): no auto-compact, no lost detail.
+# Each task of run/tasks.json gets its own `claude -p` session in the repo (auto mode, --permission-prompts none: what
+# would need a popup is refused, so the session blocks the task instead of waiting for a person). The kit, guards and
+# hooks load as usual; handoff.md, progress.md and tasks.json carry everything from one session to the next.
+# While it runs, this script holds the project's lead lease ($KIT/.ai/run/lead = "fresh-<pid>", guard-lead): other
+# sessions stay read-only. On every exit it releases the lease and ends this run's push permission (run/allow-push).
+# Stops when nothing is left, only blocked tasks remain, a session leaves its task untouched twice, quota runs out, or
+# after <max-tasks> sessions (AI_FRESH_MAX, default 10).
+# Usage (from the repo): bash $KIT/.ai/bin/fresh [max-tasks]
+#   in the lead session: as a background Bash command; overnight without a lead: in a terminal tab.
+# Model AI_FRESH_MODEL (default opus), effort AI_FRESH_EFFORT (default medium: the lead orchestrates, developers code), optional cap AI_FRESH_BUDGET_USD per
+# session (API-key accounts only). Pick them from BUDGET in mode.conf and say the cost in one line.
+set -euo pipefail
+# shellcheck source=/dev/null
+. "$(dirname "$0")/../lib.sh"
+cd "$ROOT"
+max="${1:-${AI_FRESH_MAX:-10}}"
+model="${AI_FRESH_MODEL:-opus}"
+effort="${AI_FRESH_EFFORT:-medium}"
+run="$KIT/.ai/bin/run"
+mkdir -p "$KIT/.ai/run" "$KIT/.ai/logs"
+exec 8>"$KIT/.ai/run/fresh.lock"
+flock -n 8 || { echo "A fresh run is already going for this project (lock $KIT/.ai/run/fresh.lock)." >&2; exit 1; }
+[ ! -e "$KIT/.ai/run/auto" ] || { echo "A Stop-hook auto run is on (run/auto): one run controller at a time. rm $KIT/.ai/run/auto first, then start bin/fresh." >&2; exit 1; }
+budget=(); [ -n "${AI_FRESH_BUDGET_USD:-}" ] && budget=(--max-budget-usd "$AI_FRESH_BUDGET_USD")
+task() { python3 -c 'import json,sys; d=json.load(open(sys.argv[1])); t=[t for t in d["tasks"] if t["id"]==sys.argv[2]][0]; print(t["status"], t["attempts"]); print(" | ".join(t["checks"]))' "$KIT/.ai/run/tasks.json" "$1"; }
+
+# The lead lease: refreshed every 5 minutes, released on exit (only if it is still ours)
+lead="$KIT/.ai/run/lead"; me="fresh-$$"
+lease() { ( flock 7; echo "$me $(date +%s)" > "$lead.tmp.$$" && mv "$lead.tmp.$$" "$lead" ) 7>"$lead.lock"; }
+lease
+( exec 8>&-; while sleep 300; do lease; done ) & beat=$!; disown "$beat"   # closes fd 8 so a leftover sleep never holds fresh.lock
+cleanup() {
+  pkill -P "$beat" 2>/dev/null || true; kill "$beat" 2>/dev/null || true
+  ( flock 7; [ "$(cut -d' ' -f1 "$lead" 2>/dev/null)" = "$me" ] && rm -f "$lead" ) 7>"$lead.lock" 2>/dev/null || true
+  rm -f "$KIT/.ai/run/allow-push"
+}
+trap cleanup EXIT
+
+python3 "$run" note "fresh run started: up to $max sessions, $model ($effort)" >/dev/null
+idle=0; n=0
+while [ "$n" -lt "$max" ]; do
+  st="$(python3 "$run" status)"
+  next="$(printf '%s\n' "$st" | sed -n 's/^next: //p')"
+  case "$next" in ""|"nothing left"*) break ;; esac
+  n=$((n + 1)); id="${next%% *}"
+  before="$(task "$id" | head -1)"; checks="$(task "$id" | tail -1)"
+  out="$KIT/.ai/logs/fresh-$(date +%Y%m%d-%H%M)-$id.md"
+  echo "session $n/$max: $next  (log $out)"
+  prompt="You are this project's lead for ONE task, in a fresh session started by \`bash $KIT/.ai/bin/fresh\` (session $n of
+at most $max). The user is away: ask nothing. Anything that needs a permission popup is refused automatically; when the
+task can't go on without one (or without the user), \`python3 $run block $id \"<why, and the one thing the user must do>\"\`
+and end the session.
+1. Get up to speed: $KIT/.ai/handoff.md, $KIT/.ai/LESSONS.md, the end of $KIT/.ai/run/progress.md, \`git log --oneline -5\`.
+2. Task $next
+   Checks: $checks
+   Follow $KIT/.ai/LONGRUN.md \"Each task\": \`python3 $run start $id fresh\`; developer, reviewer (and tester per
+   TEST_POLICY) in separate contexts as $KIT/.ai/WORKFLOW.md says (bin/dispatch, bin/gate); verify with the checks;
+   \`python3 $run pass $id \"<check and what it showed>\"\` or \`python3 $run block $id \"<why>\"\`; commit per mode.conf.
+3. Only this task. New ideas or follow-ups: \`python3 $run add …\`, not now.
+4. Before you end: \`python3 $run note \"…\"\` and update $KIT/.ai/handoff.md (done, decisions, next step), so the next fresh
+   session starts from facts. Write a footprint when WORKFLOW.md \"Footprints\" asks for one.
+Final message, at most 5 lines: task, result (passing/blocked), commits (SHA), decisions you made, what is next."
+  rc=0
+  printf '%s' "$prompt" | AI_FRESH=1 claude_session "$out" --permission-mode auto --model "$model" --effort "$effort" \
+    --name "fresh-$id" "${budget[@]}" || rc=$?
+  tail -n 5 "$out" 2>/dev/null || true
+  if [ "$rc" -eq 3 ]; then
+    python3 "$run" note "fresh run stopped: Claude out of quota at $id (log $out)" >/dev/null
+    echo "QUOTA: Claude is out of quota. Continue later (bash $KIT/.ai/bin/fresh) or on the next Claude account (bin/ai)."; exit 3
+  fi
+  [ "$rc" -eq 0 ] || python3 "$run" note "fresh session for $id ended with an error (log $out.err)" >/dev/null
+  if [ "$(task "$id" | head -1)" = "$before" ]; then
+    idle=$((idle + 1))
+    if [ "$idle" -ge 2 ]; then
+      python3 "$run" block "$id" "two fresh sessions ended without run start/pass/block; read $out" >/dev/null
+      python3 "$run" note "fresh run stopped: sessions leave $id untouched" >/dev/null
+      echo "STOP: two sessions left $id untouched; blocked it. Read $out."; exit 1
+    fi
+  else
+    idle=0
+  fi
+done
+python3 "$run" note "fresh run ended after $n session(s)" >/dev/null
+python3 "$run" status

@@ -11,14 +11,17 @@
 #           only if the project's PROVIDERS lists it. Never committed by this script: Claude reviews the diff, then commits.
 # Model: AI_CODEX_MODEL (default gpt-6.1-sol), effort: AI_CODEX_EFFORT (default medium; high for tricky tickets).
 # Pick both from the project's BUDGET in mode.conf; ask the user before raising them.
+# Executor = ROLE_DEV in mode.conf: codex, or claude (a fresh `claude -p` session, auto mode, no prompts; model
+# AI_CLAUDE_DEV_MODEL, default opus). Codex out of quota and no other Codex account -> the same fresh Claude session
+# takes the ticket when DEV_FALLBACK=claude (default); DEV_FALLBACK=ask stops with QUOTA instead.
 set -euo pipefail
 ticket="$(readlink -f "${1:?usage: dispatch <ticket.md> [coder|tester] [branch]}")"
 want="${3:-}"
 role="${2:-coder}"
 case "$role" in coder|tester|tiny) ;; *) echo "role must be coder, tester or tiny" >&2; exit 1 ;; esac
 ROLE_DEV=codex; [ -f "$(dirname "$0")/../mode.conf" ] && ROLE_DEV="$(. "$(dirname "$0")/../mode.conf"; echo "${ROLE_DEV:-codex}")"
-if [ "$role" != tiny ] && [ "$ROLE_DEV" != codex ]; then
-  echo "This project's ROLE_DEV=$ROLE_DEV (mode.conf): develop this ticket with a $ROLE_DEV context instead (Claude: a subagent with the roles/$role.md prompt), not Codex. Ask the user if resources changed." >&2; exit 1
+if [ "$role" != tiny ] && [ "$ROLE_DEV" != codex ] && [ "$ROLE_DEV" != claude ]; then
+  echo "This project's ROLE_DEV=$ROLE_DEV (mode.conf): dispatch runs codex or claude only. Ask the user if resources changed." >&2; exit 1
 fi
 if [ "$role" = tiny ] && ! grep -qiE "Size:[[:space:]]*tiny" "$ticket"; then
   echo "Only tickets marked 'Size: tiny' go to a free model. This one stays with Codex (or Claude)." >&2; exit 1
@@ -68,9 +71,25 @@ $(cat "$KIT/.ai/roles/$role.md")
 Ticket $id:
 $(cat "$ticket")"
 
+executor="Codex $model ($effort)"
+exec_rc=0
+# Quota is decided from the executor's exit status and the END of its log, never from the prompt or ticket text
+codex_quota() { [ "$exec_rc" -ne 0 ] && tail -n 30 "$log/$name.log" | grep -qiE 'usage limit|rate limit|quota|too many requests'; }
 run_codex() {
+  exec_rc=0
   codex exec --sandbox workspace-write -m "$model" -c model_reasoning_effort="$effort" \
-    -C "$work" -o "$log/$name.md" "$prompt" >"$log/$name.log" 2>&1 || true
+    -C "$work" -o "$log/$name.md" "$prompt" >"$log/$name.log" 2>&1 || exec_rc=$?
+}
+# A fresh Claude session: its own context (not the lead's), auto mode, nothing that needs a popup is done
+run_claude() {
+  local m="${AI_CLAUDE_DEV_MODEL:-opus}" e="$effort"
+  # Size: tiny tickets need no big model: sonnet, low effort (unless the lead set a model/effort)
+  if grep -qiE "Size:[[:space:]]*tiny" "$ticket"; then m="${AI_CLAUDE_DEV_MODEL:-sonnet}"; e="${AI_CODEX_EFFORT:-low}"; fi
+  executor="Claude $m ($e, fresh session${1:+, $1})"
+  exec_rc=0
+  printf '%s' "$prompt" | claude_session "$log/$name.md" --permission-mode auto --model "$m" --effort "$e" \
+    --no-session-persistence || exec_rc=$?
+  cat "$log/$name.md.err" "$log/$name.md" >"$log/$name.log" 2>/dev/null || true
 }
 run_tiny() {
   local who; who="$(bash "$acc" next "$tiny_tool" 2>/dev/null || echo default)"
@@ -91,23 +110,36 @@ if [ "$role" = tiny ]; then
   echo "REVIEW $id (tiny, $tiny_tool) branch=$branch checks=$status: changes left UNCOMMITTED. Claude reviews the diff (git diff) against the ticket; fix or drop anything beyond it, then commit with the ticket title (body: Executor: $tiny_tool, reviewed by Claude). log=$log/$name.log"
   exit 0
 fi
-run_codex
-# Out of quota: only another CODEX account ($KIT/.ai/bin/account), never another tool. ROTATE in
-# ~/.config/ai-kit/accounts.conf: auto = switch and retry once by itself; anything else = stop and let Claude ask the user.
-if grep -qiE 'usage limit|rate limit|quota|too many requests' "$log/$name.log"; then
+if [ "$ROLE_DEV" = claude ]; then run_claude; else run_codex; fi
+# Codex out of quota: first another CODEX account ($KIT/.ai/bin/account) when ROTATE=auto in
+# ~/.config/ai-kit/accounts.conf, then a fresh Claude session (DEV_FALLBACK=claude), else stop and let the lead ask.
+# A retry only starts on a clean tree: work an executor left behind is never thrown away by this script.
+if [ "$ROLE_DEV" = codex ] && codex_quota; then
   ROTATE=ask; [ -f "${XDG_CONFIG_HOME:-$HOME/.config}/ai-kit/accounts.conf" ] && . "${XDG_CONFIG_HOME:-$HOME/.config}/ai-kit/accounts.conf"
   curname="$(awk -F'\t' -v d="${CODEX_HOME:-}" '$1=="codex" && $4==d {print $2}' "${XDG_CONFIG_HOME:-$HOME/.config}/ai-kit/accounts.tsv" 2>/dev/null | tail -1)"
+  [ -z "$(git status --porcelain)" ] || { echo "QUOTA $id ($role): Codex ran out of quota after changing files. Changes left UNCOMMITTED: review them (git diff), then finish the ticket with another executor or ask the user."; exit 3; }
   if [ "$ROTATE" = auto ] && [ -f "$acc" ] && bash "$acc" out codex "${curname:-default}" >/dev/null && next="$(bash "$acc" next codex)"; then
     eval "$(bash "$acc" env codex "$next")"; echo "codex account ${curname:-default} out of quota; retrying on $next" >>"$log/$name.log"
-    git checkout -q -- . && git clean -qfd; run_codex
-  else
-    echo "QUOTA $id ($role): Codex account ${curname:-default} is out of quota. See \`bash $acc plan\`. Ask the user (AskUserQuestion): next Codex account (if any) / a Claude subagent develops this ticket in its own context until Codex resets (reviewer stays separate) / wait for reset. Changes left as they are."; exit 3
+    run_codex
+  fi
+  if codex_quota && [ -n "$(git status --porcelain)" ]; then
+    echo "QUOTA $id ($role): Codex ran out of quota again after changing files. Changes left UNCOMMITTED for review."; exit 3
+  elif codex_quota && [ "${DEV_FALLBACK:-claude}" = claude ] && command -v claude >/dev/null; then
+    mv "$log/$name.log" "$log/$name.codex-quota.log"
+    run_claude "Codex out of quota"
+  elif codex_quota; then
+    echo "QUOTA $id ($role): Codex account ${curname:-default} is out of quota and DEV_FALLBACK=${DEV_FALLBACK:-claude}. See \`bash $acc plan\`. Ask the user (AskUserQuestion): next Codex account (if any) / a fresh Claude session develops this ticket (reviewer stays separate) / wait for reset. Changes left as they are."; exit 3
   fi
 fi
+case "$executor" in Claude*)
+  [ "$exec_rc" -ne 3 ] || { echo "QUOTA $id ($role): Claude is out of quota too. Changes left as they are. Write the handoff; continue on the next Claude account (bin/ai, pick c) or after the reset."; exit 3; } ;;
+esac
+[ "$exec_rc" -eq 0 ] || { echo "FAIL $id ($role) branch=$branch: the executor ($executor) ended with an error (exit $exec_rc); changes left UNCOMMITTED. log=$log/$name.log"; exit 1; }
+[ "$(git rev-parse HEAD)" = "$start" ] || { echo "FAIL $id ($role) branch=$branch: the executor committed by itself (HEAD moved from ${start:0:7}); the roles forbid git writes. Review git log $start..HEAD with the user."; exit 1; }
 
 if bash "$KIT/.ai/verify.sh" --fast >"$log/$name.verify.log" 2>&1; then status=PASS; else status=FAIL; fi
 
-[ -n "$(git status --porcelain)" ] || { echo "FAIL $id ($role) branch=$branch: Codex changed nothing. See $log/$name.md"; exit 1; }
+[ -n "$(git status --porcelain)" ] || { echo "FAIL $id ($role) branch=$branch: the executor ($executor) changed nothing. See $log/$name.md"; exit 1; }
 changed="$( { git diff --name-only "$start"; git ls-files --others --exclude-standard; } | sort -u)"
 if [ "$role" = tester ]; then
   bad="$(printf '%s\n' "$changed" | grep -vE "$TEST_FILES_ERE" || true)"
@@ -129,5 +161,5 @@ title="$(sed -n 's/^Commit: *//p' "$ticket" | head -1)"
 git add -A
 git commit -q -m "${title:-$id}" -m "Ticket: $id
 Role: $role
-Executor: Codex $model ($effort). Checks: PASS"
+Executor: $executor. Checks: PASS"
 echo "PASS $id ($role) branch=$branch sha=$(git rev-parse --short HEAD) summary=$log/$name.md checks=$log/$name.verify.log"

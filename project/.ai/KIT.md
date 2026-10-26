@@ -21,11 +21,14 @@ CLAUDE.local.md               Claude-only, kept short: how to talk, ask on confl
 .ai/verify.sh + verify.conf   the gate: --fast (seconds) and full (tests, build)
 .ai/check_antipatterns.sh     rule-coded greps on CHANGED files only (old code does not block new work)
 (plugin ai-kit-workflow)      hooks: session-start (loads this kit + lists the repo's rule files), prompt-skills,
-                              guard-git, after-edit (team pre-commit), guard-outside, guard-repo, stop-gate (verify --fast on uncommitted
-                              changes), context-watch, auto-continue
-.ai/bin/dispatch              Codex runs a ticket (role coder|tester) in a fresh context, in the repo on the current branch,
-                              one at a time; script checks and commits on PASS; QUOTA -> next Codex account if allowed
-.ai/roles/                    prompts for the tester and coder roles (fresh contexts)
+                              guard-git, after-edit (team pre-commit), guard-outside, guard-repo, guard-lead (one lead
+                              session per project), stop-gate (verify --fast on uncommitted changes), context-watch, auto-continue
+.ai/bin/dispatch              ROLE_DEV (Codex, or a fresh Claude session) runs a ticket (role coder|tester) in a fresh
+                              context, in the repo on the current branch, one at a time; script checks and commits on PASS;
+                              Codex out of quota -> next Codex account if allowed, then a fresh Claude session (DEV_FALLBACK)
+.ai/bin/fresh                 long run with a fresh lead session per task (`claude -p`, unattended, no popups)
+.ai/run/costs.tsv             cost and tokens of every `claude -p` session (fresh, dispatch, gate); totals in bin/status
+.ai/roles/                    prompts for the tester, coder, reviewer and tiny roles (fresh contexts)
 .ai/commit-style.conf         commit subject rules (checked by guard-git), set at onboarding
 .ai/mode.conf                 work profile: BUDGET, BRANCHES, REMOTE, PROTECTED_BRANCHES, TEST_POLICY (asked, re-asked)
 .ai/bin/run, .ai/LONGRUN.md   long runs: tasks.json (a task may name its branch), progress.md, two-attempt limit, auto run
@@ -34,7 +37,8 @@ $KIT/.ai/bin/account, bin/ai  (machine) accounts per tool + purpose; one-termina
                               the same tool, context full -> new session from handoff.md), Claude or Codex as the brain
 .ai/footprints/               HTML catch-up pages per big change (TEMPLATE.html, INDEX.md); never in the repo
 .ai/handoff.md                session snapshot for the next session (context-watch asks for it near ~70%)
-.ai/bin/gate                  full verify + Codex adversarial review -> VERDICT PASS/BLOCK
+.ai/bin/gate                  full verify + adversarial review by ROLE_REVIEW (Codex; Claude when Codex is missing or out
+                              of quota) in a read-only fresh context -> VERDICT PASS/BLOCK
 .ai/tickets/, .ai/docs/       tickets, spec, glossary, ADRs (private, not the team's docs/)
 .ai/logs/                     Codex outputs and review reports
 ```

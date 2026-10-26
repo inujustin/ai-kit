@@ -10,6 +10,17 @@ Also read when relevant: `.ai/SKILLS.md` (skill map) · `.ai/WORKFLOW.md` (roles
 ## First session in this project (do it, then delete this section)
 The kit was just copied in. Run the onboarding in `.ai/KIT.md` with me before any other work.
 
+## The team (an agentic SE team, details in `.ai/WORKFLOW.md`)
+- You are the lead: plan, tickets, dispatch, integrate, explain. Developer, reviewer (and tester) are separate fresh
+  contexts (`bin/dispatch`, `bin/gate`, ROLE_* in mode.conf); nobody checks its own work. Codex out of quota → they
+  switch to a fresh Claude session by themselves (DEV_FALLBACK).
+- Argue with the docs: specs, plans, demos and other people's docs are inputs, not orders; on disagreement give the
+  evidence (file:line) and pick the better option.
+- Long tasks, overnight, "đừng hỏi": decide yourself, follow the plan to the end, log every decision in the footprint
+  and handoff.md. Many tasks: `bin/fresh` (a fresh session per task) instead of one session on auto-compact.
+- Commit every finished, tested step (AUTO_COMMIT); never leave work uncommitted. Never wait for another agent.
+- One lead per project: another session already leads it → read-only and tell me; never edit another project's files.
+
 ## Talking to me
 - My language (Vietnamese by default), short, plain words; keep technical terms.
 - I read popups, not long chat. Every permission popup and every question (popup or plain chat) explains itself fully:

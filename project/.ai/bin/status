@@ -7,14 +7,27 @@ if [ -f "$KIT_AI/run/open-until" ]; then
 	read -r until why < "$KIT_AI/run/open-until"
 	if [ "${until:-0}" -gt "$(date +%s)" ] 2>/dev/null; then echo "== OPEN until $(date -d "@$until" '+%Y-%m-%d %H:%M'): $why"; fi
 fi
+if read -r who at 2>/dev/null < "$KIT_AI/run/lead"; then
+	echo "== Lead session ${who:0:8}, last active $(( ($(date +%s) - ${at:-0}) / 60 )) min ago"
+fi
+if [ -s "$KIT_AI/run/costs.tsv" ]; then
+	awk -F'\t' -v d="$(date +%Y-%m-%d)" '{ t += $4; n++ } index($1, d) == 1 { td += $4; tn++ }
+		END { printf "== Cost of claude -p sessions (list price): today $%.2f in %d, total $%.2f in %d (run/costs.tsv)\n", td, tn, t, n }' "$KIT_AI/run/costs.tsv"
+fi
 echo "== Board"
 python3 "$KIT_AI/bin/run" board
 echo
 echo "== Running now"
-ps -eo pid,etime,args | grep -E "codex (exec|review)|claude -p|bin/gate|bin/dispatch|run-tests|pytest|verify\.sh" | grep -v grep || echo "(nothing running)"
+# Inside the Bash sandbox ps sees only its own few processes: say so instead of a false "(nothing running)"
+if [ "$(ps -e --no-headers | wc -l)" -lt 8 ]; then
+	echo "(can't see other processes from inside the sandbox: run this command outside it to list running agents)"
+else
+	ps -eo pid,etime,args | grep -E "codex (exec|review)|claude -p|bin/(gate|dispatch|fresh)|run-tests|pytest|verify\.sh" | grep -v grep || echo "(nothing running)"
+fi
 echo
 echo "== Newest logs ($KIT_AI/logs)"
 ls -t "$KIT_AI"/logs/*.md 2>/dev/null | head -5 | while read -r f; do
-	verdict="$(grep -m1 -E '^VERDICT:' "$f" || echo 'VERDICT: (not finished)')"
+	verdict=""
+	case "$(basename "$f")" in review-*) verdict="$(grep -E '^VERDICT:' "$f" | tail -n 1)"; verdict="${verdict:-VERDICT: (not finished)}" ;; esac
 	echo "$(date -r "$f" '+%H:%M')  $(basename "$f")  $verdict"
 done
