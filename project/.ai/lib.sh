@@ -1,9 +1,14 @@
 # Sourced by every kit script. The kit lives OUTSIDE the project repo; nothing of it is copied into the repo.
 #   KIT      this project's kit folder (the one holding .ai/), found from the script's own location
-#   ROOT     the project repo's folder, found from the current directory
+#   ROOT     the project repo's folder, found from the current directory; outside any repo, the repo registered for
+#            this kit in ~/.config/ai-kit/projects.tsv (and the script moves there), so `bash $KIT/.ai/bin/...` works
+#            from any folder and still matches the plain allow rules (no `cd`/`env` prefix, no popup)
 KIT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-ROOT="$(dirname "$(git rev-parse --path-format=absolute --git-common-dir 2>/dev/null)")" \
-  || { echo "Run this from inside the project repo." >&2; exit 1; }
+if ! git rev-parse --git-dir >/dev/null 2>&1; then
+  registered="$(awk -F'\t' -v kit="$KIT" '$2 == kit { print $1; exit }' "$HOME/.config/ai-kit/projects.tsv" 2>/dev/null)"
+  cd "${registered:-/nonexistent}" 2>/dev/null || { echo "Run this from inside the project repo." >&2; exit 1; }
+fi
+ROOT="$(dirname "$(git rev-parse --path-format=absolute --git-common-dir)")"
 export KIT ROOT
 
 # A fresh headless Claude session with its own context (prompt on stdin), for bin/fresh, dispatch and gate:

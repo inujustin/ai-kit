@@ -26,6 +26,7 @@ Scope: user = only this Linux user. sudo = system package (see SETUP.md "sudo").
 | pre-commit | 4.6.2 | github.com/pre-commit/pre-commit | `uv tool install pre-commit==4.6.2` |
 | lazygit | v0.66.0 | github.com/jesseduffield/lazygit (MIT, 83k★) | release tarball, check sha256 against the release's checksums.txt (it names the file `linux` in lowercase), then `install -m 755 lazygit ~/.local/bin/` |
 | graphify | 0.9.80 | github.com/Graphify-Labs/graphify (Apache-2.0), PyPI `graphifyy` | `uv tool install "graphifyy==0.9.80"` then `graphify install --platform claude` (appends 3 lines to ~/.claude/CLAUDE.md) |
+| claude-devtools (optional, needs Docker) | v0.5.0, sha 16cc3c87c1e4d0e08ee101fb52dad1b85dbbe48a | github.com/matt1398/claude-devtools (MIT, 8.7k★); code read 2026-10-26: no outbound calls in the standalone server, updater and SSH stubbed | `git clone --depth 1 --branch v0.5.0` into an empty dir, `docker build -t claude-devtools:0.5.0 <dir>`, then `docker run -d --name claude-devtools --restart unless-stopped -p 127.0.0.1:3456:3456 -v "$HOME/.claude:/data/.claude:ro" -e CORS_ORIGIN=http://127.0.0.1:3456 --read-only --tmpfs /tmp --tmpfs /root --cap-drop ALL --security-opt no-new-privileges claude-devtools:0.5.0`. Never its docker-compose.yml as is (binds every interface; default CORS lets any web page read the sessions). Open http://127.0.0.1:3456 |
 
 ## C3. Claude Code plugins (user scope)
 | Plugin | Marketplace | Note |
@@ -43,7 +44,7 @@ claude-code-router, omniroute, cc-switch (free model routers/switchers; the kit 
 claude-mem (send code or context to other services); playwright MCP (overlaps chrome-devtools);
 arena-skill (≈600 sub-agent calls per run, 1 commit, malware lookalike account `arena-skiIl`);
 BuildPartner plugin (uploads session data, paid), hccs (non-Claude backends), super-board (overlaps dispatch/gate),
-Understand-Anything (overlaps graphify). Details: `project/.ai/PRACTICES.md` "Leads checked".
+Understand-Anything (overlaps graphify), caveman (overlaps ponytail, ≈3% vs "be concise", CLI telemetry on by default). Details: `project/.ai/PRACTICES.md` "Leads checked".
 
 ## C4. Settings (ask first, merge, never overwrite)
 - Global permissions are open (`bin/global-settings`): `permissions.defaultMode=auto`, allow Bash/Read/Edit/Write/Glob/Grep/
