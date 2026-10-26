@@ -37,7 +37,8 @@ s["enabled"] = True
 s["autoAllowBashIfSandboxed"] = True
 # Tools that need the user's credentials or the network (push, gh, agents) run outside the sandbox without a popup.
 ex = s.setdefault("excludedCommands", [])
-for c in ("git *", "gh *", "claude *", "codex *"):
+# global-rules writes ~/.claude/CLAUDE.md, which the sandbox never lets a command write.
+for c in ("git *", "gh *", "claude *", "codex *", f"bash {src}/bin/global-rules *"):
     if c not in ex: ex.append(c)
 net = s.setdefault("network", {}).setdefault("allowedDomains", [])
 for h in ("github.com", "api.github.com", "*.githubusercontent.com", "registry.npmjs.org", "pypi.org", "files.pythonhosted.org"):
