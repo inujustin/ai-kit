@@ -24,6 +24,7 @@ rules = [
     (r"frappe|erpnext|doctype|bench|whitelist|hooks\.py|desk", "Frappe: frappe-app-dev (writing), frappe-code-review (reviewing), pack rules .ai/packs/frappe/RULES.md"),
     (r"thư viện|library|package|version|docs|tài liệu api|api của", "library/API facts: Context7 (no client code in the query)"),
     (r"ở đâu|where is|kiến trúc|architecture|luồng|flow|gọi tới|who calls|codebase", "find your way in the code: graphify, or an Explore subagent"),
+    (r"sơ đồ|diagram|vẽ|hình|graph|biểu đồ|chart|dashboard|kết quả|result|\blogs?\b", "picture: code change = footprint HTML before → after; other diagrams = artifact-diagramming; numbers/results = dataviz; codebase = graphify path"),
     (r"gọn|đơn giản|simplif|refactor|clean ?up|thừa|dư thừa|bloat", "simplify: ponytail-review / ponytail-audit (list only), then /simplify"),
     (r"giao diện|\bui\b|css|layout|console|network|trình duyệt|browser", "browser/UI: chrome-devtools-mcp"),
     (r"merge|push|pull request|\bpr\b|commit", "git: small commits on the current branch per .ai/WORKFLOW.md, PR body with the pr skill; remote follows REMOTE in .ai/mode.conf (guard-git popups)"),

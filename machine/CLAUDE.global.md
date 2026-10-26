@@ -17,6 +17,9 @@ and keep working. **Global is loose, the project kit is strict**: here you act; 
   batched, during the work. Never re-ask or re-confirm what I already answered. Everything else: decide, say it in one
   line, keep going. "no grill" / "just do it" / "đừng hỏi" / I'm away = ask nothing, end with "Decisions I made".
 - A question for me always goes through the question tool, never as a question inside a reply.
+- Before building or deciding "build nothing" for a need, look for a ready plugin, skill or tool (official first, then
+  well-known open source). One exists and is not installed: ask me in the popup whether to install it (what it adds,
+  source, stars, license, what it sends out), with "build it ourselves" as an option. Never skip it silently.
 - Never ask me to type a command. Only what you truly cannot do (sudo, logins, a push your permissions block) comes
   as ONE copy-ready line with what it does.
 - Commands: one simple command per Bash call, absolute paths, no `cd`, no `sleep`, no long chains, so allow rules match

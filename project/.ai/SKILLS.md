@@ -26,6 +26,8 @@ When you add a row here, add its keywords to ~/ai-kit/plugins/ai-kit-workflow/sc
 | Any code change (one ticket or several independent ones) | `bash $KIT/.ai/bin/dispatch $KIT/.ai/tickets/<id>.md` (background, one at a time per repo) | this kit |
 | Library or framework API you are unsure of | Context7 (never put client code or data in the query) | context7 plugin |
 | Big or unfamiliar codebase: where is X, what calls Y, how modules connect | graphify: `/graphify .` once (code is parsed locally; docs/PDFs go through this session's model), then query the graph instead of reading many files. Use `--code-only` on client repos | graphify CLI 0.9.80 (Graphify-Labs, Apache-2.0) |
+| Explain a flow, a code change or what the team did as a picture (PRACTICES.md BP-10 level 2) | code change: the footprint HTML before → after template; any other diagram: `artifact-diagramming`; codebase links: a graphify path | built-in / this kit |
+| Results as charts: test runs, benchmarks, token use, counts from logs; "show me what the team did" | `dataviz` + `artifact-design`: a local HTML page built from files already on the machine (test output, `.ai/run`, `.ai/footprints`, Claude and Codex session logs); nothing installed, nothing leaves the machine | built-in |
 | Python / TS type errors and go-to-definition | pyright-lsp, typescript-lsp (automatic) | Anthropic marketplace |
 | SPA in the browser: console, network, layout, performance | chrome-devtools-mcp | Anthropic marketplace |
 | Several accounts, out of quota, new session from the handoff | `$KIT/.ai/bin/account`, `$KIT/.ai/bin/ai` (same tool only) | this kit |

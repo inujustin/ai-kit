@@ -42,6 +42,7 @@ Several practices fit at once: one multiSelect question, max 4, best first.
 | Lead | Verdict | Why |
 |---|---|---|
 | Understand-Anything (Egonex-AI, MIT) | not now | overlaps graphify; its analysis sends code to the model provider |
+| claude-devtools (matt1398, MIT), claude-code-hooks-multi-agent-observability (disler, MIT), Claude-Code-Usage-Monitor (BSD-2) | claude-devtools: chosen 2026-10-26 (install after code review); others not now | checked 2026-10-26: each reads Claude logs only (no Codex runs, tests or per-ticket pass/fail); a dataviz HTML page from local files covers it with nothing installed. If only a Claude session viewer is wanted: claude-devtools in Docker with `--network none` |
 | Archify (tt-a1i) | not now | diagrams for people, not agent context; graphify covers navigation |
 | super-board (EricTechPro) | no | same Build → QA → Review loop as dispatch/gate; remote install script |
 | BuildPartner plugin | no | uploads session data to its service, paid after a free tier; BP-1 does it locally |
