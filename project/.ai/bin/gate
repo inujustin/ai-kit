@@ -16,7 +16,9 @@ bash "$KIT/.ai/verify.sh" || { echo "verify.sh failed: fix it before spending re
 mkdir -p "$KIT/.ai/logs"
 out="$KIT/.ai/logs/review-$(echo "$branch" | tr '/' '-')-$(git rev-parse --short HEAD).md"
 
-{ echo "Kit files (outside the repo): $KIT/AGENTS.md and $KIT/.ai/docs/ (spec, ADRs, GLOSSARY.md)."; cat <<'PROMPT'
+{ echo "Kit files (outside the repo): $KIT/AGENTS.md and $KIT/.ai/docs/ (spec, ADRs, GLOSSARY.md)."
+  echo "Review the changes of branch $branch against $base: run \`git log --oneline $base..HEAD\` and \`git diff $base...HEAD\`."
+  cat <<'PROMPT'
 Adversarial pre-merge review. Read CLAUDE.md (team rules) and the kit files named above first.
 Look for: behaviour that differs from the ticket or spec, permission and security holes, data loss,
 race conditions, missing tests for risky logic, violations of CLAUDE.md or AGENTS.md rules.
@@ -26,6 +28,7 @@ End with exactly one line, either:
 VERDICT: PASS
 VERDICT: BLOCK
 PROMPT
-} | codex review --base "$base" -c model="$model" -c model_reasoning_effort="$effort" - | tee "$out"
+# codex review cannot take --base and custom instructions together (CLI 2026-10), so run a read-only exec review
+} | codex exec -s read-only -c model="$model" -c model_reasoning_effort="$effort" - | tee "$out"
 
 grep -q '^VERDICT: PASS' "$out" && echo "PASS  report: $out" || { echo "BLOCK report: $out"; exit 1; }

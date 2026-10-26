@@ -1,0 +1,55 @@
+#!/usr/bin/env bash
+# Global stays loose, each project's kit is strict. Merge the kit's open defaults into ~/.claude/settings.json so long
+# and overnight runs never stop at a popup: auto mode, broad allow rules, no block on reads outside the working dirs,
+# every registered repo and kit as an additional directory, sandbox ON with sandboxed Bash auto-allowed.
+# Kept as they are: the user's other keys, every deny rule (secrets: ~/.ssh, ~/.aws, .env, *.pem, *.key ...).
+# The strict part lives in the plugin hooks per project kit (guard-git, guard-outside, guard-repo), not here.
+#   bash ~/ai-kit/bin/global-settings --diff     show what would change (read-only)
+#   bash ~/ai-kit/bin/global-settings --apply    write it (backup: ~/.claude/settings.json.bak-ai-kit-<date>)
+#   bash ~/ai-kit/bin/global-settings --check    exit 1 when the global settings are still too tight (doctor uses it)
+set -euo pipefail
+dst="${CLAUDE_CONFIG_DIR:-$HOME/.claude}/settings.json"
+src="$(cd "$(dirname "$0")/.." && pwd)"
+reg="${XDG_CONFIG_HOME:-$HOME/.config}/ai-kit/projects.tsv"
+new="$(mktemp)"; trap 'rm -f "$new"' EXIT
+[ -f "$dst" ] || echo '{}' > "$dst"
+python3 - "$dst" "$src" "$reg" "${1:---diff}" > "$new" <<'PY' || [ "${1:-}" = --check ]
+import json, os, sys
+dst, src, reg, mode = sys.argv[1:]
+cur = json.load(open(dst))
+d = json.loads(json.dumps(cur))
+home = os.path.expanduser("~")
+p = d.setdefault("permissions", {})
+p["defaultMode"] = "auto"
+p.pop("blockReadsOutsideWorkingDirectories", None)
+allow = p.setdefault("allow", [])
+for r in ("Bash", "Read", "Edit", "Write", "Glob", "Grep", "WebSearch", "WebFetch", "NotebookEdit", "TodoWrite", "Task"):
+    if r not in allow: allow.append(r)
+dirs = p.setdefault("additionalDirectories", [])
+want = [src, home + "/.config/ai-kit", home + "/.local/state/ai-kit", home + "/.claude/projects", home + "/.claude/plans"]
+if os.path.exists(reg):
+    for line in open(reg):
+        want += [x for x in line.rstrip("\n").split("\t") if x]
+for x in want:
+    if x not in dirs: dirs.append(x)
+s = d.setdefault("sandbox", {})
+s["enabled"] = True
+s["autoAllowBashIfSandboxed"] = True
+if mode == "--check":
+    tight = [k for k, bad in (("defaultMode not auto", cur.get("permissions", {}).get("defaultMode") != "auto"),
+                              ("blockReadsOutsideWorkingDirectories on", bool(cur.get("permissions", {}).get("blockReadsOutsideWorkingDirectories"))),
+                              ("sandbox off", not cur.get("sandbox", {}).get("enabled")),
+                              ("sandboxed Bash not auto-allowed", not cur.get("sandbox", {}).get("autoAllowBashIfSandboxed")),
+                              ("allow rules narrow", not {"Bash", "Edit", "Read"} <= set(cur.get("permissions", {}).get("allow", []))),
+                              ("registered repos/kits missing from additionalDirectories", not set(want) <= set(cur.get("permissions", {}).get("additionalDirectories", []))))
+             if bad]
+    print("; ".join(tight)); sys.exit(1 if tight else 0)
+print(json.dumps(d, indent=2, ensure_ascii=False))
+PY
+case "${1:---diff}" in
+  --check) msg="$(cat "$new")"; [ -z "$msg" ] && echo "global settings open" || { echo "too tight: $msg"; exit 1; } ;;
+  --diff)  diff -u "$dst" "$new" && echo "global settings already open" || true ;;
+  --apply) if cmp -s "$dst" "$new"; then echo "global settings already open"; exit 0; fi
+           cp "$dst" "$dst.bak-ai-kit-$(date +%Y%m%d-%H%M%S)"; cp "$new" "$dst"; echo "updated $dst (backup next to it); start a NEW session to load it" ;;
+  *) sed -n '2,9p' "$0"; exit 1 ;;
+esac

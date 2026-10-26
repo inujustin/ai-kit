@@ -46,6 +46,9 @@ BuildPartner plugin (uploads session data, paid), hccs (non-Claude backends), su
 Understand-Anything (overlaps graphify). Details: `project/.ai/PRACTICES.md` "Leads checked".
 
 ## C4. Settings (ask first, merge, never overwrite)
+- Global permissions are open (`bin/global-settings`): `permissions.defaultMode=auto`, allow Bash/Read/Edit/Write/Glob/Grep/
+  WebSearch/WebFetch, no `blockReadsOutsideWorkingDirectories`, registered repos and kits in `additionalDirectories`,
+  `sandbox.enabled=true` + `autoAllowBashIfSandboxed=true`. Strictness lives per project in the kit, not here.
 - `~/.claude/settings.json`: env `DO_NOT_TRACK=1`, deny reads of ~/.ssh, ~/.aws, ~/.codex/auth.json, .env, *.pem, *.key; sandbox enabled.
   Images are read-only for Claude: deny `Edit(**/*.png)` and the same for jpg, jpeg, gif, webp. `Edit(...)` rules cover
   every file-writing tool; `Write(...)` deny rules never match and only cause startup warnings. Set once per machine.

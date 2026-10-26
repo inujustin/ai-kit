@@ -40,11 +40,13 @@ print("ai-kit skill check: pick the skills that fit this prompt from " + map_ + 
 if question and not act:
     print("- mode: this looks like a question only: answer it cheaply and briefly; no edits, no state-changing commands, no plan mode, no agents.")
 elif big and act:
-    print("- mode: big or vague request: enter plan mode, plan (subagents allowed), then ask the user to approve before editing.")
+    print("- mode: big or vague request: enter plan mode, plan (subagents allowed), then ask the user to approve before editing (unattended run or \"ask nothing\": no approval, go straight on). The approved plan is saved by the plan-record hook.")
 if kit and act and os.path.isfile(kit + "/.ai/PRACTICES.md"):
     print("- practices: check " + kit + "/.ai/PRACTICES.md; a practice that fits this task and is not applied/no: grill the user with AskUserQuestion (apply now / not now).")
 # Forget signals: keep in sync with $KIT/.ai/PRACTICES.md "Catalog".
-nogrill = re.search(r"no grill|just do it|khỏi hỏi|đừng hỏi|làm luôn đi", text)
+# No grills while the user is away: "ask nothing" words, an unattended run ($KIT/.ai/run/auto) or an opened kit.
+unattended = bool(kit) and any(os.path.exists(kit + "/.ai/run/" + f) for f in ("auto", "open-until"))
+nogrill = unattended or re.search(r"no grill|just do it|khỏi hỏi|đừng hỏi|làm luôn|ask nothing|đừng hỏi lại|dont ask|don.t ask", text)
 bps = [
     ("BP-1", r"lại sai|đã nói rồi|nhắc lại|lần trước|như mọi khi|\bagain\b|i told you|as before", "look back at session history; repeated work becomes a skill or hook"),
     ("BP-2", r"xong chưa|xong rồi|\bmerge\b|\bship\b|\bdone\b|\bpush\b", "self-review before saying done"),
@@ -100,7 +102,7 @@ for i, h in grills:
         print("- grill NOW: " + i + " " + h + ": the prompt shows the user may have forgotten it. Before doing anything else in this turn, check its status in .ai/PRACTICES.md; proposed or not now: ask with AskUserQuestion (apply now / not now / no for this session).")
 if re.search(r"https?://|tip|mẹo|best practice|thực hành tốt|video|tiktok|facebook|github\.com", text):
     print("- lead: a pasted tip or link is a lead: check the real source (SKILLS.md Missing), add it to .ai/PRACTICES.md, ask.")
-# Ask the user about each matched skill the first time it comes up in this session; afterwards just use it.
+# Matched skills are used without asking (global stays loose); the hint is printed in full once per session.
 skill_seen_f = os.path.join(tempfile.gettempdir(), "ai-kit-skills-" + sid)
 try:
     skill_seen = set(open(skill_seen_f).read().split("\n"))
@@ -111,10 +113,10 @@ if new:
     open(skill_seen_f, "a").write("\n".join(new) + "\n")
 for h in hits[:4]:
     if h in new:
-        print("- skill ASK: " + h + " -> first time this session: before starting, ask with AskUserQuestion: use it for this (recommended, say in one line what the skill does and costs) / skip / another skill. After a yes, just use it this session and say so in one line. If its job is mechanical, checkable and repeats, also ask whether it should become a hook instead (.ai/HOOKS.md).")
+        print("- skill: " + h + " -> use it when it fits, no question; say in one line which and why.")
     else:
-        print("- hint: " + h + " (already agreed this session: use it, say so in one line)")
+        print("- hint: " + h + " (already used this session)")
 if act and not hits:
-    print("- skill check: no keyword match; look at " + map_ + " yourself and, if a skill fits, propose it with AskUserQuestion before starting.")
+    print("- skill check: no keyword match; look at " + map_ + " yourself and use one that fits, no question.")
 '
 exit 0

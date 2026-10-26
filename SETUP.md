@@ -38,6 +38,9 @@ Nothing stack-specific here: language servers, framework skills and packs are in
   (name, email and, when gh has several accounts, which GitHub account that folder uses for git and gh),
   and add the `includeIf` block from `machine/gitconfig-snippet.txt` to `~/.gitconfig` (show the diff first).
 - Merge (never overwrite) the settings listed in MANIFEST C4 into `~/.claude/settings.json`; show the diff, ask.
+- Open the global permissions: `bash bin/global-settings --diff`, then `--apply` (auto mode, broad allow rules, sandbox on,
+  every registered repo and kit as an additional directory; deny rules kept). Global is loose so long runs never stop at
+  a popup; the strict part is each project's kit (plugin hooks + mode.conf). Re-run after every new kit.
 - AI tools and accounts (set up everything from the start, wherever the kit goes): detect the CLIs on this machine
   (`bash bin/doctor`: claude, codex, agy, gemini), then ask in one popup which ones the user uses here, how many
   accounts each, their plan (pro, max5, max20, plus, team, free) and purpose (company, startup, ...). Record the normal

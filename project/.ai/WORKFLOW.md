@@ -125,12 +125,40 @@ At the end: the report (branches, commits, checks, pushed or local, decisions le
   subagent develops in its own context until Codex resets, reviewer stays separate; no Claude left = handoff, wait for
   reset (or Codex as the brain via `bin/ai --brain codex`, ask) → wait for reset. Tiny tasks fall back to Codex.
 
+## Never wait: parallel by default
+- Independent tickets run at the same time: `dispatch` Codex tickets in the background, Claude subagents in the
+  background, Explore subagents for searches. While one codes or reviews, the lead does the next independent ticket,
+  footprints, tickets or the next plan. Only work on the same files or the one checkout is serialized (never switch
+  branches while a dispatch or review runs on it; never edit a kit script a background task is running).
+- How wide: BUDGET (lean 1, normal 2-3, max as many as the quota allows); say the cost in one line, do not ask.
+- Review rounds: fix every BLOCKER/MAJOR; MINOR = fix if cheap, else a known limit in the footprint; after 3 rounds
+  move on and include it in one final gate over all branches.
+
+## The team board in chat
+After each dispatch wave and whenever an agent finishes, paste a small markdown table in chat: agent · ticket ·
+status · branch (`bash $KIT/.ai/bin/status` prints the board, open state, running agents and newest review verdicts;
+`run start <id> <who>` fills the "Who" column). The statusline (claude-hud) shows running agents and todos live.
+
+## Plans are recorded
+Every plan that leaves plan mode is saved by the plan-record hook to `$KIT/.ai/plans/<date>-<slug>.md` with one line
+in `plans/INDEX.md` (status approved). The footprint of that work links the plan file; at the end set its status to
+done or dropped in INDEX.md. Plans never enter the repo.
+
+## Open all doors for a while
+The kit is the strict layer; global is loose. When the user wants this project free for a job ("thả hết cửa", an
+overnight run), ask once how long (2 h / 8 h (recommended) / 24 h / until the run ends), then
+`python3 $KIT/.ai/bin/run open <hours> "<why>"`. While open the guards act like the global defaults (branches, feature
+pushes, pull/merge/rebase, repo fixers, outside the workspace: no popups; reset --hard, clean -f and deleting
+branches still ask; force-push and protected branches stay refused) and no grill or session-start question is asked.
+When the time is up the hooks close it by themselves and note it in run/progress.md; `run close` closes it now.
+
 ## Footprints: catch up without reading the code
 When a change is big enough that the user would need to read code to follow it (a feature, a set of tickets, a
 refactor, the end of a long run; no fixed unit, your judgement), write one footprint in the kit, never in the repo:
 copy `$KIT/.ai/footprints/TEMPLATE.html` to `<date>-<slug>.html`, fill it, add one line to `footprints/INDEX.md`.
 - Text: straight, short, exact; one line per point, no filler.
 - Diagram: the HTML before → after flow in the template (no mermaid). Cite file:line and the real checks run.
+- Header links the plan file from `.ai/plans/` when there was one.
 - Say "footprint: <file>" in one line when you write it; mention it in the end-of-run report.
 - KIT_GIT=local or remote: commit the footprint in the kit's own git right away.
 

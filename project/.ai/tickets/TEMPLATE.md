@@ -1,6 +1,7 @@
 # T000: short title in GLOSSARY words
 
 Spec: .ai/docs/spec/<file>.md#section · ADR: none · Size: tiny | S (one agent-hour at most) · Depends on: none
+Commit: <subject in the repo's commit style; dispatch uses it as the commit title>
 Executor: codex | claude | tiny (agy/gemini, Size: tiny only) · Split: yes (risky: tester then coder) | no · Tests: write | skip (asked the user on <date>)
 
 ## Goal

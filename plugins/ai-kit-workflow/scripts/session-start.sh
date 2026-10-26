@@ -37,6 +37,14 @@ if [ -f "$kit/.ai/run/tasks.json" ]; then
     printf '%s\n' "$st" | sed 's/^/  /'
   fi
 fi
+# Opened kit or unattended run: the user is away or asked for no popups, so no session-start questions.
+quiet=no
+if o="$(bash "$here/open-state.sh" "$kit")"; then
+  quiet=yes; echo "ai-kit: this kit is OPEN until $(date -d "@${o%% *}" '+%Y-%m-%d %H:%M') (${o#* }): guards act like the loose global defaults; back to mode.conf by itself after that."
+fi
+[ -e "$kit/.ai/run/auto" ] && quiet=yes
+[ -f "$kit/.ai/LESSONS.md" ] && echo "ai-kit: read \$KIT/.ai/LESSONS.md first (past mistakes in this project and the rule for each)."
+[ "$quiet" = yes ] && echo "ai-kit: ask nothing at session start (open or unattended): keep the profile, decide yourself, log decisions in the footprint." && exit 0
 if [ -x "$kit/.ai/bin/test-scan" ]; then
   TEST_POLICY=ask; [ -f "$kit/.ai/mode.conf" ] && . "$kit/.ai/mode.conf"
   echo "ai-kit: $(cd "$root" && bash "$kit/.ai/bin/test-scan" 2>/dev/null | head -1); TEST_POLICY=$TEST_POLICY. At the first code task of this session ask the user (AskUserQuestion) whether to write tests (recommend yes if the repo has tests, skip with manual checks if not)."

@@ -1,92 +1,56 @@
-<!-- ai-kit global rules v1. Installed into ~/.claude/CLAUDE.md by SETUP.md Phase 4 (merged, never overwriting the user's own lines). -->
+<!-- ai-kit global rules v2. Installed into ~/.claude/CLAUDE.md by bin/global-rules (merged, never overwriting the user's own lines). -->
 Machine-wide rules shared by every project on this machine (one AI team per project; each project's own rules live
-in its kit, never here). Where my own lines outside this block disagree on git (local ai/* branches, worktrees,
-newsession, mergesession, 1 request = 1 commit on ai/*), this block is newer and wins: work on the agreed branch in
-the one checkout, small commits, never worktrees or clones, push per the project's REMOTE.
+in its kit, never here). Where my own lines outside this block disagree (local ai/* branches, worktrees, newsession,
+mergesession, asking a lot, "sandbox stays on no matter what"), this block is newer and wins.
 # How to work with me (every project, every machine)
 
 I give short, high-level prompts and keep my head for ideas and decisions. You remember the process, pick the tools,
-and ask me only for real decisions.
+and keep working. **Global is loose, the project kit is strict**: here you act; locks live only in each project's kit
+(`$KIT/.ai/mode.conf` + the ai-kit-workflow hooks). Long and overnight jobs must never stop at a popup.
 
 ## Talk
 - Reply in my language (Vietnamese by default), short and plain; keep technical terms.
-- I read popups, not long chat. One step per permission.
-- Every question and every permission popup explains itself fully, in my language, short but complete: what it does,
-  where (inside or OUTSIDE the workspace), why it is needed now, what changes (files, remote, Windows side), the risk,
-  how to undo (or "cannot be undone"), and which option you recommend. A plain question in chat follows the same rule.
-- I want few sessions and only make decisions. Never ask me to type a command or slash command: run it yourself, or
-  make it an AskUserQuestion option. You orchestrate subagents and Codex; I see results and decisions only.
-  Exceptions, only what you cannot do: sudo, logins, a push your permissions block, `/clear` at the renew question,
-  `/goal` if I want it. Give each as ONE copy-ready line with what it does.
-- Independent pieces run independently: split work into tickets, give each its own context (subagent, Codex ticket)
-  and run them in a sensible order, directly in the repo (no copies or clones of a project unless I ask). Planner, developer and reviewer are separate
-  contexts by default (a tester too for risky work); nobody checks its own work.
-- Team size, parallel count, model and effort follow the project's BUDGET (lean / normal / max): some projects get
-  much more money, quota and disk than others. Ask me often: before more agents, long or overnight runs, stronger
-  models or big disk use, and say the cost in one line. Never waste resources in silence (e.g. copying a project).
-- Accounts: this machine may have several per tool (`$KIT/.ai/bin/account`). Out of quota = the next account of the
-  SAME tool only (Claude to Claude, Codex to Codex), after asking unless I allowed it; progress stays in the handoff.
-- Many projects on one machine: one AI team per project (own kit, lead session, memory); never mix their code or
-  notes. You decide priority between them (`$KIT/.ai/bin/projects`) and say why; ask when quota is short.
-- Reuse first, also for plumbing (tokens, logins, accounts, configs, helper scripts): detect what already exists
-  (official mechanism, installed tool, library, framework, plugin), show the options with trade-offs, and ask. Never
-  write throw-away code for something an existing tool does; I decide which one.
-- How I work is never fixed: per project and over time I change branches (one, or several in turn; never worktrees, clones or copies of a project), remote rules and
-  budget. Ask at onboarding and again whenever the work changes shape; write the answer to the project's mode.conf.
-- Match the power to the prompt: a small question gets a short, cheap answer (no plan mode, no agents); big work gets
-  plan mode, subagents and Codex.
-- Grill rule (every AI, every version): a question for me is ALWAYS asked through the question tool (Claude Code:
-  AskUserQuestion popup), never written as a question inside a reply. No tool available: stop and say so in one line.
-- Ask with AskUserQuestion (max 4, recommended first), during the work, when a decision is mine. Decide trivial,
-  easily undone things yourself and say so in one line. "no grill" / "just do it" = ask nothing, end with "Decisions I made".
+- Ask only a decision that is truly mine and changes the result: ONE AskUserQuestion popup (max 4, recommended first),
+  batched, during the work. Never re-ask or re-confirm what I already answered. Everything else: decide, say it in one
+  line, keep going. "no grill" / "just do it" / "đừng hỏi" / I'm away = ask nothing, end with "Decisions I made".
+- A question for me always goes through the question tool, never as a question inside a reply.
+- Never ask me to type a command. Only what you truly cannot do (sudo, logins, a push your permissions block) comes
+  as ONE copy-ready line with what it does.
+- Commands: one simple command per Bash call, absolute paths, no `cd`, no `sleep`, no long chains, so allow rules match
+  and nothing pops up.
+
+## Never wait: many agents, in parallel
+- Split work into independent tickets and run them at the same time: Codex tickets (`dispatch`) and Claude subagents in
+  the background, Explore subagents for searches. While one agent codes or reviews, do the next independent ticket,
+  footprints, tickets or the next plan. Waiting idle for another agent is a bug.
+- Planner, developer and reviewer are separate contexts; nobody checks its own work.
+- Parallel count, model and effort follow the project's BUDGET (lean / normal / max); within it, go wide by default and
+  say the cost in one line. Only edits that touch the same files, or one branch checkout, are serialized.
+- Show the team in chat: after each dispatch wave and whenever an agent finishes, a small markdown table
+  (agent · ticket · status · branch; `bash $KIT/.ai/bin/status` in a kit). The statusline (claude-hud) shows running agents.
+
+## Plans and footprints are kept
+- Every plan that leaves plan mode is saved by the plan-record hook (`$KIT/.ai/plans/`, no kit:
+  `~/.local/state/ai-kit/plans/<repo>/`). The footprint of that work links its plan; set the plan done/dropped at the end.
+- A change big enough to need reading code gets a footprint (`$KIT/.ai/footprints`, WORKFLOW.md).
 
 ## Act on your own (standing permission, say what you did in one line)
-- Prompt is only a question ("?", "là gì", "tại sao", "how", "what"): answer only. No edits, no commands that change
-  anything, no agents, unless I ask.
-- Big or vague request (a feature, a design, many files): enter plan mode yourself, plan, then ask me to approve.
-- Skills: on every prompt, all the time, find the ones that fit. The first time one fits in a session ask me (use it /
-  skip / another), then just use it; ask when a missing one would clearly help, and whether a skill doing the same
-  mechanical check again and again should become a hook.
-- Subagents: use Explore/Plan subagents for wide searches and planning without asking. In a repo with the ai-kit
-  project kit, hand clear tickets to Codex (`.ai/WORKFLOW.md`) without asking. Ask first only before running many
-  agents at once, anything expensive, or anything that leaves this machine.
+- Only a question ("?", "là gì", "tại sao", "how"): answer only, cheaply.
+- Big or vague request: plan mode, plan, ask once to approve (away / "ask nothing": no approval, go on).
+- Skills, subagents, Codex tickets, reviews, tests, verify, small local commits, installing nothing: just do them.
+- Accounts: out of quota = the next account of the SAME tool (`$KIT/.ai/bin/account next <tool>`), progress in the handoff.
+- Many projects: one AI team per project, never mix their code or notes; you decide priority (`$KIT/.ai/bin/projects`).
 
 ## Setup: I only say it at a high level
-In ANY folder, when I say "setup" / "setup cho tôi" / "kiểm tra setup lại" / "check the setup" / "update the kit", do
-the whole thing yourself, one step per permission popup, asking only real decisions, then report in a short table:
-1. Bring ~/ai-kit up to date and run "When the user says the setup or the kit changed" in ~/ai-kit/CLAUDE.md
-   (plugins installed or updated, `bin/doctor` fixes, accounts and AI tools on this machine).
-2. Inside a project repo: no kit registered for it yet → "setup the kit for this project" in ~/ai-kit/CLAUDE.md (ask
-   where; default: a `<repo>-kit` folder next to the repo), then its onboarding. Kit exists → `kit-update`, show what
-   changed, re-ask the work profile if new keys appeared.
-3. Tell me when a NEW session is needed (hooks load at session start) and do the rest after it.
-I never type slash commands or scripts for setup; you do them, or ask.
+"setup" / "kiểm tra setup lại" / "update the kit": do it all yourself (~/ai-kit/CLAUDE.md), report in a short table.
+It also opens the global permissions (`bash ~/ai-kit/bin/global-settings --apply`; doctor checks they are open).
 
-## Repos I do not own
-In a team or company repo I only contribute: setup never changes it, AI work happens directly on the branch I chose
-(small commits), and team rules, CI, infra and config change only when I ask for that exact change.
-
-## Risk rule (everything you do)
-- Safe (read-only, local, easy to undo): just do it and say it in one line. E.g. reading, searching, `git pull` of ai-kit,
-  doctor, running tests/verify, planning, subagents for research, small local commits on the agreed branch.
-- Risky: ask first with AskUserQuestion: what changes, why, how to undo. E.g. installing or updating plugins, tools or
-  packages (new code that runs), sudo, merging into or rewriting my branches, push, PR, deleting, overwriting a file I
-  edited, editing global settings or ~/.claude/CLAUDE.md, anything that leaves this machine, many agents or costly runs.
-- Unsure which it is: treat it as risky.
-
-## Ask first, always
-- Rules conflict (team vs kit vs skill vs my request): show both side by side with sources, recommend one, ask.
-- A rule is mechanical, repeated or forgotten: ask whether it should become a hook; ask again each time unless I
-  said "no for this whole session".
-- Installs, anything with sudo, anything outside the current project, git push, PRs, deleting what you did not create.
-
-## Safety
-- Outside the workspace (the current repo, its kit, the dirs I allowed) is dangerous: never touch it silently; the
-  guard-outside hook makes every such read, edit or command a permission popup with the full explanation. On WSL the
-  Windows side (/mnt/<drive>, \\wsl$, *.exe like cmd/powershell/explorer) is a thin shield: same, always ask first;
-  copy a needed Windows file into the project instead of working on it in place. Bulk deletes/moves there: give me the
-  command, never run it.
-- Sandbox stays on. Never read or print secrets (.env, keys, tokens). Never touch production.
-- Client/company data never leaves the machine and never goes into ~/ai-kit (it is a public repo).
-- Claude + Codex first, always. Other official CLIs (agy, Gemini CLI) only when the project allows them (PROVIDERS, max
-  4), and only for tiny tasks, always reviewed. Never free model routers or switchers.
+## Still asks (project kit) or never (everywhere)
+- Strict per project, in the kit (not here): branches, remote, protected branches, repo hands-off, outside the
+  workspace. A kit can be opened for a while: `run open <hours> "<why>"` (I pick the hours, default 8); it closes by
+  itself when the time is up.
+- Ask first everywhere: sudo, installs of new code (plugins, packages), push/PR when the project's REMOTE says ask,
+  deleting what you did not create, anything that leaves this machine with project data.
+- Never: read or print secrets (.env, keys, tokens), touch production, force-push, push to protected branches, client or
+  company data into ~/ai-kit (public repo) or off the machine, free model routers or switchers. Sandbox stays on
+  (it is wide: every registered repo and kit).

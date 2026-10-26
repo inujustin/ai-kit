@@ -15,7 +15,9 @@
 #   push for one run: $KIT/.ai/run/allow-push (created only after the user said "push by yourself" for this run; ends
 #                   with the run or after 24 h) makes REMOTE=feature for that time.
 # Agreed cases get an explicit "allow" (so an overnight run does not stop at a popup); deny rules in settings still win.
-# Repos without a registered kit get the defaults (ask for branches and remote) and no commit rules.
+# Global is loose, the kit is strict: repos without a registered kit, and a kit the user opened for a while
+# (open-state.sh, `run open`), pass branches, feature pushes, pull/merge/rebase without a popup and have no commit
+# rules; only what cannot be undone (reset --hard, clean -f, deleting a branch or stash) still asks.
 here="$(dirname "$0")"
 input=$(cat)
 cwd=$(printf '%s' "$input" | python3 -c 'import json,sys; print(json.load(sys.stdin).get("cwd",""))' 2>/dev/null); cwd="${cwd:-$PWD}"
@@ -36,11 +38,17 @@ AIKIT=no
 if [ -n "$src" ] && [ -n "$top" ] && [ "$top" = "$(realpath -m "$src")" ] && printf '%s' "$input" | grep -qE 'git([[:space:]]+-C[[:space:]]+[^[:space:]]+)?[[:space:]]+push'; then
   if bash "$src/bin/doctor" --leak-check >/dev/null 2>&1; then AIKIT=yes; else echo "Blocked by ai-kit guard-git: leak-check failed in the ai-kit source (bash $src/bin/doctor --leak-check); fix it before any push." >&2; exit 2; fi
 fi
+# Global is loose, the kit is strict: a repo without a kit, or a kit opened for a while (open-state.sh), gets no
+# popups for branches and feature pushes. Force-push, protected branches and secret files stay refused everywhere.
+LOOSE=no
+if [ -z "$kit" ] || bash "$here/open-state.sh" "$kit" >/dev/null; then
+  LOOSE=yes; BRANCHES=auto; AUTO_BRANCH_ERE='.'; REMOTE=feature
+fi
 ap="$kit/.ai/run/allow-push"
 if [ -n "$kit" ] && [ -f "$ap" ] && [ "$REMOTE" != never ]; then
   if [ $(( $(date +%s) - $(stat -c %Y "$ap") )) -lt 86400 ]; then REMOTE=feature; else rm -f "$ap"; fi
 fi
-printf '%s' "$input" | KIT="$kit" CWD="$cwd" BRANCHES="$BRANCHES" REMOTE="$REMOTE" AIKIT="$AIKIT" AUTO_ERE="$AUTO_BRANCH_ERE" \
+printf '%s' "$input" | LOOSE="$LOOSE" KIT="$kit" CWD="$cwd" BRANCHES="$BRANCHES" REMOTE="$REMOTE" AIKIT="$AIKIT" AUTO_ERE="$AUTO_BRANCH_ERE" \
   PROT="$PROTECTED_BRANCHES" SUBJ="$SUBJECT_ERE" BADSUBJ="$BAD_SUBJECT_ERE" STYLE="$COMMIT_STYLE_SOURCE" python3 -c '
 import json, os, re, shlex, subprocess, sys
 E = os.environ
@@ -59,8 +67,9 @@ def out(decision, reason):
     sys.exit(0)
 def block(why):
     print("Blocked by ai-kit guard-git: " + why, file=sys.stderr); sys.exit(2)
-asks, allows = [], []
+asks, allows, hard = [], [], []
 def ask(what, change, risk, undo):
+    if "KHÔNG" in risk or "MẤT" in risk or "xoá" in (what + change).lower(): hard.append(what)
     asks.append("⚠ GIT: " + what + ". Thay đổi: " + change + ". Rủi ro: " + risk + ". Hoàn tác: " + undo + ".")
 
 # Split into simple commands; track `cd` so -C-less commands know their folder.
@@ -168,6 +177,9 @@ for seg in re.split(r"&&|\|\||;|\||\n", cmd):
                 s = m[0].splitlines()[0]
                 if not re.search(E["SUBJ"], s): block("commit subject \"" + s + "\" does not match $KIT/.ai/commit-style.conf (" + E["STYLE"] + "). Say the behaviour a teammate can observe.")
                 if E["BADSUBJ"] and re.search(E["BADSUBJ"], s, re.I): block("commit subject \"" + s + "\" looks like wip/fixup/typo; describe the step.")
+# Loose (no kit, or the kit opened for a while): only what cannot be undone still asks.
+if asks and E["LOOSE"] == "yes" and not hard:
+    out("allow", "ai-kit guard-git: loose (no kit, or kit opened for a while): " + " | ".join(asks)[:300])
 if allows and not asks:
     out("allow", "ai-kit guard-git: agreed in this project\x27s mode.conf: " + "; ".join(allows))
 if asks:

@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+# What the AI team is doing right now: the run board, open-all state, running agents (Codex, Claude subprocesses,
+# gate, dispatch, tests) and the newest review logs. The lead pastes the board in chat after each dispatch wave.
+# Usage: bash $KIT/.ai/bin/status   (watch it live: watch -n 5 bash $KIT/.ai/bin/status)
+KIT_AI="$(cd "$(dirname "$0")/.." && pwd)"
+if [ -f "$KIT_AI/run/open-until" ]; then
+	read -r until why < "$KIT_AI/run/open-until"
+	if [ "${until:-0}" -gt "$(date +%s)" ] 2>/dev/null; then echo "== OPEN until $(date -d "@$until" '+%Y-%m-%d %H:%M'): $why"; fi
+fi
+echo "== Board"
+python3 "$KIT_AI/bin/run" board
+echo
+echo "== Running now"
+ps -eo pid,etime,args | grep -E "codex (exec|review)|claude -p|bin/gate|bin/dispatch|run-tests|pytest|verify\.sh" | grep -v grep || echo "(nothing running)"
+echo
+echo "== Newest logs ($KIT_AI/logs)"
+ls -t "$KIT_AI"/logs/*.md 2>/dev/null | head -5 | while read -r f; do
+	verdict="$(grep -m1 -E '^VERDICT:' "$f" || echo 'VERDICT: (not finished)')"
+	echo "$(date -r "$f" '+%H:%M')  $(basename "$f")  $verdict"
+done

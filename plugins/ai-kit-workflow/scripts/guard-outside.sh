@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# PreToolUse: anything outside the workspace is dangerous. Workspace = the repo of the current folder, its registered kit,
+# PreToolUse: in a project with a kit (closed), anything outside the workspace is dangerous. Workspace = the repo of the current folder, its registered kit,
 # the session's project folder, the dirs the user allowed in ~/.claude/settings.json (additionalDirectories) and the
 # session temp dir. Outside that, and on WSL the Windows side (/mnt/<drive>, \\wsl$, *.exe interop), nothing is
 # blocked silently and nothing is allowed silently: a permission popup (decision "ask", also in auto mode) explains in
@@ -10,11 +10,14 @@ cwd=$(printf '%s' "$input" | python3 -c 'import json,sys; print(json.load(sys.st
 roots=()
 r="$(git -C "$cwd" rev-parse --path-format=absolute --git-common-dir 2>/dev/null)" && roots+=("$(dirname "$r")")
 k="$(bash "$here/kit-resolve.sh" "$cwd" 2>/dev/null)" && roots+=("$k")
+# Global is loose, the kit is strict: no kit, or the kit opened for a while (open-state.sh) -> no popups here, only
+# bulk deletes/moves outside the workspace stay denied. Secrets stay denied by the settings deny rules.
+loose=yes; [ -n "$k" ] && ! bash "$here/open-state.sh" "$k" >/dev/null && loose=no
 [ -n "${CLAUDE_PROJECT_DIR:-}" ] && roots+=("$CLAUDE_PROJECT_DIR")
 roots+=("$cwd" "${TMPDIR:-/tmp/claude-$(id -u)}" "/tmp/claude-$(id -u)")
 wsl=no; { grep -qi microsoft /proc/version 2>/dev/null || [ -n "${WSL_DISTRO_NAME:-}" ]; } && wsl=yes
 src="$(cat "${XDG_CONFIG_HOME:-$HOME/.config}/ai-kit/source" 2>/dev/null)"
-printf '%s' "$input" | SRC="$src" WSL="$wsl" ROOTS="$(printf '%s\n' "${roots[@]}")" HOME_DIR="$HOME" python3 -c '
+printf '%s' "$input" | LOOSE="$loose" SRC="$src" WSL="$wsl" ROOTS="$(printf '%s\n' "${roots[@]}")" HOME_DIR="$HOME" python3 -c '
 import json, os, re, sys
 d = json.load(sys.stdin)
 tool, ti = d.get("tool_name", ""), d.get("tool_input", {}) or {}
@@ -58,6 +61,8 @@ if tool == "Bash":
     exe = wsl and re.search(r"(^|[\s;&|(/])[\w.-]+\.exe\b|\b(powershell|pwsh|cmd)(\.exe)?\b|\bwslview\b|\bexplorer\b", cmd, re.I)
     if (win or outside) and BULK.search(cmd):
         out("deny", "ai-kit guard-outside: xoá/di chuyển/đổi quyền hàng loạt ngoài workspace (" + ", ".join((win + outside)[:3]) + "). AI không tự chạy: đưa người dùng đúng 1 dòng lệnh, giải thích nó xoá/đổi gì và không hoàn tác được, để họ tự gõ nếu muốn.")
+    if os.environ["LOOSE"] == "yes":
+        sys.exit(0)
     if win:
         out("ask", explain("ổ Windows: " + ", ".join(win[:3]), "chạy lệnh: " + cmd[:180], "đây là dữ liệu Windows ngoài lớp WSL; lệnh có thể đọc file cá nhân hoặc sửa file Windows"))
     if exe:
@@ -66,6 +71,8 @@ if tool == "Bash":
         out("ask", explain(", ".join(outside[:3]), "chạy lệnh: " + cmd[:180], "đường dẫn nằm ngoài repo đang làm và kit của nó (cấu hình, dữ liệu cá nhân hoặc dự án khác)"))
     sys.exit(0)
 p = ti.get("file_path") or ti.get("notebook_path") or ti.get("path") or ""
+if os.environ["LOOSE"] == "yes":
+    sys.exit(0)
 if p and tool in ("Read", "Glob", "Grep") and in_src(p):
     allow("reading the ai-kit source (setup)")
 if p and (is_win(p) or not inside(p)):

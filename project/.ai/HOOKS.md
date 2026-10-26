@@ -40,6 +40,8 @@ The SessionStart hook of the ai-kit-workflow plugin reminds you of candidates st
 ## Hooks already in this kit
 | Hook | Event | Enforces |
 |---|---|---|
+| plugin plan-record.sh | PostToolUse(ExitPlanMode) | every plan leaving plan mode is saved to .ai/plans/ + INDEX.md |
+| plugin open-state.sh | (helper) | `run open <h>` window: guards loose until it expires, then back to mode.conf by themselves |
 | plugin guard-outside.sh | PreToolUse(Read/Edit/Write/Glob/Grep/Bash) | outside the workspace and, on WSL, the Windows side (/mnt, *.exe): always a popup with the full explanation (also in auto mode); bulk deletes/moves there denied |
 | plugin guard-git.sh | PreToolUse(Bash) | per mode.conf: branch switch/create/delete, every remote command, reset --hard, clean, rebase, merge → popup with the full explanation (BRANCHES=auto / REMOTE=feature / run allow-push let some pass); refused: git worktree add, git clone inside a kit repo, force-push, push --all/--mirror, push to protected branches, commits on protected branches, kit files in a commit, subjects off commit-style.conf |
 | plugin guard-repo.sh | PreToolUse(Edit/Write/Bash) | no whole-repo fixers in the repo; a project session never edits the ai-kit source |

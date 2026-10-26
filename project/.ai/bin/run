@@ -4,10 +4,14 @@ Tasks live in $KIT/.ai/run/tasks.json (JSON on purpose: hard to rewrite by accid
   run status                  counts + the next task to do
   run add [--branch <b>] <id> "<desc>" "<check 1>" ["<check 2>" ...]   add a task (checks = how to verify it really works;
                               --branch = the git branch this task is done on, for runs over several branches)
-  run start <id>              mark in_progress and count an attempt; refuses after MAX_ATTEMPTS (then: rescue or ask)
+  run start <id> [<who>]      mark in_progress and count an attempt; refuses after MAX_ATTEMPTS (then: rescue or ask)
   run pass <id> "<evidence>"  mark passing; evidence = the command/output that proved it (required)
   run block <id> "<why>"      mark blocked; the run moves on or stops to ask the user
   run note "<text>"           append a dated line to progress.md
+  run board                   the team board as a markdown table (paste it in chat: who does what, status, branch)
+  run open <hours> "<why>"    open every door of this project for <hours> (asked each time, default 8): the guards act
+                              like the loose global defaults; back to mode.conf by itself when the time is up
+  run close                   close now (back to mode.conf defaults)
 """
 import json, os, subprocess, sys, datetime
 KIT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -48,6 +52,7 @@ elif cmd == "add":
     d["tasks"].append({"id": i, "description": desc, "checks": checks, "status": "pending", "attempts": 0, **({"branch": br} if br else {})}); save(d); print("added", i)
 elif cmd == "start":
     t = find(d, a[1])
+    if len(a) > 2: t["who"] = a[2]   # optional: who works on it (codex, claude-sub, tiny ...), shown on the board
     if t["attempts"] >= MAX_ATTEMPTS:
         sys.exit(f'STOP: {t["id"]} already tried {t["attempts"]} times. Hand it once to /codex:rescue, or `run block` it and ask the user. Do not loop.')
     t["attempts"] += 1; t["status"] = "in_progress"; save(d); note(f'start {t["id"]} (attempt {t["attempts"]})'); print("started", t["id"], "attempt", t["attempts"], where(t))
@@ -59,5 +64,21 @@ elif cmd == "block":
     t = find(d, a[1]); t["status"] = "blocked"; t["why"] = " ".join(a[2:]); save(d); note(f'block {t["id"]}: {t["why"]}'); print("blocked", t["id"])
 elif cmd == "note":
     note(" ".join(a[1:])); print("noted")
+elif cmd == "board":
+    print("| Task | Status | Who | Branch | Tries |\n|---|---|---|---|---|")
+    for t in d["tasks"]:
+        print(f'| {t["id"]} {t["description"][:50]} | {t["status"]} | {t.get("who", "-")} | {t.get("branch", "-")} | {t["attempts"]}/{MAX_ATTEMPTS} |')
+    if not d["tasks"]: print("| (no tasks) | | | | |")
+elif cmd == "open":
+    import time
+    h = float(a[1]) if len(a) > 1 else 8.0; why = " ".join(a[2:]).strip() or "user opened all doors"
+    until = int(time.time() + h * 3600); os.makedirs(RUN, exist_ok=True)
+    open(os.path.join(RUN, "open-until"), "w").write(f"{until} {why}\n")
+    note(f"open-all for {h:g} h until {datetime.datetime.fromtimestamp(until):%Y-%m-%d %H:%M}: {why}")
+    print(f"open until {datetime.datetime.fromtimestamp(until):%Y-%m-%d %H:%M}; back to mode.conf by itself")
+elif cmd == "close":
+    f = os.path.join(RUN, "open-until")
+    if os.path.exists(f): os.remove(f); note("open-all closed by hand")
+    print("closed: mode.conf defaults")
 else:
     sys.exit(__doc__)

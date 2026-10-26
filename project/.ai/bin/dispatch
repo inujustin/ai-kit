@@ -123,7 +123,9 @@ fi
 if [ "$status" = FAIL ]; then
   echo "FAIL $id ($role) branch=$branch: changes left UNCOMMITTED for review. summary=$log/$name.md checks=$log/$name.verify.log"; exit 1
 fi
-title="$(sed -n '1s/^#* *//p' "$ticket")"
+# Subject in the team's commit style: the ticket's "Commit: <subject>" line, else its title
+title="$(sed -n 's/^Commit: *//p' "$ticket" | head -1)"
+[ -n "$title" ] || title="$(sed -n '1s/^#* *//p' "$ticket")"
 git add -A
 git commit -q -m "${title:-$id}" -m "Ticket: $id
 Role: $role

@@ -2,8 +2,8 @@
 
 This folder is the user's portable AI setup. It contains no client or company data and must never receive any.
 Reply in the user's language (Vietnamese by default), short and plain. Grill with AskUserQuestion at each real decision.
-Every permission popup and every question carries its own brief explanation in the user's language (what, what it
-changes, why, remote or not, undo, which option); the user reads the popup, not the chat. One step per permission.
+Global stays loose (few popups, long runs never stop); strict rules live in each project's kit. Ask only real
+decisions, batched once; never re-confirm what the user already answered.
 Claude + Codex first; other official CLIs (agy, Gemini CLI) only per project for tiny tasks. Never install free model
 routers or switchers (omniroute, claude-code-router, cc-switch).
 
@@ -62,7 +62,7 @@ when a rule is mechanical, repeated or forgotten, ask whether to make it a hook,
 "no for this whole session". See `project/CLAUDE.local.md` and `project/.ai/HOOKS.md`.
 
 ## Git for this repo
-- Work on `ai/claude/<date>-<name>` branches; ask the user whether to merge into main when a piece is done.
+- Work directly on `main` (user's choice 2026-10-26), small commits.
 - The repo is public. Before every commit: `bash bin/doctor --leak-check` must pass (no company names, emails,
   client code or data; leak words live outside the repo in ~/.config/ai-kit/leak-words).
-- The user pushes (`git push` is blocked for the AI); tell them when main is ready.
+- The AI pushes main itself after leak-check passes (guard-git allows it only then).

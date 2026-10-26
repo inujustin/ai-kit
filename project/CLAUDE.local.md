@@ -3,6 +3,7 @@
 `$KIT` = this kit's folder (printed at session start). Every `.ai/...` path below means `$KIT/.ai/...`.
 The repo's own rules win over this kit: CLAUDE.md, AGENTS.md, CONTRIBUTING, lint and format configs, commit
 conventions, .cursor/.claude rules, ADRs. Work with them; when the kit and the repo disagree, ask (see "When rules conflict").
+Always read first: `.ai/LESSONS.md` (past AI mistakes in this project and the rule for each; add new ones there).
 Also read when relevant: `.ai/SKILLS.md` (skill map) · `.ai/WORKFLOW.md` (roles, Codex, separate contexts, git, push/PR) · `.ai/HOOKS.md` (rule → hook)
 · `.ai/KIT.md` (what each kit file does, onboarding, freshness check) · `.ai/PRACTICES.md` (best practices to grill me about).
 
@@ -17,8 +18,7 @@ The kit was just copied in. Run the onboarding in `.ai/KIT.md` with me before an
     (or "cannot be undone"), which option to pick ("Chọn Yes").
   - question: one plain sentence, 2–4 options each with what happens if I pick it, recommended first, understandable alone.
   - never chain many steps into one permission; split them.
-- Skills, all the time (not only at onboarding): the first time a skill fits in a session, ask me with AskUserQuestion
-  (use it / skip / another), then just use it. If a skill keeps doing the same mechanical check, ask whether it should
+- Skills, all the time (not only at onboarding): when a skill fits, use it and say in one line which (no question). If a skill keeps doing the same mechanical check, ask whether it should
   become a hook instead. I talk normally and do not remember names. At the start of each task, check `.ai/SKILLS.md` and the installed
   skills yourself, invoke the ones that fit, and say in one line which. When a skill might fit but you are unsure, when
   two skills disagree, or when a skill that is not installed would clearly help, ask me (what it adds, cost, source).
@@ -39,8 +39,9 @@ I prompt at a high level and do not want to remember the process. You may, witho
   separate contexts, a tester only when the ticket says `Tests: write`; you choose how many agents and at what effort).
 - Tests: never decide alone. Ask me often (start of each session, each ticket) with the facts from `.ai/bin/test-scan`:
   the repo has tests → recommend writing them; none → recommend skipping with manual checks.
-Ask first before: more agents or spend than BUDGET suggests, long/overnight runs, installs, sudo, merge, push, PR,
-anything leaving this machine.
+Ask first before: spend beyond BUDGET, installs, sudo, merge, push or PR when REMOTE says ask, anything leaving this
+machine. Never wait for another agent: run independent tickets in parallel (WORKFLOW.md "Never wait").
+Opened kit (`run open`) or unattended run: ask nothing, log decisions in the footprint.
 
 ## How I work is never fixed: ask (work profile, `.ai/mode.conf`)
 This kit is a portable SE team: company work with colleagues, my own startup, many projects and branches. Each project
@@ -64,7 +65,7 @@ Team rules, CI, infra and config files change only when I ask for that exact cha
 review. The plugin's guard-repo hook blocks the fixers; I can lift it for a while with `touch $KIT/.ai/allow-root-edits`.
 
 ## Plans and tickets never enter the repo
-Plans live only on this machine (`~/.claude/plans/`); tickets, specs, glossary and ADR drafts live in the kit
+Plans live only on this machine (`~/.claude/plans/`, and each approved plan is kept in `$KIT/.ai/plans/` by the plan-record hook); tickets, specs, glossary and ADR drafts live in the kit
 (`$KIT/.ai/tickets/`, `$KIT/.ai/docs/`). No plan or ticket file is ever committed or pushed. Only the code of each ticket
 enters the repo, as small commits on the branch, then my review. Commit messages and PR bodies describe the change, not the plan file.
 

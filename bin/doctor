@@ -70,6 +70,8 @@ done
 echo "== global rules"
 if grep -q 'ai-kit global rules' "$HOME/.claude/CLAUDE.md" 2>/dev/null; then row "~/.claude/CLAUDE.md" OK "ai-kit rules merged"; else row "~/.claude/CLAUDE.md" MISSING "merge machine/CLAUDE.global.md"; fi
 
+if t="$(bash bin/global-settings --check 2>&1)"; then row "global permissions" OK "open (auto mode, broad allow, sandbox on)"; else row "global permissions" MISSING "$t: bash bin/global-settings --diff, then --apply"; fi
+if grep -q '"statusLine"' "$HOME/.claude/settings.json" 2>/dev/null; then row "statusline (agents)" OK "set"; else row "statusline (agents)" MISSING "/claude-hud:setup (shows running agents and todos)"; fi
 if grep -qE '"Bash\(git push' "$HOME/.claude/settings.json" 2>/dev/null; then
   printf '%-26s %-8s %s\n' "git push rule" INFO "settings.json has a git push rule: projects with REMOTE=feature or allow-push cannot push (deny wins); ask the user"
 fi

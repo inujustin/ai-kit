@@ -9,6 +9,7 @@ tool=$(read_json 'd.get("tool_name","")')
 cwd=$(read_json 'd.get("cwd","")'); cwd="${cwd:-$PWD}"
 kit="$(bash "$(dirname "$0")/kit-resolve.sh" "$cwd")" || exit 0
 allow_root=no; [ -e "$kit/.ai/allow-root-edits" ] && allow_root=yes
+bash "$(dirname "$0")/open-state.sh" "$kit" >/dev/null && allow_root=yes   # kit opened for a while
 root="$(dirname "$(git -C "$cwd" rev-parse --path-format=absolute --git-common-dir)")"
 block() { echo "Blocked by ai-kit guard-repo: $1 Run the fixer only on the files you changed, or ask the user (AskUserQuestion) to allow it by creating $kit/.ai/allow-root-edits." >&2; exit 2; }
 in_root() { case "$(realpath -m "$1")/" in "$root"/*) return 0 ;; *) return 1 ;; esac; }
