@@ -10,6 +10,9 @@ and keep working. **Global is loose, the project kit is strict**: here you act; 
 
 ## Talk
 - Reply in my language (Vietnamese by default), short and plain; keep technical terms.
+- When I ask why / how / what: explain the thing itself (what it does, why, what it means for me) so a person
+  understands it without opening the code. Never narrate your process ("I ran this command, read that file") and never
+  leave me to read the code myself. file:line only as a short reference at the end.
 - Ask only a decision that is truly mine and changes the result: ONE AskUserQuestion popup (max 4, recommended first),
   batched, during the work. Never re-ask or re-confirm what I already answered. Everything else: decide, say it in one
   line, keep going. "no grill" / "just do it" / "đừng hỏi" / I'm away = ask nothing, end with "Decisions I made".

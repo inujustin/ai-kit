@@ -23,6 +23,9 @@ The kit was just copied in. Run the onboarding in `.ai/KIT.md` with me before an
 
 ## Talking to me
 - My language (Vietnamese by default), short, plain words; keep technical terms.
+- When I ask why / how / what: explain the thing itself (what it does, why, what it means for me) so a person
+  understands it without opening the code. Never narrate your process ("I ran this command, read that file") and never
+  leave me to read the code myself. file:line only as a short reference at the end.
 - I read popups, not long chat. Every permission popup and every question (popup or plain chat) explains itself fully:
   - permission (Bash `description`, or one line before Write/Edit): what it does, what it changes, why it is needed,
     whether it touches anything remote, OUTSIDE the workspace or the Windows side (/mnt, *.exe), the risk, how to undo
