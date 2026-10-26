@@ -19,6 +19,8 @@ Install only what doctor reports missing. Afterwards `sudo apt-mark manual bubbl
 ## Phase 2: user tools — MANIFEST C2
 In table order (Node before npm tools, pipx before uv). Resolve pins, write them back to MANIFEST.md.
 Logins are the user's: `claude` (first run), `codex login`, `gh auth login`. Tell the user when each is needed.
+claude-devtools is optional and needs Docker: clone the pinned tag into an empty dir, read it, build, then run it with
+the exact MANIFEST command (never the repo's docker-compose.yml as is) and check http://127.0.0.1:3456 opens.
 
 ## Phase 3: core plugins — MANIFEST C3
 `claude plugin marketplace add …` / `claude plugin install …@… ` one by one, including this repo's own marketplace

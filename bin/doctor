@@ -31,6 +31,13 @@ if [ -s "$HOME/.nvm/nvm.sh" ]; then row nvm OK ""; else row nvm MISSING ""; fi
 for c in node npm uv claude codex pre-commit lazygit graphify docker; do
   if command -v "$c" >/dev/null; then row "$c" OK "$(ver "$c" --version)"; else row "$c" MISSING ""; fi
 done
+# Optional: only checked when Docker is here; timeouts so a stuck daemon never hangs doctor.
+if ! command -v docker >/dev/null; then printf '%-26s %-8s %s\n' "claude-devtools" INFO "n/a (optional, needs Docker)"
+elif ! timeout 5 docker info >/dev/null 2>&1; then printf '%-26s %-8s %s\n' "claude-devtools" INFO "docker socket not reachable, cannot check"
+elif s="$(timeout 5 docker ps --filter 'name=^claude-devtools$' --format '{{.Status}}' 2>/dev/null)"; [ -n "$s" ]; then
+  row "claude-devtools" OK "$s"
+  if timeout 5 docker port claude-devtools 3456 2>/dev/null | grep -qvE '^127\.0\.0\.1:'; then printf '%-26s %-8s %s\n' "claude-devtools port" WARN "3456 not only on 127.0.0.1: re-run with the MANIFEST C2 command"; fi
+else row "claude-devtools" MISSING "optional: MANIFEST C2 claude-devtools row"; fi
 
 f="$HOME/.claude/plugins/installed_plugins.json"
 plugin_scope() {

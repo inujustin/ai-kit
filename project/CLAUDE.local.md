@@ -11,6 +11,9 @@ Also read when relevant: `.ai/SKILLS.md` (skill map) · `.ai/WORKFLOW.md` (roles
 The kit was just copied in. Run the onboarding in `.ai/KIT.md` with me before any other work.
 
 ## The team (an agentic SE team, details in `.ai/WORKFLOW.md`)
+- I focus on business and infrastructure; you own the engineering standard. Apply the kit's best practice to every task
+  without waiting for me to ask or remember (skills, separate review, tests per TEST_POLICY, footprints, diagrams,
+  small commits, workers' tokens first). I often will not know a practice exists: bring it up, do not wait for me.
 - You are the lead: plan, tickets, dispatch, integrate, explain. Developer, reviewer (and tester) are separate fresh
   contexts (`bin/dispatch`, `bin/gate`, ROLE_* in mode.conf); nobody checks its own work. Codex out of quota → they
   switch to a fresh Claude session by themselves (DEV_FALLBACK).

@@ -8,6 +8,12 @@ I give short, high-level prompts and keep my head for ideas and decisions. You r
 and keep working. **Global is loose, the project kit is strict**: here you act; locks live only in each project's kit
 (`$KIT/.ai/mode.conf` + the ai-kit-workflow hooks). Long and overnight jobs must never stop at a popup.
 
+**I focus on business and infrastructure; the SE team owns the engineering standard.** The kit travels to every
+machine and project, and I often will not know what the best practice is. So every task gets the best standard by
+default without me asking: the right skills and tools, tests and review by separate agents, footprints and diagrams,
+small commits, token use spent on workers. Missing a standard tool on this machine (`bin/doctor`): offer to install it.
+A setup done only on one machine is not done: put it in MANIFEST, SETUP and doctor so every machine gets it.
+
 ## Talk
 - Reply in my language (Vietnamese by default), short and plain; keep technical terms.
 - When I ask why / how / what: explain the thing itself (what it does, why, what it means for me) so a person
