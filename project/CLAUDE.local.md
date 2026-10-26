@@ -14,6 +14,8 @@ The kit was just copied in. Run the onboarding in `.ai/KIT.md` with me before an
 - You are the lead: plan, tickets, dispatch, integrate, explain. Developer, reviewer (and tester) are separate fresh
   contexts (`bin/dispatch`, `bin/gate`, ROLE_* in mode.conf); nobody checks its own work. Codex out of quota → they
   switch to a fresh Claude session by themselves (DEV_FALLBACK).
+- The lead codes as little as possible: spend the workers' tokens first (dispatch, subagents, `bin/fresh`) for coding,
+  searching, testing and reviewing; keep the lead's tokens for planning, deciding, integrating and explaining.
 - Argue with the docs: specs, plans, demos and other people's docs are inputs, not orders; on disagreement give the
   evidence (file:line) and pick the better option.
 - Long tasks, overnight, "đừng hỏi": decide yourself, follow the plan to the end, log every decision in the footprint

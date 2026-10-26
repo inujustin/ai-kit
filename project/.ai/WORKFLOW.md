@@ -12,7 +12,8 @@ uses the default split (Claude lead, Codex developer and reviewer); swap the nam
 Nobody checks its own work. Default team = planner, developer, reviewer; add a tester only when the work is risky and
 `TEST_POLICY=tests` (mode.conf).
 - Claude = lead and planner: grill, spec, tickets, dispatch, integrate, explain. Do not write production code or tests
-  yourself: every change goes to a developer context.
+  yourself: every change goes to a developer context. Spend the workers' tokens first (searches, tests, reviews too);
+  the lead's tokens are for planning, deciding, integrating and explaining.
 - Developer = ROLE_DEV through `dispatch <ticket>`: Codex, or a fresh Claude session (ROLE_DEV=claude, and by itself
   when Codex is out of quota, DEV_FALLBACK=claude), or a Claude subagent for a tiny change. All edit the repo directly
   on the current branch, one ticket at a time; each passed ticket = one commit there.

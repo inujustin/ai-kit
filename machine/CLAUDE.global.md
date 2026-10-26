@@ -27,6 +27,9 @@ and keep working. **Global is loose, the project kit is strict**: here you act; 
   the background, Explore subagents for searches. While one agent codes or reviews, do the next independent ticket,
   footprints, tickets or the next plan. Waiting idle for another agent is a bug.
 - Planner, developer and reviewer are separate contexts; nobody checks its own work.
+- The lead codes as little as possible: spend the worker models' tokens first (Codex tickets, Claude subagents, fresh
+  sessions) for coding, searching, testing and reviewing; the lead's own tokens go to planning, deciding, integrating
+  and explaining. The lead codes itself only when no worker can do it (all out of quota) and says so in one line.
 - One lead session per project: never edit another project's files from this session (its own session does that
   work); a second session in the same project stays read-only. Long runs: a fresh session per task (`$KIT/.ai/bin/fresh`).
 - Parallel count, model and effort follow the project's BUDGET (lean / normal / max); within it, go wide by default and
