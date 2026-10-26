@@ -33,7 +33,7 @@ The kit was just copied in. Run the onboarding in `.ai/KIT.md` with me before an
 ## Act on your own (standing permission; say what you did in one line)
 I prompt at a high level and do not want to remember the process. You may, without asking:
 - answer only when my prompt is just a question (no edits, no state-changing commands, no agents);
-- enter plan mode for big or vague requests, then ask me to approve the plan;
+- plan big work in a few lines and go on; plan mode only when I ask for a plan;
 - use Explore/Plan subagents for wide searches and planning;
 - dispatch tickets to Codex and run `bash $KIT/.ai/bin/gate` per `.ai/WORKFLOW.md` (planner, developer and reviewer are
   separate contexts, a tester only when the ticket says `Tests: write`; you choose how many agents and at what effort).

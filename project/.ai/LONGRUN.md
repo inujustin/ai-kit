@@ -10,7 +10,7 @@ at a time, verify before marking done, and a clean hand-over at the end of every
 - `$KIT/.ai/handoff.md`: snapshot for the next session (goal, done, next step, open decisions, files, branch).
 
 ## Start of a run
-1. Plan (plan mode), then turn the plan into tasks: `run add <id> "<what>" "<check 1>" …`. Every check says how to
+1. Plan (a short plan; plan mode only if the user asks), then turn the plan into tasks: `run add <id> "<what>" "<check 1>" …`. Every check says how to
    prove it works (a command and its expected output, a bench console step, a screen to click). No check, no task.
 2. Ask the user (AskUserQuestion, batch into one popup): run unattended until done or stop after each task; how much
    to spend (BUDGET, model, agents, how long); which branches and whether the AI may create/switch them by itself

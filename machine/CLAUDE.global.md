@@ -36,7 +36,7 @@ and keep working. **Global is loose, the project kit is strict**: here you act; 
 
 ## Act on your own (standing permission, say what you did in one line)
 - Only a question ("?", "là gì", "tại sao", "how"): answer only, cheaply.
-- Big or vague request: plan mode, plan, ask once to approve (away / "ask nothing": no approval, go on).
+- Never switch to plan mode by yourself. Plan mode only when I ask for a plan; otherwise plan in a few lines and do it.
 - Skills, subagents, Codex tickets, reviews, tests, verify, small local commits, installing nothing: just do them.
 - Accounts: out of quota = the next account of the SAME tool (`$KIT/.ai/bin/account next <tool>`), progress in the handoff.
 - Many projects: one AI team per project, never mix their code or notes; you decide priority (`$KIT/.ai/bin/projects`).

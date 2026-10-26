@@ -9,7 +9,7 @@ When you add a row here, add its keywords to ~/ai-kit/plugins/ai-kit-workflow/sc
 ## Map (situation -> what you use)
 | Situation | Use | Source |
 |---|---|---|
-| New feature, vague or big request | `grilling` (question the plan) → `domain-modeling` (glossary, ADR) → plan mode → tickets from `.ai/tickets/TEMPLATE.md`; UI or state unsure: `prototype` | mattpocock-skills (+ this kit for tickets) |
+| New feature, vague or big request | `grilling` (question the plan) → `domain-modeling` (glossary, ADR) → a short plan → tickets from `.ai/tickets/TEMPLATE.md`; UI or state unsure: `prototype` | mattpocock-skills (+ this kit for tickets) |
 | Facts from docs or the codebase before deciding | `research`; module shape and seams: `codebase-design` | mattpocock-skills |
 | PR description | `pr` | mattpocock-skills |
 | Bug, error, "it does not work" | `diagnosing-bugs` | mattpocock-skills |

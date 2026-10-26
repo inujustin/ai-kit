@@ -14,7 +14,7 @@ text = p[:3000].lower()
 if len(text.strip()) < 15:
     sys.exit(0)
 rules = [
-    (r"tính năng|chức năng|màn hình|làm (cái|trang|module)|feature|implement|build|thêm mới|new page", "new or vague feature: grilling, then domain-modeling, then plan mode and tickets from .ai/tickets/TEMPLATE.md (mattpocock + kit); ask on reuse first"),
+    (r"tính năng|chức năng|màn hình|làm (cái|trang|module)|feature|implement|build|thêm mới|new page", "new or vague feature: grilling, then domain-modeling, then tickets from .ai/tickets/TEMPLATE.md (mattpocock + kit); ask on reuse first"),
     (r"lỗi|bug|error|không chạy|ko chạy|fail|crash|exception|traceback|sai rồi|hỏng", "bug: diagnosing-bugs (mattpocock); stuck after 2 tries: /codex:rescue"),
     (r"\btest|kiểm thử|tdd|unit", "tests: tdd (mattpocock); risky logic: tester/coder split (.ai/WORKFLOW.md)"),
     (r"review|xem lại|soát|check code|kiểm tra code", "review: code-review; Frappe code: frappe-code-review; risky diff: bash .ai/bin/gate"),
@@ -33,14 +33,15 @@ rules = [
 hits = [hint for pat, hint in rules if re.search(pat, text)]
 act = re.search(r"\b(làm|sửa|fix|thêm|xoá|xóa|tạo|viết|cài|chạy|implement|build|add|create|write|install|run|refactor|merge|push)\b", text)
 question = re.match(r"\s*/?btw\b", text) or text.rstrip().endswith("?") or re.search(r"\b(là gì|tại sao|vì sao|thế nào|như nào|có nên|khác gì|how|what|why|which|should i|is it)\b", text)
-big = re.search(r"tính năng|chức năng|màn hình|module|thiết kế|design|kiến trúc|architecture|feature|migrate|nhiều file|toàn bộ|whole", text)
+# Plan mode only when the user asks for a plan; never switched on from keywords (it stopped long runs).
+big = re.search(r"plan mode|lên kế hoạch|lập kế hoạch|\bplan (it|this|first)|make a plan|kế hoạch trước", text)
 kit = os.environ.get("KIT", "")
 map_ = (kit + "/.ai/SKILLS.md") if kit else "the installed skills"
 print("ai-kit skill check: pick the skills that fit this prompt from " + map_ + ", invoke them, say in one line which; ask the user if unsure or if a missing skill would help. Repo rules beat kit rules; on any conflict ask.")
 if question and not act:
     print("- mode: this looks like a question only: answer it cheaply and briefly; no edits, no state-changing commands, no plan mode, no agents.")
 elif big and act:
-    print("- mode: big or vague request: enter plan mode, plan (subagents allowed), then ask the user to approve before editing (unattended run or \"ask nothing\": no approval, go straight on). The approved plan is saved by the plan-record hook.")
+    print("- mode: the user asked for a plan: plan mode, plan, ask once to approve (unattended or \"ask nothing\": go straight on). The plan-record hook saves it.")
 if kit and act and os.path.isfile(kit + "/.ai/PRACTICES.md"):
     print("- practices: check " + kit + "/.ai/PRACTICES.md; a practice that fits this task and is not applied/no: grill the user with AskUserQuestion (apply now / not now).")
 # Forget signals: keep in sync with $KIT/.ai/PRACTICES.md "Catalog".
